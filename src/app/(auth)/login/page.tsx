@@ -21,7 +21,7 @@ export default function LoginPage() {
     })
 
     if (authError) {
-      setError('Feil e-post eller passord. Prøv igjen.')
+      setError(authError.message)
       setLoading(false)
       return
     }
