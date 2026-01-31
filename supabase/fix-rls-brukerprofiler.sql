@@ -1,33 +1,34 @@
--- Fix RLS on brukerprofiler so logged-in users can read their own profile
--- Run this in Supabase SQL Editor: https://supabase.com/dashboard/project/gmxcubjktulxunxyeqih/sql
+-- Fix RLS on brukerprofiler - drop and recreate WITHOUT recursion
+-- Run this in Supabase SQL Editor
 
--- Drop all existing SELECT policies on brukerprofiler
-DROP POLICY IF EXISTS "brukerprofiler_select" ON brukerprofiler;
-DROP POLICY IF EXISTS "brukerprofiler_select_own" ON brukerprofiler;
-DROP POLICY IF EXISTS "brukerprofiler_select_admin" ON brukerprofiler;
-DROP POLICY IF EXISTS "Brukere kan se egen profil" ON brukerprofiler;
-DROP POLICY IF EXISTS "Admin kan se alle profiler" ON brukerprofiler;
-DROP POLICY IF EXISTS "Users can view own profile" ON brukerprofiler;
-DROP POLICY IF EXISTS "Admins can view all profiles" ON brukerprofiler;
+-- Drop ALL existing policies on brukerprofiler
+DO $$
+DECLARE
+  pol RECORD;
+BEGIN
+  FOR pol IN
+    SELECT policyname FROM pg_policies WHERE tablename = 'brukerprofiler'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON brukerprofiler', pol.policyname);
+  END LOOP;
+END $$;
 
--- Simple policy: authenticated users can read their own row
-CREATE POLICY "brukerprofiler_select_own" ON brukerprofiler
+-- Simple policy: every authenticated user can read their own profile row
+-- No recursion - just compares auth.uid() with the row's user_id
+CREATE POLICY "select_own_profile" ON brukerprofiler
   FOR SELECT
   TO authenticated
   USING (auth.uid() = user_id);
 
--- Admin can read all rows (non-recursive: checks JWT claim, not a subquery)
-CREATE POLICY "brukerprofiler_select_admin" ON brukerprofiler
-  FOR SELECT
+-- Users can update their own profile
+CREATE POLICY "update_own_profile" ON brukerprofiler
+  FOR UPDATE
   TO authenticated
-  USING (
-    auth.uid() IN (
-      SELECT bp.user_id FROM brukerprofiler bp WHERE bp.user_id = auth.uid() AND bp.rolle = 'admin'
-    )
-  );
+  USING (auth.uid() = user_id);
 
--- Verify RLS is enabled
+-- Service role (server-side) can do everything
+-- Admin operations (manage other users) should go through server-side API routes
+-- that use the service_role key, not through client-side queries
+
+-- Ensure RLS is on
 ALTER TABLE brukerprofiler ENABLE ROW LEVEL SECURITY;
-
--- Test: this should return the current user's profile
--- SELECT * FROM brukerprofiler WHERE user_id = auth.uid();
