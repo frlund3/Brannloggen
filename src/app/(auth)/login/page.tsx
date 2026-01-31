@@ -24,6 +24,17 @@ export default function LoginPage() {
   }, [])
 
   const redirectByRole = async (userId: string) => {
+    // Check if role is already cached
+    const cached = localStorage.getItem('brannloggen_user_rolle')
+    if (cached) {
+      if (cached === 'admin') window.location.href = '/admin/brukere'
+      else if (cached === 'operator') window.location.href = '/operator/hendelser'
+      else if (cached === 'presse') window.location.href = '/presse/hendelser'
+      else window.location.href = '/'
+      return
+    }
+
+    // Try DB query (may fail due to RLS)
     const supabase = createClient()
     const { data: profile } = await supabase
       .from('brukerprofiler')
@@ -32,18 +43,15 @@ export default function LoginPage() {
       .maybeSingle()
 
     const rolle = (profile as { rolle?: string } | null)?.rolle
-    // Cache role in localStorage so AuthProvider can read it without RLS issues
     if (rolle) {
       localStorage.setItem('brannloggen_user_rolle', rolle)
-    }
-    if (rolle === 'admin') {
-      window.location.href = '/admin/brukere'
-    } else if (rolle === 'operator') {
-      window.location.href = '/operator/hendelser'
-    } else if (rolle === 'presse') {
-      window.location.href = '/presse/hendelser'
+      if (rolle === 'admin') window.location.href = '/admin/brukere'
+      else if (rolle === 'operator') window.location.href = '/operator/hendelser'
+      else if (rolle === 'presse') window.location.href = '/presse/hendelser'
+      else window.location.href = '/'
     } else {
-      window.location.href = '/'
+      // RLS blocked the query - send to debug to set role manually
+      window.location.href = '/debug'
     }
   }
 
