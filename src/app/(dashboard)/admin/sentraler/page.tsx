@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { sentraler as initialSentraler } from '@/data/sentraler'
 import { fylker } from '@/data/fylker'
 import { brannvesen } from '@/data/brannvesen'
+import { useSentralScope } from '@/hooks/useSentralScope'
 import { useState } from 'react'
 
 interface SentralItem {
@@ -15,6 +16,7 @@ interface SentralItem {
 }
 
 export default function AdminSentralerPage() {
+  const { isAdmin, is110Admin, isScoped, filterSentraler } = useSentralScope()
   const [items, setItems] = useState<SentralItem[]>([...initialSentraler])
   const [showAdd, setShowAdd] = useState(false)
   const [editItem, setEditItem] = useState<SentralItem | null>(null)
@@ -68,6 +70,8 @@ export default function AdminSentralerPage() {
     ? brannvesen.filter(b => form.fylke_ids.includes(b.fylke_id))
     : brannvesen
 
+  const displayItems = isScoped ? filterSentraler(items) : items
+
   const formContent = (
     <div className="space-y-4">
       <div>
@@ -105,21 +109,25 @@ export default function AdminSentralerPage() {
   )
 
   return (
-    <DashboardLayout role="admin">
+    <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
       <div className="p-4 lg:p-8">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white">110-sentraler</h1>
-            <p className="text-sm text-gray-400">{items.length} sentraler registrert</p>
+            <p className="text-sm text-gray-400">
+              {isScoped ? `${displayItems.length} sentraler du har tilgang til` : `${items.length} sentraler registrert`}
+            </p>
           </div>
-          <button onClick={() => { resetForm(); setShowAdd(true) }} className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-            Ny 110-sentral
-          </button>
+          {isAdmin && (
+            <button onClick={() => { resetForm(); setShowAdd(true) }} className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              Ny 110-sentral
+            </button>
+          )}
         </div>
 
         <div className="space-y-3">
-          {items.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map((s) => {
+          {displayItems.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map((s) => {
             const sFylker = fylker.filter(f => s.fylke_ids.includes(f.id))
             const sBrannvesen = brannvesen.filter(b => s.brannvesen_ids.includes(b.id))
             const isExpanded = expandedId === s.id
@@ -136,10 +144,14 @@ export default function AdminSentralerPage() {
                       <p className="text-xs text-gray-500">{sFylker.map(f => f.navn).join(', ')} &middot; {sBrannvesen.length} brannvesen</p>
                     </div>
                   </button>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => handleEdit(s)} className="text-xs text-blue-400 hover:text-blue-300">Rediger</button>
-                    <button onClick={() => setDeleteConfirm(s.id)} className="text-xs text-red-400 hover:text-red-300">Slett</button>
-                  </div>
+                  {isAdmin ? (
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => handleEdit(s)} className="text-xs text-blue-400 hover:text-blue-300">Rediger</button>
+                      <button onClick={() => setDeleteConfirm(s.id)} className="text-xs text-red-400 hover:text-red-300">Slett</button>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-500">Kun visning</span>
+                  )}
                 </div>
                 {isExpanded && (
                   <div className="px-4 pb-3 border-t border-[#2a2a2a] pt-3">

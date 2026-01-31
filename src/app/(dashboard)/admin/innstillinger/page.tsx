@@ -4,31 +4,75 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { fylker } from '@/data/fylker'
 import { kommuner } from '@/data/kommuner'
 import { brannvesen } from '@/data/brannvesen'
+import { sentraler } from '@/data/sentraler'
+import { useSentralScope } from '@/hooks/useSentralScope'
 
 export default function AdminInnstillingerPage() {
+  const { isAdmin, is110Admin, isScoped, scope, filterFylker, filterKommuner, filterBrannvesen, filterSentraler } = useSentralScope()
+
+  const displayFylker = filterFylker(fylker)
+  const displayKommuner = filterKommuner(kommuner)
+  const displayBrannvesen = filterBrannvesen(brannvesen)
+  const displaySentraler = filterSentraler(sentraler)
+
   return (
-    <DashboardLayout role="admin">
+    <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
       <div className="p-4 lg:p-8 max-w-3xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-white">Innstillinger</h1>
-          <p className="text-sm text-gray-400">Systemkonfigurasjon og oversikt</p>
+          <p className="text-sm text-gray-400">
+            {isScoped ? 'Oversikt for dine 110-sentraler' : 'Systemkonfigurasjon og oversikt'}
+          </p>
         </div>
+
+        {/* Scoped info for 110-admin */}
+        {isScoped && (
+          <section className="mb-8">
+            <h2 className="text-lg font-semibold text-white mb-4">Din tilgang</h2>
+            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Tilknyttede 110-sentraler</p>
+                  <div className="flex flex-wrap gap-1">
+                    {displaySentraler.map(s => (
+                      <span key={s.id} className="text-xs bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded">{s.kort_navn}</span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500 mb-1">Fylker i scope</p>
+                  <div className="flex flex-wrap gap-1">
+                    {displayFylker.map(f => (
+                      <span key={f.id} className="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded">{f.navn}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* System stats */}
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-4">Systemoversikt</h2>
-          <div className="grid grid-cols-3 gap-4">
+          <h2 className="text-lg font-semibold text-white mb-4">
+            {isScoped ? 'Oversikt' : 'Systemoversikt'}
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
+              <p className="text-xs text-gray-400">110-sentraler</p>
+              <p className="text-2xl font-bold text-white">{displaySentraler.length}</p>
+            </div>
             <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
               <p className="text-xs text-gray-400">Fylker</p>
-              <p className="text-2xl font-bold text-white">{fylker.length}</p>
+              <p className="text-2xl font-bold text-white">{displayFylker.length}</p>
             </div>
             <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
               <p className="text-xs text-gray-400">Kommuner</p>
-              <p className="text-2xl font-bold text-white">{kommuner.length}</p>
+              <p className="text-2xl font-bold text-white">{displayKommuner.length}</p>
             </div>
             <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
               <p className="text-xs text-gray-400">Brannvesen</p>
-              <p className="text-2xl font-bold text-white">{brannvesen.length}</p>
+              <p className="text-2xl font-bold text-white">{displayBrannvesen.length}</p>
             </div>
           </div>
         </section>

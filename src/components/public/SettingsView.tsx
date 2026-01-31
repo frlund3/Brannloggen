@@ -291,6 +291,7 @@ export function SettingsView() {
               onClick={() => {
                 // Force clear everything - no async
                 localStorage.removeItem('brannloggen_user_rolle')
+                localStorage.removeItem('brannloggen_user_sentral_ids')
                 Object.keys(localStorage).forEach(key => {
                   if (key.startsWith('sb-')) localStorage.removeItem(key)
                 })

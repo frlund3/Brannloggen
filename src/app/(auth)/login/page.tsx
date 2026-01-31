@@ -27,7 +27,7 @@ export default function LoginPage() {
     // Check if role is already cached
     const cached = localStorage.getItem('brannloggen_user_rolle')
     if (cached) {
-      if (cached === 'admin') window.location.href = '/operator/hendelser'
+      if (cached === 'admin' || cached === '110-admin') window.location.href = '/operator/hendelser'
       else if (cached === 'operator') window.location.href = '/operator/hendelser'
       else if (cached === 'presse') window.location.href = '/presse/hendelser'
       else window.location.href = '/'
@@ -38,14 +38,18 @@ export default function LoginPage() {
     const supabase = createClient()
     const { data: profile } = await supabase
       .from('brukerprofiler')
-      .select('rolle')
+      .select('rolle, sentral_ids')
       .eq('user_id', userId)
       .maybeSingle()
 
-    const rolle = (profile as { rolle?: string } | null)?.rolle
+    const rolle = (profile as { rolle?: string; sentral_ids?: string[] } | null)?.rolle
+    const sentralIds = (profile as { rolle?: string; sentral_ids?: string[] } | null)?.sentral_ids
     if (rolle) {
       localStorage.setItem('brannloggen_user_rolle', rolle)
-      if (rolle === 'admin') window.location.href = '/operator/hendelser'
+      if (sentralIds && sentralIds.length > 0) {
+        localStorage.setItem('brannloggen_user_sentral_ids', JSON.stringify(sentralIds))
+      }
+      if (rolle === 'admin' || rolle === '110-admin') window.location.href = '/operator/hendelser'
       else if (rolle === 'operator') window.location.href = '/operator/hendelser'
       else if (rolle === 'presse') window.location.href = '/presse/hendelser'
       else window.location.href = '/'

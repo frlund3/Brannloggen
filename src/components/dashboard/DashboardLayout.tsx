@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
-  role: 'operator' | 'admin' | 'presse'
+  role: 'operator' | 'admin' | '110-admin' | 'presse'
 }
 
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
@@ -39,13 +39,13 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     )
   }
 
-  // Operator links - shared between operator and admin
+  // Operator links - shared between operator, admin, and 110-admin
   const operatorLinks = [
     { href: '/operator/hendelser', label: 'Hendelser', icon: 'list' },
     { href: '/operator/hendelser/ny', label: 'Ny hendelse', icon: 'plus' },
   ]
 
-  // Admin-only links
+  // Full admin links
   const adminLinks = [
     { href: '/admin/brukere', label: 'Brukere', icon: 'users' },
     { href: '/admin/brannvesen', label: 'Brannvesen', icon: 'truck' },
@@ -56,18 +56,44 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     { href: '/admin/innstillinger', label: 'Innstillinger', icon: 'settings' },
   ]
 
+  // 110-admin links - scoped admin with limited admin pages
+  const admin110Links = [
+    { href: '/admin/brukere', label: 'Brukere', icon: 'users' },
+    { href: '/admin/brannvesen', label: 'Brannvesen', icon: 'truck' },
+    { href: '/admin/sentraler', label: '110-sentraler', icon: 'phone' },
+    { href: '/admin/innstillinger', label: 'Innstillinger', icon: 'settings' },
+  ]
+
   const presseLinks = [
     { href: '/presse/hendelser', label: 'Hendelser', icon: 'list' },
     { href: '/presse/innstillinger', label: 'Varsler', icon: 'settings' },
   ]
 
-  // Admin sees operator + admin links, operator sees only operator links
+  // Determine effective role: use actual rolle from auth if available
   const effectiveRole = rolle || role
   const links = effectiveRole === 'admin'
     ? [...operatorLinks, ...adminLinks]
+    : effectiveRole === '110-admin'
+    ? [...operatorLinks, ...admin110Links]
     : effectiveRole === 'presse'
     ? presseLinks
     : operatorLinks
+
+  const roleLabel = effectiveRole === 'admin'
+    ? 'Administrator'
+    : effectiveRole === '110-admin'
+    ? '110-sentral Admin'
+    : effectiveRole === 'presse'
+    ? 'Pressekonto'
+    : '110-Sentral CMS'
+
+  const headerLabel = effectiveRole === 'admin'
+    ? 'Admin'
+    : effectiveRole === '110-admin'
+    ? '110-Admin'
+    : effectiveRole === 'presse'
+    ? 'Presse'
+    : '110-Sentral'
 
   const getIcon = (icon: string) => {
     switch (icon) {
@@ -102,9 +128,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <span className="text-sm font-semibold text-white">
-            {role === 'admin' ? 'Admin' : role === 'presse' ? 'Presse' : '110-Sentral'}
-          </span>
+          <span className="text-sm font-semibold text-white">{headerLabel}</span>
           <a href="/" className="text-sm text-blue-400">Forside</a>
         </div>
       </header>
@@ -126,9 +150,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
               </div>
               <div>
                 <h1 className="text-sm font-bold text-white">Brannloggen</h1>
-                <p className="text-xs text-gray-400">
-                  {role === 'admin' ? 'Administrator' : role === 'presse' ? 'Pressekonto' : '110-Sentral CMS'}
-                </p>
+                <p className="text-xs text-gray-400">{roleLabel}</p>
               </div>
             </div>
           </div>
@@ -163,9 +185,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
               </div>
               <div>
                 <p className="text-sm text-white truncate max-w-[160px]">{user?.email ?? 'Bruker'}</p>
-                <p className="text-xs text-gray-400">
-                  {role === 'admin' ? 'Administrator' : role === 'presse' ? 'Presse' : 'Operatør'}
-                </p>
+                <p className="text-xs text-gray-400">{roleLabel}</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -175,6 +195,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
               <button
                 onClick={() => {
                   localStorage.removeItem('brannloggen_user_rolle')
+                  localStorage.removeItem('brannloggen_user_sentral_ids')
                   Object.keys(localStorage).forEach(key => {
                     if (key.startsWith('sb-')) localStorage.removeItem(key)
                   })
