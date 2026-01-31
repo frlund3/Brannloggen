@@ -226,10 +226,13 @@ export function SettingsView() {
         </div>
       </section>
 
-      {/* Version info */}
+      {/* Version info + login link */}
       <section className="mb-24">
-        <div className="text-center">
+        <div className="text-center space-y-2">
           <p className="text-xs text-gray-600">Brannloggen v0.1.0</p>
+          <a href="/login" className="text-xs text-gray-600 hover:text-gray-400">
+            Operatør / Admin
+          </a>
         </div>
       </section>
     </div>
