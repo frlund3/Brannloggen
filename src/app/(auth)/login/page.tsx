@@ -1,9 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -40,7 +42,6 @@ export default function LoginPage() {
 
     if (profileError) {
       setDebugInfo(prev => prev + `\nProfil-feil: ${profileError.message} (${profileError.code})`)
-      // If profile query fails, show navigation buttons
       setLoggedIn(true)
       setLoading(false)
       return
@@ -55,15 +56,22 @@ export default function LoginPage() {
 
     setDebugInfo(prev => prev + `\nRolle: ${profile.rolle}`)
 
+    // Use router.push + refresh to preserve session cookies
     if (profile.rolle === 'admin') {
-      window.location.href = '/admin/brukere'
+      router.push('/admin/brukere')
     } else if (profile.rolle === 'operator') {
-      window.location.href = '/operator/hendelser'
+      router.push('/operator/hendelser')
     } else if (profile.rolle === 'presse') {
-      window.location.href = '/presse/hendelser'
+      router.push('/presse/hendelser')
     } else {
-      window.location.href = '/'
+      router.push('/')
     }
+    router.refresh()
+  }
+
+  const navigateTo = (path: string) => {
+    router.push(path)
+    router.refresh()
   }
 
   return (
@@ -83,30 +91,30 @@ export default function LoginPage() {
         {loggedIn ? (
           <div className="space-y-3">
             <p className="text-green-400 text-sm text-center mb-4">Innlogget! Velg destinasjon:</p>
-            <a
-              href="/admin/brukere"
+            <button
+              onClick={() => navigateTo('/admin/brukere')}
               className="block w-full py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg text-center transition-colors"
             >
               Admin-panel
-            </a>
-            <a
-              href="/operator/hendelser"
+            </button>
+            <button
+              onClick={() => navigateTo('/operator/hendelser')}
               className="block w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-center transition-colors"
             >
               Operatør-panel
-            </a>
-            <a
-              href="/presse/hendelser"
+            </button>
+            <button
+              onClick={() => navigateTo('/presse/hendelser')}
               className="block w-full py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg text-center transition-colors"
             >
               Presse-panel
-            </a>
-            <a
-              href="/"
+            </button>
+            <button
+              onClick={() => navigateTo('/')}
               className="block w-full py-3 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white font-semibold rounded-lg text-center transition-colors"
             >
               Forsiden
-            </a>
+            </button>
             {debugInfo && (
               <pre className="mt-4 p-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-xs text-yellow-400 whitespace-pre-wrap">{debugInfo}</pre>
             )}

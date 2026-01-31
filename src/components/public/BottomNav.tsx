@@ -15,13 +15,13 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   useEffect(() => {
     const checkRole = async () => {
       const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
       const { data: profile } = await supabase
         .from('brukerprofiler')
         .select('rolle')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .maybeSingle()
 
       if (profile) {
