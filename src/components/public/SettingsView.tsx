@@ -235,11 +235,16 @@ export function SettingsView() {
           <p className="text-xs text-gray-600">Brannloggen v0.1.0</p>
           {user ? (
             <button
-              onClick={async () => {
+              onClick={() => {
                 const supabase = createClient()
-                await supabase.auth.signOut()
-                localStorage.removeItem('brannloggen_user_rolle')
-                window.location.reload()
+                supabase.auth.signOut().finally(() => {
+                  // Clear all Supabase auth data from localStorage
+                  localStorage.removeItem('brannloggen_user_rolle')
+                  Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('sb-')) localStorage.removeItem(key)
+                  })
+                  window.location.href = '/'
+                })
               }}
               className="text-xs text-red-400 hover:text-red-300"
             >
