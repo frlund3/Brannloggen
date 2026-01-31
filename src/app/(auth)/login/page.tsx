@@ -8,6 +8,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loggedIn, setLoggedIn] = useState(false)
+  const [debugInfo, setDebugInfo] = useState('')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -15,7 +17,7 @@ export default function LoginPage() {
     setError('')
 
     const supabase = createClient()
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
@@ -26,27 +28,36 @@ export default function LoginPage() {
       return
     }
 
-    // Get logged in user
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      window.location.href = '/'
-      return
-    }
+    const userId = authData.user?.id
+    setDebugInfo(`Innlogget som ${authData.user?.email} (${userId})`)
 
-    // Redirect based on role
+    // Try to get profile
     const { data: profile, error: profileError } = await supabase
       .from('brukerprofiler')
       .select('rolle')
-      .eq('user_id', user.id)
-      .single()
+      .eq('user_id', userId!)
+      .maybeSingle()
 
     if (profileError) {
-      console.error('Profile fetch error:', profileError)
+      setDebugInfo(prev => prev + `\nProfil-feil: ${profileError.message} (${profileError.code})`)
+      // If profile query fails, show navigation buttons
+      setLoggedIn(true)
+      setLoading(false)
+      return
     }
 
-    if (profile?.rolle === 'admin') {
+    if (!profile) {
+      setDebugInfo(prev => prev + '\nIngen profil funnet - viser navigasjon')
+      setLoggedIn(true)
+      setLoading(false)
+      return
+    }
+
+    setDebugInfo(prev => prev + `\nRolle: ${profile.rolle}`)
+
+    if (profile.rolle === 'admin') {
       window.location.href = '/admin/brukere'
-    } else if (profile?.rolle === 'operator') {
+    } else if (profile.rolle === 'operator') {
       window.location.href = '/operator/hendelser'
     } else {
       window.location.href = '/'
@@ -67,51 +78,80 @@ export default function LoginPage() {
           <p className="text-gray-400 text-sm mt-1">Logg inn for 110-sentral eller admin</p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-              <p className="text-sm text-red-400">{error}</p>
+        {loggedIn ? (
+          <div className="space-y-3">
+            <p className="text-green-400 text-sm text-center mb-4">Innlogget! Velg destinasjon:</p>
+            <a
+              href="/admin/brukere"
+              className="block w-full py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg text-center transition-colors"
+            >
+              Admin-panel
+            </a>
+            <a
+              href="/operator/hendelser"
+              className="block w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-center transition-colors"
+            >
+              Operatør-panel
+            </a>
+            <a
+              href="/"
+              className="block w-full py-3 bg-[#2a2a2a] hover:bg-[#3a3a3a] text-white font-semibold rounded-lg text-center transition-colors"
+            >
+              Forsiden
+            </a>
+            {debugInfo && (
+              <pre className="mt-4 p-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-xs text-yellow-400 whitespace-pre-wrap">{debugInfo}</pre>
+            )}
+          </div>
+        ) : (
+          <>
+            <form onSubmit={handleLogin} className="space-y-4">
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                  <p className="text-sm text-red-400">{error}</p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">E-post</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  placeholder="operatør@brannvesen.no"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Passord</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  placeholder="Skriv inn passord"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
+              >
+                {loading ? 'Logger inn...' : 'Logg inn'}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <a href="/" className="text-sm text-gray-400 hover:text-white">
+                Tilbake til forsiden
+              </a>
             </div>
-          )}
-
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">E-post</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
-              placeholder="operatør@brannvesen.no"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Passord</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
-              placeholder="Skriv inn passord"
-              required
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
-          >
-            {loading ? 'Logger inn...' : 'Logg inn'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <a href="/" className="text-sm text-gray-400 hover:text-white">
-            Tilbake til forsiden
-          </a>
-        </div>
+          </>
+        )}
       </div>
     </div>
   )
