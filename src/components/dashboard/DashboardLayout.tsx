@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { createClient } from '@/lib/supabase/client'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -13,6 +14,7 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
+  const { user } = useAuth()
 
   const operatorLinks = [
     { href: '/operator/hendelser', label: 'Hendelser', icon: 'list' },
@@ -62,7 +64,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           <span className="text-sm font-semibold text-white">
             {role === 'admin' ? 'Admin' : role === 'presse' ? 'Presse' : '110-Sentral'}
           </span>
-          <Link href="/" className="text-sm text-blue-400">Forside</Link>
+          <a href="/" className="text-sm text-blue-400">Forside</a>
         </div>
       </header>
 
@@ -92,7 +94,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
 
           <nav className="p-2 space-y-1">
             {links.map((link) => (
-              <Link
+              <a
                 key={link.href}
                 href={link.href}
                 onClick={() => setSidebarOpen(false)}
@@ -107,23 +109,39 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                   {getIcon(link.icon)}
                 </svg>
                 {link.label}
-              </Link>
+              </a>
             ))}
           </nav>
 
           <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[#2a2a2a]">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                <span className="text-xs text-white font-bold">OP</span>
+                <span className="text-xs text-white font-bold">
+                  {(user?.email?.substring(0, 2) ?? 'U').toUpperCase()}
+                </span>
               </div>
               <div>
-                <p className="text-sm text-white">Operatør Demo</p>
-                <p className="text-xs text-gray-400">Bergen brannvesen</p>
+                <p className="text-sm text-white truncate max-w-[160px]">{user?.email ?? 'Bruker'}</p>
+                <p className="text-xs text-gray-400">
+                  {role === 'admin' ? 'Administrator' : role === 'presse' ? 'Presse' : 'Operatør'}
+                </p>
               </div>
             </div>
-            <Link href="/" className="block text-sm text-gray-400 hover:text-white">
-              Tilbake til forsiden
-            </Link>
+            <div className="flex items-center gap-4">
+              <a href="/" className="text-sm text-gray-400 hover:text-white">
+                Forside
+              </a>
+              <button
+                onClick={async () => {
+                  const supabase = createClient()
+                  await supabase.auth.signOut()
+                  window.location.href = '/'
+                }}
+                className="text-sm text-red-400 hover:text-red-300"
+              >
+                Logg ut
+              </button>
+            </div>
           </div>
         </aside>
 

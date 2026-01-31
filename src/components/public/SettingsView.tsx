@@ -1,56 +1,107 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { fylker } from '@/data/fylker'
 import { kategorier } from '@/data/kategorier'
 import { brannvesen } from '@/data/brannvesen'
 
-export function SettingsView() {
-  const [pushEnabled, setPushEnabled] = useState(false)
-  const [selectedFylker, setSelectedFylker] = useState<string[]>([])
-  const [selectedKategorier, setSelectedKategorier] = useState<string[]>([])
-  const [selectedBrannvesen, setSelectedBrannvesen] = useState<string[]>([])
-  const [onlyOngoing, setOnlyOngoing] = useState(false)
+const STORAGE_KEY = 'brannloggen_push_prefs'
 
-  const toggleItem = (arr: string[], setArr: (v: string[]) => void, id: string) => {
-    setArr(arr.includes(id) ? arr.filter((v) => v !== id) : [...arr, id])
+interface PushPrefs {
+  pushEnabled: boolean
+  onlyOngoing: boolean
+  fylker: string[]
+  kategorier: string[]
+  brannvesen: string[]
+}
+
+const defaultPrefs: PushPrefs = {
+  pushEnabled: false,
+  onlyOngoing: false,
+  fylker: [],
+  kategorier: [],
+  brannvesen: [],
+}
+
+function loadPrefs(): PushPrefs {
+  if (typeof window === 'undefined') return defaultPrefs
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) return { ...defaultPrefs, ...JSON.parse(saved) }
+  } catch {}
+  return defaultPrefs
+}
+
+export function SettingsView() {
+  const [prefs, setPrefs] = useState<PushPrefs>(defaultPrefs)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    setPrefs(loadPrefs())
+  }, [])
+
+  const savePrefs = useCallback((newPrefs: PushPrefs) => {
+    setPrefs(newPrefs)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newPrefs))
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }, [])
+
+  const toggleItem = (key: 'fylker' | 'kategorier' | 'brannvesen', id: string) => {
+    const arr = prefs[key]
+    const updated = arr.includes(id) ? arr.filter((v) => v !== id) : [...arr, id]
+    savePrefs({ ...prefs, [key]: updated })
   }
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
-      <h1 className="text-xl font-bold mb-6">Innstillinger</h1>
+      <h1 className="text-xl font-bold mb-1">Innstillinger</h1>
+      <p className="text-xs text-gray-500 mb-6">Velg hva du vil få varsler om. Lagres lokalt på denne enheten.</p>
+
+      {/* Saved toast */}
+      {saved && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-green-500/90 text-white text-sm px-4 py-2 rounded-lg z-50 animate-pulse">
+          Innstillinger lagret
+        </div>
+      )}
 
       {/* Push section */}
       <section className="mb-8">
         <h2 className="text-lg font-semibold mb-3">Push-varsler</h2>
         <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#2a2a2a]">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-sm">Aktiver push-varsler</span>
+            <div>
+              <span className="text-sm text-white">Aktiver push-varsler</span>
+              <p className="text-xs text-gray-500 mt-0.5">Få varsel om hendelser i nettleseren</p>
+            </div>
             <button
-              onClick={() => setPushEnabled(!pushEnabled)}
-              className={`w-12 h-6 rounded-full transition-colors ${
-                pushEnabled ? 'bg-blue-500' : 'bg-gray-600'
+              onClick={() => savePrefs({ ...prefs, pushEnabled: !prefs.pushEnabled })}
+              className={`w-12 h-6 rounded-full transition-colors relative ${
+                prefs.pushEnabled ? 'bg-blue-500' : 'bg-gray-600'
               }`}
             >
               <div
-                className={`w-5 h-5 bg-white rounded-full transition-transform ${
-                  pushEnabled ? 'translate-x-6' : 'translate-x-0.5'
+                className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
+                  prefs.pushEnabled ? 'translate-x-6' : 'translate-x-0.5'
                 }`}
               />
             </button>
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-sm">Kun pågående hendelser</span>
+            <div>
+              <span className="text-sm text-white">Kun pågående hendelser</span>
+              <p className="text-xs text-gray-500 mt-0.5">Ikke varsle om avsluttede hendelser</p>
+            </div>
             <button
-              onClick={() => setOnlyOngoing(!onlyOngoing)}
-              className={`w-12 h-6 rounded-full transition-colors ${
-                onlyOngoing ? 'bg-blue-500' : 'bg-gray-600'
+              onClick={() => savePrefs({ ...prefs, onlyOngoing: !prefs.onlyOngoing })}
+              className={`w-12 h-6 rounded-full transition-colors relative ${
+                prefs.onlyOngoing ? 'bg-blue-500' : 'bg-gray-600'
               }`}
             >
               <div
-                className={`w-5 h-5 bg-white rounded-full transition-transform ${
-                  onlyOngoing ? 'translate-x-6' : 'translate-x-0.5'
+                className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
+                  prefs.onlyOngoing ? 'translate-x-6' : 'translate-x-0.5'
                 }`}
               />
             </button>
@@ -60,25 +111,33 @@ export function SettingsView() {
 
       {/* Fylker */}
       <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-3">
-          Fylker
-          {selectedFylker.length > 0 && (
-            <span className="text-sm text-blue-400 font-normal ml-2">
-              ({selectedFylker.length} valgt)
-            </span>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold">
+            Fylker
+            {prefs.fylker.length > 0 && (
+              <span className="text-sm text-blue-400 font-normal ml-2">
+                ({prefs.fylker.length} valgt)
+              </span>
+            )}
+          </h2>
+          {prefs.fylker.length > 0 && (
+            <button onClick={() => savePrefs({ ...prefs, fylker: [] })} className="text-xs text-gray-400">
+              Nullstill
+            </button>
           )}
-        </h2>
+        </div>
+        <p className="text-xs text-gray-500 mb-2">Ingen valgt = alle fylker</p>
         <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
           {fylker.map((f, i) => (
             <button
               key={f.id}
-              onClick={() => toggleItem(selectedFylker, setSelectedFylker, f.id)}
+              onClick={() => toggleItem('fylker', f.id)}
               className={`w-full flex items-center justify-between px-4 py-3 text-left ${
                 i < fylker.length - 1 ? 'border-b border-[#2a2a2a]' : ''
-              } ${selectedFylker.includes(f.id) ? 'text-blue-400' : 'text-white'}`}
+              } ${prefs.fylker.includes(f.id) ? 'text-blue-400' : 'text-white'}`}
             >
               <span className="text-sm">{f.navn}</span>
-              {selectedFylker.includes(f.id) && (
+              {prefs.fylker.includes(f.id) && (
                 <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
@@ -90,28 +149,36 @@ export function SettingsView() {
 
       {/* Kategorier */}
       <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-3">
-          Hendelsestyper
-          {selectedKategorier.length > 0 && (
-            <span className="text-sm text-blue-400 font-normal ml-2">
-              ({selectedKategorier.length} valgt)
-            </span>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold">
+            Hendelsestyper
+            {prefs.kategorier.length > 0 && (
+              <span className="text-sm text-blue-400 font-normal ml-2">
+                ({prefs.kategorier.length} valgt)
+              </span>
+            )}
+          </h2>
+          {prefs.kategorier.length > 0 && (
+            <button onClick={() => savePrefs({ ...prefs, kategorier: [] })} className="text-xs text-gray-400">
+              Nullstill
+            </button>
           )}
-        </h2>
+        </div>
+        <p className="text-xs text-gray-500 mb-2">Ingen valgt = alle typer</p>
         <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
           {kategorier.map((k, i) => (
             <button
               key={k.id}
-              onClick={() => toggleItem(selectedKategorier, setSelectedKategorier, k.id)}
+              onClick={() => toggleItem('kategorier', k.id)}
               className={`w-full flex items-center justify-between px-4 py-3 text-left ${
                 i < kategorier.length - 1 ? 'border-b border-[#2a2a2a]' : ''
-              } ${selectedKategorier.includes(k.id) ? 'text-blue-400' : 'text-white'}`}
+              } ${prefs.kategorier.includes(k.id) ? 'text-blue-400' : 'text-white'}`}
             >
               <div className="flex items-center gap-2">
                 <span className="w-3 h-3 rounded-full" style={{ backgroundColor: k.farge }} />
                 <span className="text-sm">{k.navn}</span>
               </div>
-              {selectedKategorier.includes(k.id) && (
+              {prefs.kategorier.includes(k.id) && (
                 <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
@@ -121,27 +188,35 @@ export function SettingsView() {
         </div>
       </section>
 
-      {/* Brannvesen (condensed) */}
+      {/* Brannvesen */}
       <section className="mb-8">
-        <h2 className="text-lg font-semibold mb-3">
-          Brannvesen
-          {selectedBrannvesen.length > 0 && (
-            <span className="text-sm text-blue-400 font-normal ml-2">
-              ({selectedBrannvesen.length} valgt)
-            </span>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold">
+            Brannvesen
+            {prefs.brannvesen.length > 0 && (
+              <span className="text-sm text-blue-400 font-normal ml-2">
+                ({prefs.brannvesen.length} valgt)
+              </span>
+            )}
+          </h2>
+          {prefs.brannvesen.length > 0 && (
+            <button onClick={() => savePrefs({ ...prefs, brannvesen: [] })} className="text-xs text-gray-400">
+              Nullstill
+            </button>
           )}
-        </h2>
+        </div>
+        <p className="text-xs text-gray-500 mb-2">Ingen valgt = alle brannvesen</p>
         <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] max-h-80 overflow-y-auto">
           {brannvesen.map((b, i) => (
             <button
               key={b.id}
-              onClick={() => toggleItem(selectedBrannvesen, setSelectedBrannvesen, b.id)}
+              onClick={() => toggleItem('brannvesen', b.id)}
               className={`w-full flex items-center justify-between px-4 py-2.5 text-left ${
                 i < brannvesen.length - 1 ? 'border-b border-[#2a2a2a]' : ''
-              } ${selectedBrannvesen.includes(b.id) ? 'text-blue-400' : 'text-white'}`}
+              } ${prefs.brannvesen.includes(b.id) ? 'text-blue-400' : 'text-white'}`}
             >
               <span className="text-sm">{b.kort_navn}</span>
-              {selectedBrannvesen.includes(b.id) && (
+              {prefs.brannvesen.includes(b.id) && (
                 <svg className="w-4 h-4 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
@@ -151,15 +226,10 @@ export function SettingsView() {
         </div>
       </section>
 
-      {/* Links */}
+      {/* Version info */}
       <section className="mb-24">
-        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
-          <a href="/login" className="block px-4 py-3 text-sm text-white border-b border-[#2a2a2a] hover:bg-[#222]">
-            Logg inn (110-sentral / Admin)
-          </a>
-          <a href="/operator/hendelser" className="block px-4 py-3 text-sm text-white hover:bg-[#222]">
-            110-sentral dashboard
-          </a>
+        <div className="text-center">
+          <p className="text-xs text-gray-600">Brannloggen v0.1.0</p>
         </div>
       </section>
     </div>

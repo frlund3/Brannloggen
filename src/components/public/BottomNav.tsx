@@ -1,8 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
-import { useEffect, useState } from 'react'
+import { useAuth } from '@/components/providers/AuthProvider'
 
 interface BottomNavProps {
   activeTab: 'følger' | 'alle' | 'innstillinger'
@@ -10,26 +9,7 @@ interface BottomNavProps {
 }
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
-  const [rolle, setRolle] = useState<string | null>(null)
-
-  useEffect(() => {
-    const checkRole = async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data: profile } = await supabase
-        .from('brukerprofiler')
-        .select('rolle')
-        .eq('user_id', user.id)
-        .maybeSingle()
-
-      if (profile) {
-        setRolle(profile.rolle)
-      }
-    }
-    checkRole()
-  }, [])
+  const { rolle } = useAuth()
 
   const getDashboardLink = () => {
     if (rolle === 'admin') return '/admin/brukere'
@@ -91,7 +71,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
           <span className="text-xs">Innstillinger</span>
         </button>
 
-        {dashboardLink ? (
+        {dashboardLink && (
           <a
             href={dashboardLink}
             className={cn(
@@ -113,16 +93,6 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
               </svg>
             )}
             <span className="text-xs">{dashboardLabel}</span>
-          </a>
-        ) : (
-          <a
-            href="/login"
-            className="flex flex-col items-center gap-0.5 px-3 py-1 text-gray-500"
-          >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <span className="text-xs">Logg inn</span>
           </a>
         )}
       </div>
