@@ -81,12 +81,13 @@ export default function DebugPage() {
           addLog(`Antall profiler synlig via RLS: ${count}`)
         }
       } else {
+        const p = profile as Record<string, unknown>
         addLog('Profil funnet!')
-        addLog(`Rolle: ${profile.rolle}`)
-        addLog(`Navn: ${profile.fullt_navn}`)
-        addLog(`Aktiv: ${profile.aktiv}`)
-        addLog(`Brannvesen: ${profile.brannvesen_id || 'ingen'}`)
-        addLog(`Profil user_id: ${profile.user_id}`)
+        addLog(`Rolle: ${p.rolle}`)
+        addLog(`Navn: ${p.fullt_navn}`)
+        addLog(`Aktiv: ${p.aktiv}`)
+        addLog(`Brannvesen: ${p.brannvesen_id || 'ingen'}`)
+        addLog(`Profil user_id: ${p.user_id}`)
       }
 
       addLog('---')

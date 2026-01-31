@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .select('rolle')
           .eq('user_id', currentUser.id)
           .maybeSingle()
-        setRolle(profile?.rolle ?? null)
+        setRolle((profile as { rolle?: string } | null)?.rolle ?? null)
       }
       setLoading(false)
     }
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .select('rolle')
             .eq('user_id', currentUser.id)
             .maybeSingle()
-          setRolle(profile?.rolle ?? null)
+          setRolle((profile as { rolle?: string } | null)?.rolle ?? null)
         } else {
           setRolle(null)
         }

@@ -31,7 +31,7 @@ export default function LoginPage() {
       .eq('user_id', userId)
       .maybeSingle()
 
-    const rolle = profile?.rolle
+    const rolle = (profile as { rolle?: string } | null)?.rolle
     if (rolle === 'admin') {
       window.location.href = '/admin/brukere'
     } else if (rolle === 'operator') {

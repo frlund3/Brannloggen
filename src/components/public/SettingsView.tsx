@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { fylker } from '@/data/fylker'
 import { kategorier } from '@/data/kategorier'
 import { brannvesen } from '@/data/brannvesen'
+import { useAuth } from '@/components/providers/AuthProvider'
+import { createClient } from '@/lib/supabase/client'
 
 const STORAGE_KEY = 'brannloggen_push_prefs'
 
@@ -33,6 +35,7 @@ function loadPrefs(): PushPrefs {
 }
 
 export function SettingsView() {
+  const { user } = useAuth()
   const [prefs, setPrefs] = useState<PushPrefs>(defaultPrefs)
   const [saved, setSaved] = useState(false)
 
@@ -226,13 +229,26 @@ export function SettingsView() {
         </div>
       </section>
 
-      {/* Version info + login link */}
+      {/* Version info + login/logout */}
       <section className="mb-24">
         <div className="text-center space-y-2">
           <p className="text-xs text-gray-600">Brannloggen v0.1.0</p>
-          <a href="/login" className="text-xs text-gray-600 hover:text-gray-400">
-            Operatør / Admin
-          </a>
+          {user ? (
+            <button
+              onClick={async () => {
+                const supabase = createClient()
+                await supabase.auth.signOut()
+                window.location.reload()
+              }}
+              className="text-xs text-red-400 hover:text-red-300"
+            >
+              Logg ut ({user.email})
+            </button>
+          ) : (
+            <a href="/login" className="text-xs text-gray-600 hover:text-gray-400">
+              Operatør / Admin
+            </a>
+          )}
         </div>
       </section>
     </div>
