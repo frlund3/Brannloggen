@@ -4,7 +4,6 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { fylker } from '@/data/fylker'
 import { kommuner } from '@/data/kommuner'
 import { brannvesen } from '@/data/brannvesen'
-import { kategorier } from '@/data/kategorier'
 
 export default function AdminInnstillingerPage() {
   return (
@@ -18,7 +17,7 @@ export default function AdminInnstillingerPage() {
         {/* System stats */}
         <section className="mb-8">
           <h2 className="text-lg font-semibold text-white mb-4">Systemoversikt</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
               <p className="text-xs text-gray-400">Fylker</p>
               <p className="text-2xl font-bold text-white">{fylker.length}</p>
@@ -31,34 +30,6 @@ export default function AdminInnstillingerPage() {
               <p className="text-xs text-gray-400">Brannvesen</p>
               <p className="text-2xl font-bold text-white">{brannvesen.length}</p>
             </div>
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-              <p className="text-xs text-gray-400">Kategorier</p>
-              <p className="text-2xl font-bold text-white">{kategorier.length}</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Categories */}
-        <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-4">Hendelseskategorier</h2>
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
-            {kategorier.map((kat, i) => (
-              <div
-                key={kat.id}
-                className={`flex items-center justify-between px-4 py-3 ${
-                  i < kategorier.length - 1 ? 'border-b border-[#2a2a2a]' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: kat.farge }} />
-                  <div>
-                    <p className="text-sm text-white">{kat.navn}</p>
-                    <p className="text-xs text-gray-500">{kat.beskrivelse}</p>
-                  </div>
-                </div>
-                <button className="text-xs text-blue-400 hover:text-blue-300">Rediger</button>
-              </div>
-            ))}
           </div>
         </section>
 
