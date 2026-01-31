@@ -1313,4 +1313,87 @@ ON CONFLICT (id) DO NOTHING;
 --   - Full RLS policies for all tables and storage
 --   - Audit triggers on critical tables
 --   - All seed data uses ON CONFLICT DO NOTHING for idempotency
+--   - Admin user: frank.lunde1981@gmail.com (rolle: admin)
 -- ============================================================
+
+-- ============================================
+-- PART 6: ADMIN USER
+-- ============================================
+
+-- Create admin user in auth.users
+INSERT INTO auth.users (
+  id,
+  instance_id,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  aud,
+  role,
+  created_at,
+  updated_at,
+  confirmation_token,
+  recovery_token
+) VALUES (
+  gen_random_uuid(),
+  '00000000-0000-0000-0000-000000000000',
+  'frank.lunde1981@gmail.com',
+  crypt('Flomlys@2025', gen_salt('bf')),
+  NOW(),
+  '{"provider": "email", "providers": ["email"]}',
+  '{"fullt_navn": "Frank Lunde"}',
+  'authenticated',
+  'authenticated',
+  NOW(),
+  NOW(),
+  '',
+  ''
+) ON CONFLICT (email) DO NOTHING;
+
+-- Create identity for email login
+INSERT INTO auth.identities (
+  id,
+  user_id,
+  identity_data,
+  provider,
+  provider_id,
+  last_sign_in_at,
+  created_at,
+  updated_at
+)
+SELECT
+  id,
+  id,
+  jsonb_build_object('sub', id::text, 'email', 'frank.lunde1981@gmail.com'),
+  'email',
+  id::text,
+  NOW(),
+  NOW(),
+  NOW()
+FROM auth.users
+WHERE email = 'frank.lunde1981@gmail.com'
+ON CONFLICT DO NOTHING;
+
+-- Create admin profile
+INSERT INTO brukerprofiler (
+  id,
+  user_id,
+  rolle,
+  fullt_navn,
+  brannvesen_id,
+  aktiv
+)
+SELECT
+  gen_random_uuid(),
+  id,
+  'admin',
+  'Frank Lunde',
+  NULL,
+  true
+FROM auth.users
+WHERE email = 'frank.lunde1981@gmail.com'
+ON CONFLICT (user_id) DO UPDATE SET
+  rolle = 'admin',
+  fullt_navn = 'Frank Lunde',
+  aktiv = true;
