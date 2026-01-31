@@ -6,10 +6,18 @@ import { useSentralScope } from '@/hooks/useSentralScope'
 
 export default function AdminInnstillingerPage() {
   const { isAdmin, is110Admin, isScoped, scope, filterFylker, filterKommuner, filterBrannvesen, filterSentraler } = useSentralScope()
-  const { data: fylker } = useFylker()
-  const { data: kommuner } = useKommuner()
-  const { data: brannvesen } = useBrannvesen()
-  const { data: sentraler } = useSentraler()
+  const { data: fylker, loading: fylkerLoading } = useFylker()
+  const { data: kommuner, loading: kommunerLoading } = useKommuner()
+  const { data: brannvesen, loading: brannvesenLoading } = useBrannvesen()
+  const { data: sentraler, loading: sentralerLoading } = useSentraler()
+
+  if (fylkerLoading || kommunerLoading || brannvesenLoading || sentralerLoading) {
+    return (
+      <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
+        <div className="p-8 text-center text-gray-400">Laster...</div>
+      </DashboardLayout>
+    )
+  }
 
   const displayFylker = filterFylker(fylker)
   const displayKommuner = filterKommuner(kommuner)

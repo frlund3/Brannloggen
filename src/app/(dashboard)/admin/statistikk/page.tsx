@@ -88,12 +88,20 @@ function formatDateTime(iso: string) {
 
 export default function AdminStatistikkPage() {
   const { is110Admin, isScoped, filterSentraler } = useSentralScope()
-  const { data: sentraler } = useSentraler()
-  const { data: fylker } = useFylker()
-  const { data: kategorier } = useKategorier()
+  const { data: sentraler, loading: sentralerLoading } = useSentraler()
+  const { data: fylker, loading: fylkerLoading } = useFylker()
+  const { data: kategorier, loading: kategorierLoading } = useKategorier()
   const [selectedSub, setSelectedSub] = useState<PushSubscriber | null>(null)
   const [filterPush, setFilterPush] = useState<string>('')
   const [filterPlatform, setFilterPlatform] = useState<string>('')
+
+  if (sentralerLoading || fylkerLoading || kategorierLoading) {
+    return (
+      <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
+        <div className="p-8 text-center text-gray-400">Laster...</div>
+      </DashboardLayout>
+    )
+  }
 
   // Scope for 110-admin
   const scopedSubs = isScoped

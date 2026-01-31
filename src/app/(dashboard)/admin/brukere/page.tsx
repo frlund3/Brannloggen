@@ -36,7 +36,7 @@ interface UserForm {
 
 export default function AdminBrukerePage() {
   const { isAdmin, is110Admin, isScoped, scope } = useSentralScope()
-  const { data: sentraler } = useSentraler()
+  const { data: sentraler, loading: sentralerLoading } = useSentraler()
   const [brukere, setBrukere] = useState<UserItem[]>(initialBrukere)
   const [showAddModal, setShowAddModal] = useState(false)
   const [editUser, setEditUser] = useState<UserItem | null>(null)
@@ -46,6 +46,14 @@ export default function AdminBrukerePage() {
   const [search, setSearch] = useState('')
   const [filterSentral, setFilterSentral] = useState('')
   const [filterRolle, setFilterRolle] = useState('')
+
+  if (sentralerLoading) {
+    return (
+      <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
+        <div className="p-8 text-center text-gray-400">Laster...</div>
+      </DashboardLayout>
+    )
+  }
 
   // 110-admin can only see users within their sentraler
   const scopedBrukere = isScoped

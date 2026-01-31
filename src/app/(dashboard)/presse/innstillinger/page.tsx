@@ -5,12 +5,20 @@ import { useFylker, useKategorier } from '@/hooks/useSupabaseData'
 import { useState } from 'react'
 
 export default function PresseInnstillingerPage() {
-  const { data: fylker } = useFylker()
-  const { data: kategorier } = useKategorier()
+  const { data: fylker, loading: fylkerLoading } = useFylker()
+  const { data: kategorier, loading: kategorierLoading } = useKategorier()
   const [selectedFylker, setSelectedFylker] = useState<string[]>([])
   const [selectedKategorier, setSelectedKategorier] = useState<string[]>([])
   const [minAlvorlighet, setMinAlvorlighet] = useState('middels')
   const [kunPågående, setKunPågående] = useState(false)
+
+  if (fylkerLoading || kategorierLoading) {
+    return (
+      <DashboardLayout role="presse">
+        <div className="p-8 text-center text-gray-400">Laster...</div>
+      </DashboardLayout>
+    )
+  }
 
   const toggleFylke = (id: string) => {
     setSelectedFylker(prev =>
