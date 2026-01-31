@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
-  role: 'operator' | 'admin'
+  role: 'operator' | 'admin' | 'presse'
 }
 
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
@@ -25,7 +25,12 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     { href: '/admin/innstillinger', label: 'Innstillinger', icon: 'settings' },
   ]
 
-  const links = role === 'admin' ? adminLinks : operatorLinks
+  const presseLinks = [
+    { href: '/presse/hendelser', label: 'Hendelser', icon: 'list' },
+    { href: '/presse/innstillinger', label: 'Varsler', icon: 'settings' },
+  ]
+
+  const links = role === 'admin' ? adminLinks : role === 'presse' ? presseLinks : operatorLinks
 
   const getIcon = (icon: string) => {
     switch (icon) {
@@ -55,7 +60,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             </svg>
           </button>
           <span className="text-sm font-semibold text-white">
-            {role === 'admin' ? 'Admin' : '110-Sentral'}
+            {role === 'admin' ? 'Admin' : role === 'presse' ? 'Presse' : '110-Sentral'}
           </span>
           <Link href="/" className="text-sm text-blue-400">Forside</Link>
         </div>
@@ -79,7 +84,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
               <div>
                 <h1 className="text-sm font-bold text-white">Brannloggen</h1>
                 <p className="text-xs text-gray-400">
-                  {role === 'admin' ? 'Administrator' : '110-Sentral CMS'}
+                  {role === 'admin' ? 'Administrator' : role === 'presse' ? 'Pressekonto' : '110-Sentral CMS'}
                 </p>
               </div>
             </div>

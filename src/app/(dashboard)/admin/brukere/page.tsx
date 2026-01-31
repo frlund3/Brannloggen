@@ -16,10 +16,13 @@ interface MockUser {
 
 const mockBrukere: MockUser[] = [
   { id: '1', fullt_navn: 'Frank Lunde', epost: 'frank.lunde1981@gmail.com', rolle: 'admin', brannvesen_id: null, aktiv: true, created_at: '2024-01-15' },
-  { id: '2', fullt_navn: 'Kari Operatør', epost: 'kari@bergen-brann.no', rolle: 'operator', brannvesen_id: 'bv-bergen', aktiv: true, created_at: '2024-02-01' },
-  { id: '3', fullt_navn: 'Ole Vansen', epost: 'ole@oslo-brann.no', rolle: 'operator', brannvesen_id: 'bv-oslo', aktiv: true, created_at: '2024-02-15' },
-  { id: '4', fullt_navn: 'Per Hansen', epost: 'per@tbrt.no', rolle: 'operator', brannvesen_id: 'bv-trondheim', aktiv: true, created_at: '2024-03-01' },
-  { id: '5', fullt_navn: 'Lisa Eriksen', epost: 'lisa@kbr.no', rolle: 'operator', brannvesen_id: 'bv-kristiansand', aktiv: false, created_at: '2024-03-15' },
+  { id: '2', fullt_navn: 'Helge Lunde', epost: 'helge.lunde1981@gmail.com', rolle: 'admin', brannvesen_id: null, aktiv: true, created_at: '2024-01-15' },
+  { id: '3', fullt_navn: 'Kari Operatør', epost: 'kari@bergen-brann.no', rolle: 'operator', brannvesen_id: 'bv-bergen', aktiv: true, created_at: '2024-02-01' },
+  { id: '4', fullt_navn: 'Ole Vansen', epost: 'ole@oslo-brann.no', rolle: 'operator', brannvesen_id: 'bv-oslo', aktiv: true, created_at: '2024-02-15' },
+  { id: '5', fullt_navn: 'Per Hansen', epost: 'per@tbrt.no', rolle: 'operator', brannvesen_id: 'bv-trondheim', aktiv: true, created_at: '2024-03-01' },
+  { id: '6', fullt_navn: 'Anna Journalist', epost: 'anna@nrk.no', rolle: 'presse', brannvesen_id: null, aktiv: true, created_at: '2024-04-01' },
+  { id: '7', fullt_navn: 'Erik Redaktør', epost: 'erik@vg.no', rolle: 'presse', brannvesen_id: null, aktiv: true, created_at: '2024-04-10' },
+  { id: '8', fullt_navn: 'Lisa Eriksen', epost: 'lisa@kbr.no', rolle: 'operator', brannvesen_id: 'bv-kristiansand', aktiv: false, created_at: '2024-03-15' },
 ]
 
 export default function AdminBrukerePage() {
@@ -46,11 +49,12 @@ export default function AdminBrukerePage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           {[
             { label: 'Totalt', value: mockBrukere.length, color: 'text-white' },
             { label: 'Administratorer', value: mockBrukere.filter(u => u.rolle === 'admin').length, color: 'text-purple-400' },
             { label: 'Operatører', value: mockBrukere.filter(u => u.rolle === 'operator').length, color: 'text-blue-400' },
+            { label: 'Presse', value: mockBrukere.filter(u => u.rolle === 'presse').length, color: 'text-cyan-400' },
             { label: 'Deaktivert', value: mockBrukere.filter(u => !u.aktiv).length, color: 'text-red-400' },
           ].map((stat) => (
             <div key={stat.label} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
@@ -95,9 +99,11 @@ export default function AdminBrukerePage() {
                       <span className={`text-xs px-2 py-0.5 rounded ${
                         user.rolle === 'admin'
                           ? 'bg-purple-500/20 text-purple-400'
+                          : user.rolle === 'presse'
+                          ? 'bg-cyan-500/20 text-cyan-400'
                           : 'bg-blue-500/20 text-blue-400'
                       }`}>
-                        {user.rolle === 'admin' ? 'Admin' : 'Operatør'}
+                        {user.rolle === 'admin' ? 'Admin' : user.rolle === 'presse' ? 'Presse' : 'Operatør'}
                       </span>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
@@ -155,6 +161,7 @@ export default function AdminBrukerePage() {
                     className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
                   >
                     <option value="operator">Operatør</option>
+                    <option value="presse">Presse</option>
                     <option value="admin">Administrator</option>
                   </select>
                 </div>

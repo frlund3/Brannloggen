@@ -59,6 +59,8 @@ export default function LoginPage() {
       window.location.href = '/admin/brukere'
     } else if (profile.rolle === 'operator') {
       window.location.href = '/operator/hendelser'
+    } else if (profile.rolle === 'presse') {
+      window.location.href = '/presse/hendelser'
     } else {
       window.location.href = '/'
     }
@@ -92,6 +94,12 @@ export default function LoginPage() {
               className="block w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-center transition-colors"
             >
               Operatør-panel
+            </a>
+            <a
+              href="/presse/hendelser"
+              className="block w-full py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg text-center transition-colors"
+            >
+              Presse-panel
             </a>
             <a
               href="/"

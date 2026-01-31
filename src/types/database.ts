@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'operator' | 'public'
+export type UserRole = 'admin' | 'operator' | 'presse' | 'public'
 export type IncidentStatus = 'pågår' | 'avsluttet'
 export type IncidentSeverity = 'lav' | 'middels' | 'høy' | 'kritisk'
 
@@ -53,6 +53,7 @@ export interface Incident {
   opprettet_tidspunkt: string
   oppdatert_tidspunkt: string
   avsluttet_tidspunkt: string | null
+  presse_info: string | null
   latitude: number | null
   longitude: number | null
   created_at: string
@@ -98,6 +99,8 @@ export interface UserProfile {
   rolle: UserRole
   fullt_navn: string
   brannvesen_id: string | null
+  mediehus: string | null
+  telefon: string | null
   aktiv: boolean
   created_at: string
 }
@@ -117,6 +120,7 @@ export interface PushPreference {
   brannvesen_ids: string[]
   kategori_ids: string[]
   kun_pågående: boolean
+  alvorlighetsgrad_minimum: IncidentSeverity | null
   created_at: string
 }
 
