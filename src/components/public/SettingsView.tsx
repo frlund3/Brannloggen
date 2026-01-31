@@ -1,17 +1,18 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { fylker } from '@/data/fylker'
 import { kategorier } from '@/data/kategorier'
 import { brannvesen } from '@/data/brannvesen'
+import { sentraler } from '@/data/sentraler'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { createClient } from '@/lib/supabase/client'
 
 const STORAGE_KEY = 'brannloggen_push_prefs'
 
 interface PushPrefs {
   pushEnabled: boolean
   onlyOngoing: boolean
+  sentraler: string[]
   fylker: string[]
   kategorier: string[]
   brannvesen: string[]
@@ -20,6 +21,7 @@ interface PushPrefs {
 const defaultPrefs: PushPrefs = {
   pushEnabled: false,
   onlyOngoing: false,
+  sentraler: [],
   fylker: [],
   kategorier: [],
   brannvesen: [],
@@ -50,11 +52,17 @@ export function SettingsView() {
     setTimeout(() => setSaved(false), 2000)
   }, [])
 
-  const toggleItem = (key: 'fylker' | 'kategorier' | 'brannvesen', id: string) => {
+  const toggleItem = (key: 'sentraler' | 'fylker' | 'kategorier' | 'brannvesen', id: string) => {
     const arr = prefs[key]
     const updated = arr.includes(id) ? arr.filter((v) => v !== id) : [...arr, id]
     savePrefs({ ...prefs, [key]: updated })
   }
+
+  // Filter brannvesen by selected fylker
+  const filteredBrannvesen = useMemo(() => {
+    if (prefs.fylker.length === 0) return brannvesen
+    return brannvesen.filter(b => prefs.fylker.includes(b.fylke_id))
+  }, [prefs.fylker])
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6">
@@ -112,6 +120,47 @@ export function SettingsView() {
         </div>
       </section>
 
+      {/* 110-sentraler */}
+      <section className="mb-8">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold">
+            110-sentraler
+            {prefs.sentraler.length > 0 && (
+              <span className="text-sm text-blue-400 font-normal ml-2">
+                ({prefs.sentraler.length} valgt)
+              </span>
+            )}
+          </h2>
+          {prefs.sentraler.length > 0 && (
+            <button onClick={() => savePrefs({ ...prefs, sentraler: [] })} className="text-xs text-gray-400">
+              Nullstill
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-gray-500 mb-2">Ingen valgt = alle sentraler</p>
+        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
+          {sentraler.map((s, i) => (
+            <button
+              key={s.id}
+              onClick={() => toggleItem('sentraler', s.id)}
+              className={`w-full flex items-center justify-between px-4 py-3 text-left ${
+                i < sentraler.length - 1 ? 'border-b border-[#2a2a2a]' : ''
+              } ${prefs.sentraler.includes(s.id) ? 'text-blue-400' : 'text-white'}`}
+            >
+              <div>
+                <span className="text-sm">{s.kort_navn}</span>
+                <span className="text-xs text-gray-500 ml-2">{s.navn !== s.kort_navn ? s.navn : ''}</span>
+              </div>
+              {prefs.sentraler.includes(s.id) && (
+                <svg className="w-4 h-4 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
+      </section>
+
       {/* Fylker */}
       <section className="mb-8">
         <div className="flex items-center justify-between mb-3">
@@ -129,7 +178,7 @@ export function SettingsView() {
             </button>
           )}
         </div>
-        <p className="text-xs text-gray-500 mb-2">Ingen valgt = alle fylker</p>
+        <p className="text-xs text-gray-500 mb-2">Ingen valgt = alle fylker. Valgte fylker filtrerer brannvesen nedenfor.</p>
         <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
           {fylker.map((f, i) => (
             <button
@@ -168,7 +217,7 @@ export function SettingsView() {
           )}
         </div>
         <p className="text-xs text-gray-500 mb-2">Ingen valgt = alle typer</p>
-        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
+        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] max-h-80 overflow-y-auto">
           {kategorier.map((k, i) => (
             <button
               key={k.id}
@@ -208,14 +257,18 @@ export function SettingsView() {
             </button>
           )}
         </div>
-        <p className="text-xs text-gray-500 mb-2">Ingen valgt = alle brannvesen</p>
+        <p className="text-xs text-gray-500 mb-2">
+          {prefs.fylker.length > 0
+            ? `Filtrert etter valgte fylker (${filteredBrannvesen.length} brannvesen)`
+            : 'Ingen valgt = alle brannvesen'}
+        </p>
         <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] max-h-80 overflow-y-auto">
-          {brannvesen.map((b, i) => (
+          {filteredBrannvesen.map((b, i) => (
             <button
               key={b.id}
               onClick={() => toggleItem('brannvesen', b.id)}
               className={`w-full flex items-center justify-between px-4 py-2.5 text-left ${
-                i < brannvesen.length - 1 ? 'border-b border-[#2a2a2a]' : ''
+                i < filteredBrannvesen.length - 1 ? 'border-b border-[#2a2a2a]' : ''
               } ${prefs.brannvesen.includes(b.id) ? 'text-blue-400' : 'text-white'}`}
             >
               <span className="text-sm">{b.kort_navn}</span>

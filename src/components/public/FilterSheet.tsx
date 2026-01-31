@@ -5,6 +5,7 @@ import { fylker } from '@/data/fylker'
 import { kommuner } from '@/data/kommuner'
 import { brannvesen } from '@/data/brannvesen'
 import { kategorier } from '@/data/kategorier'
+import { sentraler } from '@/data/sentraler'
 
 interface FilterSheetProps {
   isOpen: boolean
@@ -18,6 +19,7 @@ export interface FilterState {
   kommune_ids: string[]
   brannvesen_ids: string[]
   kategori_ids: string[]
+  sentral_ids: string[]
   status: string | null
 }
 
@@ -26,10 +28,11 @@ export const emptyFilters: FilterState = {
   kommune_ids: [],
   brannvesen_ids: [],
   kategori_ids: [],
+  sentral_ids: [],
   status: null,
 }
 
-type View = 'main' | 'fylke' | 'kommune' | 'brannvesen' | 'tema' | 'status'
+type View = 'main' | 'fylke' | 'kommune' | 'brannvesen' | 'tema' | 'status' | 'sentral'
 
 export function FilterSheet({ isOpen, onClose, filters, onFiltersChange }: FilterSheetProps) {
   const [view, setView] = useState<View>('main')
@@ -58,6 +61,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange }: Filte
     filters.kommune_ids.length +
     filters.brannvesen_ids.length +
     filters.kategori_ids.length +
+    filters.sentral_ids.length +
     (filters.status ? 1 : 0)
 
   const renderMain = () => (
@@ -74,6 +78,23 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange }: Filte
       </div>
 
       <div className="p-4 space-y-1">
+        <button
+          onClick={() => setView('sentral')}
+          className="w-full flex items-center justify-between py-3 border-b border-[#2a2a2a] text-left"
+        >
+          <div>
+            <span className="text-white">110-sentral</span>
+            {filters.sentral_ids.length > 0 && (
+              <span className="ml-2 text-xs text-blue-400">
+                ({filters.sentral_ids.length} valgt)
+              </span>
+            )}
+          </div>
+          <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
         <button
           onClick={() => setView('fylke')}
           className="w-full flex items-center justify-between py-3 border-b border-[#2a2a2a] text-left"
@@ -323,6 +344,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange }: Filte
         {view === 'fylke' && renderFylkeView()}
         {view === 'kommune' && renderListView('Kommuner', filteredKommuner, 'kommune_ids', 'fylke')}
         {view === 'brannvesen' && renderListView('Brannvesen', filteredBrannvesen.map(b => ({ id: b.id, navn: b.kort_navn })), 'brannvesen_ids')}
+        {view === 'sentral' && renderListView('110-sentral', sentraler.map(s => ({ id: s.id, navn: s.kort_navn })), 'sentral_ids')}
         {view === 'tema' && renderListView('Kategori', kategorier.map(k => ({ id: k.id, navn: k.navn })), 'kategori_ids')}
         {view === 'status' && renderStatusView()}
       </div>

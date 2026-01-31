@@ -6,6 +6,7 @@ import { BottomNav } from '@/components/public/BottomNav'
 import { FilterSheet, FilterState, emptyFilters } from '@/components/public/FilterSheet'
 import { SettingsView } from '@/components/public/SettingsView'
 import { mockHendelser } from '@/data/mock-hendelser'
+import { sentraler } from '@/data/sentraler'
 
 type Tab = 'følger' | 'alle' | 'innstillinger'
 type SubTab = 'alle' | 'pågår'
@@ -33,6 +34,13 @@ export default function HomePage() {
     if (filters.kategori_ids.length > 0) {
       result = result.filter((h) => filters.kategori_ids.includes(h.kategori_id))
     }
+    if (filters.sentral_ids.length > 0) {
+      const sentralBrannvesen = filters.sentral_ids.flatMap(sId => {
+        const s = sentraler.find(x => x.id === sId)
+        return s ? s.brannvesen_ids : []
+      })
+      result = result.filter((h) => sentralBrannvesen.includes(h.brannvesen_id))
+    }
     if (filters.status) {
       result = result.filter((h) => h.status === filters.status)
     }
@@ -57,6 +65,7 @@ export default function HomePage() {
     filters.kommune_ids.length +
     filters.brannvesen_ids.length +
     filters.kategori_ids.length +
+    filters.sentral_ids.length +
     (filters.status ? 1 : 0)
 
   return (
