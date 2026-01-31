@@ -7,123 +7,164 @@ export default function DebugPage() {
   const [log, setLog] = useState<string[]>([])
 
   const addLog = (msg: string) => {
-    setLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${msg}`])
+    setLog(prev => [...prev, msg])
   }
 
   useEffect(() => {
     const run = async () => {
-      const supabase = createClient()
+      addLog('=== LOCALSTORAGE ===')
+      const keys = Object.keys(localStorage)
+      addLog(`Keys (${keys.length}): ${keys.join(', ')}`)
 
-      addLog('Henter sesjon...')
+      const cachedRolle = localStorage.getItem('brannloggen_user_rolle')
+      addLog(`Cached rolle: ${cachedRolle || 'INGEN'}`)
+
+      const sbKeys = keys.filter(k => k.startsWith('sb-'))
+      sbKeys.forEach(k => {
+        const val = localStorage.getItem(k)
+        addLog(`${k}: ${val ? val.substring(0, 80) + '...' : 'null'}`)
+      })
+
+      addLog('')
+      addLog('=== SUPABASE AUTH ===')
+      const supabase = createClient()
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
 
       if (sessionError) {
-        addLog(`Sesjon-feil: ${sessionError.message}`)
-        return
-      }
-
-      if (!session) {
-        addLog('Ingen sesjon - ikke innlogget')
-        addLog('Prøver å logge inn...')
-
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email: 'frank.lunde1981@gmail.com',
-          password: 'Flomlys@2025',
-        })
-
-        if (authError) {
-          addLog(`Login-feil: ${authError.message}`)
-          return
-        }
-
-        addLog(`Innlogget som: ${authData.user?.email}`)
-        addLog(`User ID: ${authData.user?.id}`)
-
-        // Fetch profile
-        await checkProfile(supabase, authData.user!.id)
+        addLog(`SESSION ERROR: ${sessionError.message}`)
+      } else if (!session) {
+        addLog('SESSION: null (ikke innlogget)')
       } else {
-        addLog(`Allerede innlogget: ${session.user.email}`)
-        addLog(`User ID: ${session.user.id}`)
-        addLog(`Token utløper: ${new Date(session.expires_at! * 1000).toLocaleString()}`)
-
-        await checkProfile(supabase, session.user.id)
+        addLog(`SESSION: ${session.user.email}`)
+        addLog(`USER ID: ${session.user.id}`)
+        addLog(`TOKEN expires: ${new Date(session.expires_at! * 1000).toLocaleString()}`)
       }
-    }
 
-    const checkProfile = async (supabase: ReturnType<typeof createClient>, userId: string) => {
-      addLog('---')
-      addLog(`Henter profil for user_id: ${userId}`)
-
-      const { data: profile, error: profileError, status, statusText } = await supabase
-        .from('brukerprofiler')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle()
-
-      addLog(`HTTP status: ${status} ${statusText}`)
-
-      if (profileError) {
-        addLog(`Profil-feil: ${profileError.message}`)
-        addLog(`Feilkode: ${profileError.code}`)
-        addLog(`Detaljer: ${profileError.details}`)
-        addLog(`Hint: ${profileError.hint}`)
-      } else if (!profile) {
-        addLog('Ingen profil funnet (null)')
-        addLog('Prøver uten RLS (teller alle rader)...')
-
-        const { count, error: countError } = await supabase
+      addLog('')
+      addLog('=== BRUKERPROFILER QUERY ===')
+      if (session) {
+        const { data: profile, error: profileError, status } = await supabase
           .from('brukerprofiler')
-          .select('*', { count: 'exact', head: true })
+          .select('*')
+          .eq('user_id', session.user.id)
+          .maybeSingle()
 
-        if (countError) {
-          addLog(`Count-feil: ${countError.message}`)
+        addLog(`HTTP: ${status}`)
+        if (profileError) {
+          addLog(`ERROR: ${profileError.message}`)
+          addLog(`CODE: ${profileError.code}`)
+          addLog(`DETAILS: ${profileError.details}`)
+          addLog(`HINT: ${profileError.hint}`)
+        } else if (!profile) {
+          addLog('RESULT: null (ingen profil / RLS blokkerer)')
+
+          // Count all visible rows
+          const { count } = await supabase
+            .from('brukerprofiler')
+            .select('*', { count: 'exact', head: true })
+          addLog(`Synlige rader: ${count}`)
         } else {
-          addLog(`Antall profiler synlig via RLS: ${count}`)
+          const p = profile as Record<string, unknown>
+          addLog(`ROLLE: ${p.rolle}`)
+          addLog(`NAVN: ${p.fullt_navn}`)
+          addLog(`AKTIV: ${p.aktiv}`)
+          addLog(`USER_ID: ${p.user_id}`)
         }
-      } else {
-        const p = profile as Record<string, unknown>
-        addLog('Profil funnet!')
-        addLog(`Rolle: ${p.rolle}`)
-        addLog(`Navn: ${p.fullt_navn}`)
-        addLog(`Aktiv: ${p.aktiv}`)
-        addLog(`Brannvesen: ${p.brannvesen_id || 'ingen'}`)
-        addLog(`Profil user_id: ${p.user_id}`)
       }
 
-      addLog('---')
-      addLog('Prøver RPC ping...')
-      const { error: rpcError } = await supabase.rpc('log_audit' as never)
-      addLog(rpcError ? `RPC: ${rpcError.message}` : 'RPC: OK')
+      addLog('')
+      addLog('=== FIX: CACHE ROLLE ===')
+      if (session && !cachedRolle) {
+        // Try to get rolle and cache it
+        const { data: profile } = await supabase
+          .from('brukerprofiler')
+          .select('rolle')
+          .eq('user_id', session.user.id)
+          .maybeSingle()
+        const rolle = (profile as { rolle?: string } | null)?.rolle
+        if (rolle) {
+          localStorage.setItem('brannloggen_user_rolle', rolle)
+          addLog(`CACHED rolle: ${rolle} -> Reload page!`)
+        } else {
+          addLog('Kunne ikke hente rolle fra DB')
+          addLog('Kjør denne SQL i Supabase SQL Editor:')
+          addLog('')
+          addLog('DROP POLICY IF EXISTS "brukerprofiler_select" ON brukerprofiler;')
+          addLog('CREATE POLICY "brukerprofiler_select" ON brukerprofiler')
+          addLog('  FOR SELECT USING (true);')
+          addLog('')
+          addLog('Eller manuelt sett rolle:')
+        }
+      } else if (cachedRolle) {
+        addLog(`Rolle allerede cachet: ${cachedRolle}`)
+      }
     }
 
     run()
   }, [])
 
+  const setRolleManually = (rolle: string) => {
+    localStorage.setItem('brannloggen_user_rolle', rolle)
+    window.location.href = '/'
+  }
+
   return (
     <div className="min-h-screen bg-black p-4">
-      <h1 className="text-lg font-bold text-white mb-2">Brannloggen Debug</h1>
-      <div className="space-y-1">
+      <h1 className="text-lg font-bold text-white mb-4">Debug</h1>
+
+      <div className="space-y-0.5 mb-6">
         {log.map((line, i) => (
           <p key={i} className={`text-xs font-mono ${
-            line.includes('feil') || line.includes('Feil') || line.includes('error')
+            line.includes('ERROR') || line.includes('null')
               ? 'text-red-400'
-              : line.includes('funnet!') || line.includes('Innlogget') || line.includes('OK')
+              : line.includes('CACHED') || line.includes('ROLLE:') || line.includes('SESSION:')
               ? 'text-green-400'
-              : line.startsWith('[')
-              ? 'text-yellow-300'
+              : line.startsWith('===')
+              ? 'text-yellow-300 font-bold mt-2'
               : 'text-gray-400'
           }`}>
             {line}
           </p>
         ))}
       </div>
-      <div className="mt-6 space-y-2">
-        <a href="/admin/brukere" className="block py-2 px-4 bg-red-600 text-white text-sm rounded text-center">
-          Gå til Admin
-        </a>
-        <a href="/login" className="block py-2 px-4 bg-blue-600 text-white text-sm rounded text-center">
-          Gå til Login
-        </a>
+
+      <div className="space-y-2 border-t border-gray-700 pt-4">
+        <p className="text-xs text-gray-400">Sett rolle manuelt:</p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setRolleManually('admin')}
+            className="px-4 py-2 bg-purple-600 text-white text-sm rounded"
+          >
+            Admin
+          </button>
+          <button
+            onClick={() => setRolleManually('operator')}
+            className="px-4 py-2 bg-red-600 text-white text-sm rounded"
+          >
+            Operatør
+          </button>
+          <button
+            onClick={() => setRolleManually('presse')}
+            className="px-4 py-2 bg-cyan-600 text-white text-sm rounded"
+          >
+            Presse
+          </button>
+        </div>
+
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={() => {
+              localStorage.clear()
+              window.location.href = '/'
+            }}
+            className="px-4 py-2 bg-gray-700 text-white text-sm rounded"
+          >
+            Logg ut (tøm alt)
+          </button>
+          <a href="/" className="px-4 py-2 bg-blue-600 text-white text-sm rounded text-center">
+            Forsiden
+          </a>
+        </div>
       </div>
     </div>
   )
