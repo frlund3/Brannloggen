@@ -67,7 +67,10 @@ export default function HomePage() {
           <header className="sticky top-0 z-30 bg-[#0a0a0a]/95 backdrop-blur border-b border-[#2a2a2a]">
             <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
               <h1 className="text-lg font-bold">Jeg følger</h1>
-              <button className="text-blue-400 text-sm flex items-center gap-1">
+              <button
+                onClick={() => { setActiveTab('innstillinger') }}
+                className="text-blue-400 text-sm flex items-center gap-1"
+              >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                 </svg>

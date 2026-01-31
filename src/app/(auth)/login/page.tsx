@@ -27,7 +27,7 @@ export default function LoginPage() {
     // Check if role is already cached
     const cached = localStorage.getItem('brannloggen_user_rolle')
     if (cached) {
-      if (cached === 'admin') window.location.href = '/admin/brukere'
+      if (cached === 'admin') window.location.href = '/operator/hendelser'
       else if (cached === 'operator') window.location.href = '/operator/hendelser'
       else if (cached === 'presse') window.location.href = '/presse/hendelser'
       else window.location.href = '/'
@@ -45,7 +45,7 @@ export default function LoginPage() {
     const rolle = (profile as { rolle?: string } | null)?.rolle
     if (rolle) {
       localStorage.setItem('brannloggen_user_rolle', rolle)
-      if (rolle === 'admin') window.location.href = '/admin/brukere'
+      if (rolle === 'admin') window.location.href = '/operator/hendelser'
       else if (rolle === 'operator') window.location.href = '/operator/hendelser'
       else if (rolle === 'presse') window.location.href = '/presse/hendelser'
       else window.location.href = '/'

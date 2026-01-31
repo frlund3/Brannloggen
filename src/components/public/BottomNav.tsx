@@ -12,14 +12,14 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   const { rolle } = useAuth()
 
   const getDashboardLink = () => {
-    if (rolle === 'admin') return '/admin/brukere'
+    if (rolle === 'admin') return '/operator/hendelser'
     if (rolle === 'operator') return '/operator/hendelser'
     if (rolle === 'presse') return '/presse/hendelser'
     return null
   }
 
   const getDashboardLabel = () => {
-    if (rolle === 'admin') return 'Admin'
+    if (rolle === 'admin') return 'Dashboard'
     if (rolle === 'operator') return '110-Sentral'
     if (rolle === 'presse') return 'Presse'
     return null

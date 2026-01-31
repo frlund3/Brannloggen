@@ -24,6 +24,8 @@ export default function NyHendelsePage() {
   const [presseInfo, setPresseInfo] = useState('')
   const [internNotat, setInternNotat] = useState('')
   const [bilder, setBilder] = useState<File[]>([])
+  const [bilderSynligPresse, setBilderSynligPresse] = useState(true)
+  const [bilderSynligPublikum, setBilderSynligPublikum] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const filteredKommuner = selectedFylke
@@ -240,6 +242,31 @@ export default function NyHendelsePage() {
                     </button>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Image visibility options */}
+            {bilder.length > 0 && (
+              <div className="mt-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 space-y-2">
+                <p className="text-xs text-gray-400 font-medium mb-2">Bildesynlighet</p>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={bilderSynligPresse}
+                    onChange={(e) => setBilderSynligPresse(e.target.checked)}
+                    className="rounded border-gray-600"
+                  />
+                  <span className="text-sm text-gray-300">Synlig for presse</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={bilderSynligPublikum}
+                    onChange={(e) => setBilderSynligPublikum(e.target.checked)}
+                    className="rounded border-gray-600"
+                  />
+                  <span className="text-sm text-gray-300">Synlig for publikum</span>
+                </label>
               </div>
             )}
           </div>
