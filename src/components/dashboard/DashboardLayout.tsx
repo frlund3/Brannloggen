@@ -153,6 +153,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                 onClick={async () => {
                   const supabase = createClient()
                   await supabase.auth.signOut()
+                  localStorage.removeItem('brannloggen_user_rolle')
                   window.location.href = '/'
                 }}
                 className="text-sm text-red-400 hover:text-red-300"

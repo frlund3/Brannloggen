@@ -238,6 +238,7 @@ export function SettingsView() {
               onClick={async () => {
                 const supabase = createClient()
                 await supabase.auth.signOut()
+                localStorage.removeItem('brannloggen_user_rolle')
                 window.location.reload()
               }}
               className="text-xs text-red-400 hover:text-red-300"

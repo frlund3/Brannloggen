@@ -32,6 +32,10 @@ export default function LoginPage() {
       .maybeSingle()
 
     const rolle = (profile as { rolle?: string } | null)?.rolle
+    // Cache role in localStorage so AuthProvider can read it without RLS issues
+    if (rolle) {
+      localStorage.setItem('brannloggen_user_rolle', rolle)
+    }
     if (rolle === 'admin') {
       window.location.href = '/admin/brukere'
     } else if (rolle === 'operator') {
