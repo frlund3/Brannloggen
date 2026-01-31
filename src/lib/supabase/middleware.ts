@@ -1,7 +1,55 @@
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-  // Pass through all requests - auth is handled client-side
-  // by AuthProvider and DashboardLayout to avoid cookie sync issues
-  return NextResponse.next({ request })
+  let supabaseResponse = NextResponse.next({ request })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          )
+          supabaseResponse = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
+  // Try to get user with a timeout to avoid hanging
+  let user = null
+  try {
+    const result = await Promise.race([
+      supabase.auth.getUser(),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000)),
+    ])
+    if (result && typeof result === 'object' && 'data' in result) {
+      user = result.data.user
+    }
+  } catch {
+    // Auth check failed - let client-side handle it
+  }
+
+  // Protect dashboard routes
+  const isProtectedRoute =
+    request.nextUrl.pathname.startsWith('/operator') ||
+    request.nextUrl.pathname.startsWith('/admin') ||
+    request.nextUrl.pathname.startsWith('/presse')
+
+  if (!user && isProtectedRoute) {
+    // Don't redirect - let client-side DashboardLayout handle auth
+    // This avoids redirect loops when cookies are out of sync with localStorage
+    // DashboardLayout will redirect to /login if user is not authenticated
+  }
+
+  return supabaseResponse
 }

@@ -14,10 +14,14 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
-  const { user, loading } = useAuth()
+  const { user, rolle, loading } = useAuth()
 
-  // Redirect to login if not authenticated
-  if (!loading && !user) {
+  // If rolle is cached in localStorage, show dashboard immediately
+  // Don't wait for the potentially hanging getSession()
+  const hasCachedRole = typeof window !== 'undefined' && !!localStorage.getItem('brannloggen_user_rolle')
+
+  // Redirect to login if not authenticated (only after loading is done)
+  if (!loading && !user && !hasCachedRole) {
     window.location.href = '/login'
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
@@ -26,7 +30,8 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     )
   }
 
-  if (loading) {
+  // Show loading only if we have no cached role
+  if (loading && !hasCachedRole) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <p className="text-gray-400 text-sm">Laster...</p>
