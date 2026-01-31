@@ -3,6 +3,65 @@
 -- Generated from static TypeScript data files
 
 -- ============================================================================
+-- 0. Create missing tables / update schema if needed
+-- ============================================================================
+
+-- Sentraler table (may not exist in older deployments)
+CREATE TABLE IF NOT EXISTS sentraler (
+  id TEXT PRIMARY KEY,
+  navn TEXT NOT NULL,
+  kort_navn TEXT NOT NULL,
+  fylke_ids TEXT[] NOT NULL DEFAULT '{}',
+  brannvesen_ids TEXT[] NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable RLS on sentraler
+ALTER TABLE sentraler ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies (use DO block to avoid errors if they already exist)
+DO $$ BEGIN
+  CREATE POLICY "Anyone can read sentraler" ON sentraler FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Admins can manage sentraler" ON sentraler FOR ALL USING (
+    EXISTS (SELECT 1 FROM brukerprofiler WHERE user_id = auth.uid() AND rolle = 'admin')
+  );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- Update brukerprofiler role check if needed (add 110-admin and presse)
+-- This is safe to re-run - it drops and recreates the constraint
+DO $$ BEGIN
+  ALTER TABLE brukerprofiler DROP CONSTRAINT IF EXISTS brukerprofiler_rolle_check;
+  ALTER TABLE brukerprofiler ADD CONSTRAINT brukerprofiler_rolle_check
+    CHECK (rolle IN ('admin', '110-admin', 'operator', 'presse', 'public'));
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- Add sentral_ids column if it doesn't exist
+DO $$ BEGIN
+  ALTER TABLE brukerprofiler ADD COLUMN IF NOT EXISTS sentral_ids TEXT[] NOT NULL DEFAULT '{}';
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- Add epost column if it doesn't exist
+DO $$ BEGIN
+  ALTER TABLE brukerprofiler ADD COLUMN IF NOT EXISTS epost TEXT;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- Update hendelser status check to include 'deaktivert'
+DO $$ BEGIN
+  ALTER TABLE hendelser DROP CONSTRAINT IF EXISTS hendelser_status_check;
+  ALTER TABLE hendelser ADD CONSTRAINT hendelser_status_check
+    CHECK (status IN ('pågår', 'avsluttet', 'deaktivert'));
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- ============================================================================
 -- 1. Fylker (15 rows)
 -- ============================================================================
 INSERT INTO fylker (id, navn, nummer) VALUES
