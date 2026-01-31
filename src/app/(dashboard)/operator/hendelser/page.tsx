@@ -3,18 +3,19 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
-import { mockHendelser } from '@/data/mock-hendelser'
-import { brannvesen } from '@/data/brannvesen'
-import { kategorier } from '@/data/kategorier'
-import { fylker } from '@/data/fylker'
-import { kommuner } from '@/data/kommuner'
-import { sentraler } from '@/data/sentraler'
+import { useHendelser, useBrannvesen, useKategorier, useFylker, useKommuner, useSentraler } from '@/hooks/useSupabaseData'
 import { formatDateTime } from '@/lib/utils'
 import { useSentralScope } from '@/hooks/useSentralScope'
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
 
 export default function OperatorHendelserPage() {
+  const { data: allHendelser, loading: hendelserLoading } = useHendelser({ excludeDeactivated: true })
+  const { data: brannvesen, loading: brannvesenLoading } = useBrannvesen()
+  const { data: kategorier, loading: kategorierLoading } = useKategorier()
+  const { data: fylker, loading: fylkerLoading } = useFylker()
+  const { data: kommuner, loading: kommunerLoading } = useKommuner()
+  const { data: sentraler, loading: sentralerLoading } = useSentraler()
   const { isAdmin, is110Admin, isScoped, hasAdminAccess, filterByBrannvesen } = useSentralScope()
   const [statusFilter, setStatusFilter] = useState<string>('alle')
   const [search, setSearch] = useState('')
@@ -30,10 +31,13 @@ export default function OperatorHendelserPage() {
   const [editStatus, setEditStatus] = useState('')
   const [newUpdate, setNewUpdate] = useState('')
 
+  const isLoading = hendelserLoading || brannvesenLoading || kategorierLoading || fylkerLoading || kommunerLoading || sentralerLoading
+  if (isLoading) return <div className="p-8 text-center text-gray-400">Laster...</div>
+
   // Scope hendelser for 110-admin
   const scopedHendelser = useMemo(() => {
-    return isScoped ? filterByBrannvesen(mockHendelser) : mockHendelser
-  }, [isScoped, filterByBrannvesen])
+    return isScoped ? filterByBrannvesen(allHendelser) : allHendelser
+  }, [isScoped, filterByBrannvesen, allHendelser])
 
   const filteredKommuner = filterFylke ? kommuner.filter(k => k.fylke_id === filterFylke) : kommuner
   const filteredBrannvesenList = filterSentral
@@ -77,7 +81,7 @@ export default function OperatorHendelserPage() {
     setDeactivateConfirm(null)
   }
 
-  const selectedH = selectedHendelse ? mockHendelser.find(h => h.id === selectedHendelse) : null
+  const selectedH = selectedHendelse ? allHendelser.find(h => h.id === selectedHendelse) : null
 
   const layoutRole = isAdmin ? 'admin' as const : is110Admin ? '110-admin' as const : 'operator' as const
 
@@ -215,7 +219,7 @@ export default function OperatorHendelserPage() {
           <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-sm mx-4">
             <h2 className="text-lg font-bold text-white mb-2">Deaktiver hendelse?</h2>
             <p className="text-sm text-gray-400 mb-2">
-              {mockHendelser.find(h => h.id === deactivateConfirm)?.tittel}
+              {allHendelser.find(h => h.id === deactivateConfirm)?.tittel}
             </p>
             <p className="text-xs text-gray-500 mb-6">
               Hendelsen vil bli skjult fra oversikten. Den kan ikke vises igjen uten en administrator.
@@ -287,11 +291,11 @@ export default function OperatorHendelserPage() {
             </div>
 
             {/* Existing updates */}
-            {selectedH.oppdateringer.length > 0 && (
+            {(selectedH.oppdateringer?.length ?? 0) > 0 && (
               <div className="mb-4">
-                <p className="text-sm text-gray-400 mb-2">Oppdateringer ({selectedH.oppdateringer.length})</p>
+                <p className="text-sm text-gray-400 mb-2">Oppdateringer ({selectedH.oppdateringer?.length})</p>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {selectedH.oppdateringer.map(u => (
+                  {selectedH.oppdateringer?.map(u => (
                     <div key={u.id} className="bg-[#0a0a0a] rounded-lg p-3">
                       <p className="text-sm text-gray-300">{u.tekst}</p>
                       <p className="text-xs text-gray-500 mt-1">{formatDateTime(u.opprettet_tidspunkt)}</p>

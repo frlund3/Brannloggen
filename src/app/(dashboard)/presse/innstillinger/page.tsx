@@ -1,11 +1,12 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { fylker } from '@/data/fylker'
-import { kategorier } from '@/data/kategorier'
+import { useFylker, useKategorier } from '@/hooks/useSupabaseData'
 import { useState } from 'react'
 
 export default function PresseInnstillingerPage() {
+  const { data: fylker } = useFylker()
+  const { data: kategorier } = useKategorier()
   const [selectedFylker, setSelectedFylker] = useState<string[]>([])
   const [selectedKategorier, setSelectedKategorier] = useState<string[]>([])
   const [minAlvorlighet, setMinAlvorlighet] = useState('middels')

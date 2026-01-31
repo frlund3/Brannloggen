@@ -5,8 +5,7 @@ import { IncidentCard } from '@/components/public/IncidentCard'
 import { BottomNav } from '@/components/public/BottomNav'
 import { FilterSheet, FilterState, emptyFilters } from '@/components/public/FilterSheet'
 import { SettingsView } from '@/components/public/SettingsView'
-import { mockHendelser } from '@/data/mock-hendelser'
-import { sentraler } from '@/data/sentraler'
+import { useHendelser, useSentraler } from '@/hooks/useSupabaseData'
 
 const PREFS_KEY = 'brannloggen_push_prefs'
 
@@ -32,11 +31,16 @@ type Tab = 'følger' | 'alle' | 'innstillinger'
 type SubTab = 'alle' | 'pågår'
 
 export default function HomePage() {
+  const { data: hendelser, loading: hendelserLoading } = useHendelser({ excludeDeactivated: true })
+  const { data: sentraler, loading: sentralerLoading } = useSentraler()
+
   const [activeTab, setActiveTab] = useState<Tab>('alle')
   const [subTab, setSubTab] = useState<SubTab>('alle')
   const [filterOpen, setFilterOpen] = useState(false)
   const [filters, setFilters] = useState<FilterState>(emptyFilters)
   const [pushPrefs, setPushPrefs] = useState<PushPrefs>(defaultPrefs)
+
+  const loading = hendelserLoading || sentralerLoading
 
   // Load push prefs from localStorage, re-read when switching tabs (to pick up changes from settings)
   useEffect(() => {
@@ -50,7 +54,7 @@ export default function HomePage() {
   const hasPrefs = pushPrefs.sentraler.length > 0 || pushPrefs.fylker.length > 0 || pushPrefs.kategorier.length > 0 || pushPrefs.brannvesen.length > 0
 
   const allHendelser = useMemo(() => {
-    let result = [...mockHendelser]
+    let result = [...hendelser]
 
     // Apply filters
     if (filters.fylke_ids.length > 0) {
@@ -80,11 +84,11 @@ export default function HomePage() {
     result.sort((a, b) => new Date(b.opprettet_tidspunkt).getTime() - new Date(a.opprettet_tidspunkt).getTime())
 
     return result
-  }, [filters])
+  }, [hendelser, sentraler, filters])
 
   // "Jeg følger" - filter based on push preferences from settings
   const følgerHendelser = useMemo(() => {
-    let result = [...mockHendelser]
+    let result = [...hendelser]
 
     // Filter by sentral preferences
     if (pushPrefs.sentraler.length > 0) {
@@ -117,7 +121,7 @@ export default function HomePage() {
 
     result.sort((a, b) => new Date(b.opprettet_tidspunkt).getTime() - new Date(a.opprettet_tidspunkt).getTime())
     return result
-  }, [pushPrefs, subTab])
+  }, [hendelser, sentraler, pushPrefs, subTab])
 
   const activeFilterCount =
     filters.fylke_ids.length +
@@ -188,7 +192,9 @@ export default function HomePage() {
           </header>
 
           <main className="max-w-lg mx-auto px-4 py-4 space-y-3">
-            {!hasPrefs ? (
+            {loading ? (
+              <p className="text-center text-gray-400 py-12">Laster hendelser...</p>
+            ) : !hasPrefs ? (
               <div className="text-center py-12">
                 <svg className="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -242,7 +248,9 @@ export default function HomePage() {
           </header>
 
           <main className="max-w-lg mx-auto px-4 py-4 space-y-3">
-            {allHendelser.length > 0 ? (
+            {loading ? (
+              <p className="text-center text-gray-400 py-12">Laster hendelser...</p>
+            ) : allHendelser.length > 0 ? (
               allHendelser.map((h) => (
                 <IncidentCard key={h.id} {...h} oppdateringer={h.oppdateringer} />
               ))

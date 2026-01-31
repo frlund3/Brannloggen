@@ -1,7 +1,7 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { sentraler } from '@/data/sentraler'
+import { useSentraler } from '@/hooks/useSupabaseData'
 import { useSentralScope } from '@/hooks/useSentralScope'
 import { useState } from 'react'
 
@@ -36,6 +36,7 @@ interface UserForm {
 
 export default function AdminBrukerePage() {
   const { isAdmin, is110Admin, isScoped, scope } = useSentralScope()
+  const { data: sentraler } = useSentraler()
   const [brukere, setBrukere] = useState<UserItem[]>(initialBrukere)
   const [showAddModal, setShowAddModal] = useState(false)
   const [editUser, setEditUser] = useState<UserItem | null>(null)

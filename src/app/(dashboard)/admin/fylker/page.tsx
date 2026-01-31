@@ -1,23 +1,21 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { fylker as initialFylker } from '@/data/fylker'
-import { kommuner } from '@/data/kommuner'
-import { useState } from 'react'
-
-interface FylkeItem {
-  id: string
-  navn: string
-  nummer: string
-}
+import { useFylker, useKommuner } from '@/hooks/useSupabaseData'
+import type { Fylke } from '@/hooks/useSupabaseData'
+import { useState, useEffect } from 'react'
 
 export default function AdminFylkerPage() {
-  const [items, setItems] = useState<FylkeItem[]>([...initialFylker])
+  const { data: fylkerData, loading: fylkerLoading } = useFylker()
+  const { data: kommunerData, loading: kommunerLoading } = useKommuner()
+  const [items, setItems] = useState<Fylke[]>([])
   const [showAdd, setShowAdd] = useState(false)
-  const [editItem, setEditItem] = useState<FylkeItem | null>(null)
+  const [editItem, setEditItem] = useState<Fylke | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [form, setForm] = useState({ navn: '', nummer: '' })
   const [search, setSearch] = useState('')
+
+  useEffect(() => { if (fylkerData.length > 0) setItems(fylkerData) }, [fylkerData])
 
   const filtered = items.filter(f =>
     !search || f.navn.toLowerCase().includes(search.toLowerCase()) || f.nummer.includes(search)
@@ -30,7 +28,7 @@ export default function AdminFylkerPage() {
     setShowAdd(false)
   }
 
-  const handleEdit = (item: FylkeItem) => {
+  const handleEdit = (item: Fylke) => {
     setEditItem(item)
     setForm({ navn: item.navn, nummer: item.nummer })
   }
@@ -45,6 +43,16 @@ export default function AdminFylkerPage() {
   const handleDelete = (id: string) => {
     setItems(items.filter(f => f.id !== id))
     setDeleteConfirm(null)
+  }
+
+  if (fylkerLoading || kommunerLoading) {
+    return (
+      <DashboardLayout role="admin">
+        <div className="p-4 lg:p-8">
+          <p className="text-gray-400">Laster...</p>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
@@ -75,7 +83,7 @@ export default function AdminFylkerPage() {
             </thead>
             <tbody>
               {filtered.map((f) => {
-                const antallKommuner = kommuner.filter(k => k.fylke_id === f.id).length
+                const antallKommuner = kommunerData.filter(k => k.fylke_id === f.id).length
                 return (
                   <tr key={f.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
                     <td className="px-4 py-3 text-sm text-white font-medium">{f.navn}</td>

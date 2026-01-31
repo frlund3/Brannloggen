@@ -1,28 +1,24 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { sentraler as initialSentraler } from '@/data/sentraler'
-import { fylker } from '@/data/fylker'
-import { brannvesen } from '@/data/brannvesen'
+import { useSentraler, useFylker, useBrannvesen } from '@/hooks/useSupabaseData'
+import type { Sentral } from '@/hooks/useSupabaseData'
 import { useSentralScope } from '@/hooks/useSentralScope'
-import { useState } from 'react'
-
-interface SentralItem {
-  id: string
-  navn: string
-  kort_navn: string
-  fylke_ids: string[]
-  brannvesen_ids: string[]
-}
+import { useState, useEffect } from 'react'
 
 export default function AdminSentralerPage() {
   const { isAdmin, is110Admin, isScoped, filterSentraler } = useSentralScope()
-  const [items, setItems] = useState<SentralItem[]>([...initialSentraler])
+  const { data: sentralerData, loading: sentralerLoading } = useSentraler()
+  const { data: fylkerData, loading: fylkerLoading } = useFylker()
+  const { data: brannvesenData, loading: brannvesenLoading } = useBrannvesen()
+  const [items, setItems] = useState<Sentral[]>([])
   const [showAdd, setShowAdd] = useState(false)
-  const [editItem, setEditItem] = useState<SentralItem | null>(null)
+  const [editItem, setEditItem] = useState<Sentral | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [form, setForm] = useState({ navn: '', kort_navn: '', fylke_ids: [] as string[], brannvesen_ids: [] as string[] })
   const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  useEffect(() => { if (sentralerData.length > 0) setItems(sentralerData) }, [sentralerData])
 
   const resetForm = () => setForm({ navn: '', kort_navn: '', fylke_ids: [], brannvesen_ids: [] })
 
@@ -34,7 +30,7 @@ export default function AdminSentralerPage() {
     setShowAdd(false)
   }
 
-  const handleEdit = (item: SentralItem) => {
+  const handleEdit = (item: Sentral) => {
     setEditItem(item)
     setForm({ navn: item.navn, kort_navn: item.kort_navn, fylke_ids: [...item.fylke_ids], brannvesen_ids: [...item.brannvesen_ids] })
   }
@@ -67,10 +63,20 @@ export default function AdminSentralerPage() {
 
   // Filter brannvesen by selected fylker
   const filteredBrannvesen = form.fylke_ids.length > 0
-    ? brannvesen.filter(b => form.fylke_ids.includes(b.fylke_id))
-    : brannvesen
+    ? brannvesenData.filter(b => form.fylke_ids.includes(b.fylke_id))
+    : brannvesenData
 
   const displayItems = isScoped ? filterSentraler(items) : items
+
+  if (sentralerLoading || fylkerLoading || brannvesenLoading) {
+    return (
+      <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
+        <div className="p-4 lg:p-8">
+          <p className="text-gray-400">Laster...</p>
+        </div>
+      </DashboardLayout>
+    )
+  }
 
   const formContent = (
     <div className="space-y-4">
@@ -85,7 +91,7 @@ export default function AdminSentralerPage() {
       <div>
         <label className="block text-sm text-gray-400 mb-2">Fylker</label>
         <div className="max-h-40 overflow-y-auto bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg p-2 space-y-1">
-          {fylker.map(f => (
+          {fylkerData.map(f => (
             <label key={f.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#1a1a1a] cursor-pointer">
               <input type="checkbox" checked={form.fylke_ids.includes(f.id)} onChange={() => toggleFylke(f.id)} className="rounded border-gray-600" />
               <span className="text-sm text-white">{f.navn}</span>
@@ -100,7 +106,7 @@ export default function AdminSentralerPage() {
             <label key={b.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#1a1a1a] cursor-pointer">
               <input type="checkbox" checked={form.brannvesen_ids.includes(b.id)} onChange={() => toggleBrannvesen(b.id)} className="rounded border-gray-600" />
               <span className="text-sm text-white">{b.kort_navn}</span>
-              <span className="text-xs text-gray-500 ml-auto">{fylker.find(f => f.id === b.fylke_id)?.navn}</span>
+              <span className="text-xs text-gray-500 ml-auto">{fylkerData.find(f => f.id === b.fylke_id)?.navn}</span>
             </label>
           ))}
         </div>
@@ -128,8 +134,8 @@ export default function AdminSentralerPage() {
 
         <div className="space-y-3">
           {displayItems.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map((s) => {
-            const sFylker = fylker.filter(f => s.fylke_ids.includes(f.id))
-            const sBrannvesen = brannvesen.filter(b => s.brannvesen_ids.includes(b.id))
+            const sFylker = fylkerData.filter(f => s.fylke_ids.includes(f.id))
+            const sBrannvesen = brannvesenData.filter(b => s.brannvesen_ids.includes(b.id))
             const isExpanded = expandedId === s.id
 
             return (

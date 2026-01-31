@@ -3,21 +3,30 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
-import { mockHendelser } from '@/data/mock-hendelser'
-import { brannvesen } from '@/data/brannvesen'
-import { kommuner } from '@/data/kommuner'
-import { kategorier } from '@/data/kategorier'
-import { fylker } from '@/data/fylker'
+import { useHendelser, useBrannvesen, useKommuner, useKategorier, useFylker } from '@/hooks/useSupabaseData'
 import { formatDateTime, formatTime, formatTimeAgo } from '@/lib/utils'
 import { useState } from 'react'
 
 export default function PresseHendelserPage() {
+  const { data: hendelser, loading: hendelserLoading } = useHendelser({ excludeDeactivated: true })
+  const { data: brannvesen } = useBrannvesen()
+  const { data: kommuner } = useKommuner()
+  const { data: kategorier } = useKategorier()
+  const { data: fylker } = useFylker()
   const [filter, setFilter] = useState<'alle' | 'pågår' | 'avsluttet'>('alle')
   const [selectedFylke, setSelectedFylke] = useState('')
   const [selectedKategori, setSelectedKategori] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  const filtered = mockHendelser.filter((h) => {
+  if (hendelserLoading) {
+    return (
+      <DashboardLayout role="presse">
+        <div className="p-8 text-center text-gray-400">Laster...</div>
+      </DashboardLayout>
+    )
+  }
+
+  const filtered = hendelser.filter((h) => {
     if (filter !== 'alle' && h.status !== filter) return false
     if (selectedFylke && h.fylke_id !== selectedFylke) return false
     if (selectedKategori && h.kategori_id !== selectedKategori) return false
@@ -77,15 +86,15 @@ export default function PresseHendelserPage() {
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
             <p className="text-xs text-gray-400">Totalt</p>
-            <p className="text-2xl font-bold text-white">{mockHendelser.length}</p>
+            <p className="text-2xl font-bold text-white">{hendelser.length}</p>
           </div>
           <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
             <p className="text-xs text-gray-400">Pågår nå</p>
-            <p className="text-2xl font-bold text-red-400">{mockHendelser.filter(h => h.status === 'pågår').length}</p>
+            <p className="text-2xl font-bold text-red-400">{hendelser.filter(h => h.status === 'pågår').length}</p>
           </div>
           <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
             <p className="text-xs text-gray-400">Siste 24t</p>
-            <p className="text-2xl font-bold text-blue-400">{mockHendelser.filter(h => {
+            <p className="text-2xl font-bold text-blue-400">{hendelser.filter(h => {
               const t = new Date(h.opprettet_tidspunkt).getTime()
               return Date.now() - t < 24 * 60 * 60 * 1000
             }).length}</p>

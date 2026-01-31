@@ -1,8 +1,6 @@
 import { useMemo } from 'react'
 import { useAuth } from '@/components/providers/AuthProvider'
-import { sentraler } from '@/data/sentraler'
-import { brannvesen } from '@/data/brannvesen'
-import { kommuner } from '@/data/kommuner'
+import { useSentraler, useBrannvesen } from '@/hooks/useSupabaseData'
 
 /**
  * Hook that derives the scope for a 110-admin user.
@@ -12,6 +10,8 @@ import { kommuner } from '@/data/kommuner'
  */
 export function useSentralScope() {
   const { rolle, sentralIds } = useAuth()
+  const { data: sentraler } = useSentraler()
+  const { data: brannvesen } = useBrannvesen()
 
   const isAdmin = rolle === 'admin'
   const is110Admin = rolle === '110-admin'
@@ -41,7 +41,7 @@ export function useSentralScope() {
       brannvesenIds,
       kommuneIds: uniqueKommuneIds,
     }
-  }, [isScoped, sentralIds])
+  }, [isScoped, sentralIds, sentraler, brannvesen])
 
   return {
     isAdmin,

@@ -54,20 +54,30 @@ CREATE TABLE kategorier (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 110-sentraler (Emergency dispatch centers)
+CREATE TABLE sentraler (
+  id TEXT PRIMARY KEY,
+  navn TEXT NOT NULL,
+  kort_navn TEXT NOT NULL,
+  fylke_ids TEXT[] NOT NULL DEFAULT '{}',
+  brannvesen_ids TEXT[] NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- User profiles (extends Supabase auth.users)
 CREATE TABLE brukerprofiler (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  rolle TEXT NOT NULL CHECK (rolle IN ('admin', 'operator', 'public')) DEFAULT 'public',
+  rolle TEXT NOT NULL CHECK (rolle IN ('admin', '110-admin', 'operator', 'presse', 'public')) DEFAULT 'public',
   fullt_navn TEXT NOT NULL,
-  brannvesen_id TEXT REFERENCES brannvesen(id),
+  epost TEXT,
+  sentral_ids TEXT[] NOT NULL DEFAULT '{}',
   aktiv BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id)
 );
 
 CREATE INDEX idx_brukerprofiler_user ON brukerprofiler(user_id);
-CREATE INDEX idx_brukerprofiler_brannvesen ON brukerprofiler(brannvesen_id);
 
 -- ============================================
 -- INCIDENT TABLES
@@ -83,7 +93,7 @@ CREATE TABLE hendelser (
   tittel TEXT NOT NULL,
   beskrivelse TEXT NOT NULL,
   sted TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('pågår', 'avsluttet')) DEFAULT 'pågår',
+  status TEXT NOT NULL CHECK (status IN ('pågår', 'avsluttet', 'deaktivert')) DEFAULT 'pågår',
   alvorlighetsgrad TEXT NOT NULL CHECK (alvorlighetsgrad IN ('lav', 'middels', 'høy', 'kritisk')) DEFAULT 'middels',
   opprettet_av UUID NOT NULL REFERENCES auth.users(id),
   opprettet_tidspunkt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -202,11 +212,14 @@ ALTER TABLE bruker_følger ENABLE ROW LEVEL SECURITY;
 ALTER TABLE push_preferanser ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 
+ALTER TABLE sentraler ENABLE ROW LEVEL SECURITY;
+
 -- Public read access for reference data
 CREATE POLICY "Anyone can read fylker" ON fylker FOR SELECT USING (true);
 CREATE POLICY "Anyone can read kommuner" ON kommuner FOR SELECT USING (true);
 CREATE POLICY "Anyone can read brannvesen" ON brannvesen FOR SELECT USING (true);
 CREATE POLICY "Anyone can read kategorier" ON kategorier FOR SELECT USING (true);
+CREATE POLICY "Anyone can read sentraler" ON sentraler FOR SELECT USING (true);
 
 -- Hendelser: Everyone can read, only operators/admins can write
 CREATE POLICY "Anyone can read hendelser" ON hendelser FOR SELECT USING (true);
@@ -286,13 +299,13 @@ CREATE POLICY "Operators can insert notater" ON interne_notater FOR INSERT WITH 
 CREATE POLICY "Users can read own profile" ON brukerprofiler FOR SELECT USING (
   auth.uid() = user_id
   OR EXISTS (
-    SELECT 1 FROM brukerprofiler WHERE user_id = auth.uid() AND rolle = 'admin'
+    SELECT 1 FROM brukerprofiler WHERE user_id = auth.uid() AND rolle IN ('admin', '110-admin')
   )
 );
 
 CREATE POLICY "Admins can manage profiles" ON brukerprofiler FOR ALL USING (
   EXISTS (
-    SELECT 1 FROM brukerprofiler WHERE user_id = auth.uid() AND rolle = 'admin'
+    SELECT 1 FROM brukerprofiler WHERE user_id = auth.uid() AND rolle IN ('admin', '110-admin')
   )
 );
 
@@ -332,6 +345,9 @@ CREATE POLICY "Admins can manage brannvesen" ON brannvesen FOR ALL USING (
   EXISTS (SELECT 1 FROM brukerprofiler WHERE user_id = auth.uid() AND rolle = 'admin')
 );
 CREATE POLICY "Admins can manage kategorier" ON kategorier FOR ALL USING (
+  EXISTS (SELECT 1 FROM brukerprofiler WHERE user_id = auth.uid() AND rolle = 'admin')
+);
+CREATE POLICY "Admins can manage sentraler" ON sentraler FOR ALL USING (
   EXISTS (SELECT 1 FROM brukerprofiler WHERE user_id = auth.uid() AND rolle = 'admin')
 );
 

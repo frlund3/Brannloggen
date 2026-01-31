@@ -1,40 +1,36 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { kategorier as initialKategorier } from '@/data/kategorier'
-import { useState } from 'react'
-
-interface KategoriItem {
-  id: string
-  navn: string
-  ikon: string
-  farge: string
-  beskrivelse?: string
-}
+import { useKategorier } from '@/hooks/useSupabaseData'
+import type { Kategori } from '@/hooks/useSupabaseData'
+import { useState, useEffect } from 'react'
 
 export default function AdminKategorierPage() {
-  const [items, setItems] = useState<KategoriItem[]>([...initialKategorier])
+  const { data: kategorierData, loading: kategorierLoading } = useKategorier()
+  const [items, setItems] = useState<Kategori[]>([])
   const [showAdd, setShowAdd] = useState(false)
-  const [editItem, setEditItem] = useState<KategoriItem | null>(null)
+  const [editItem, setEditItem] = useState<Kategori | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [form, setForm] = useState({ navn: '', ikon: '', farge: '#DC2626', beskrivelse: '' })
+
+  useEffect(() => { if (kategorierData.length > 0) setItems(kategorierData) }, [kategorierData])
 
   const handleAdd = () => {
     if (!form.navn) return
     const id = 'kat-' + form.navn.toLowerCase().replace(/\s+/g, '-').replace(/[æ]/g, 'ae').replace(/[ø]/g, 'o').replace(/[å]/g, 'a')
-    setItems([...items, { id, navn: form.navn, ikon: form.ikon || 'Flame', farge: form.farge, beskrivelse: form.beskrivelse }])
+    setItems([...items, { id, navn: form.navn, ikon: form.ikon || 'Flame', farge: form.farge, beskrivelse: form.beskrivelse || null }])
     setForm({ navn: '', ikon: '', farge: '#DC2626', beskrivelse: '' })
     setShowAdd(false)
   }
 
-  const handleEdit = (item: KategoriItem) => {
+  const handleEdit = (item: Kategori) => {
     setEditItem(item)
     setForm({ navn: item.navn, ikon: item.ikon, farge: item.farge, beskrivelse: item.beskrivelse || '' })
   }
 
   const handleSaveEdit = () => {
     if (!editItem || !form.navn) return
-    setItems(items.map(k => k.id === editItem.id ? { ...k, navn: form.navn, ikon: form.ikon || 'Flame', farge: form.farge, beskrivelse: form.beskrivelse } : k))
+    setItems(items.map(k => k.id === editItem.id ? { ...k, navn: form.navn, ikon: form.ikon || 'Flame', farge: form.farge, beskrivelse: form.beskrivelse || null } : k))
     setEditItem(null)
     setForm({ navn: '', ikon: '', farge: '#DC2626', beskrivelse: '' })
   }
@@ -42,6 +38,16 @@ export default function AdminKategorierPage() {
   const handleDelete = (id: string) => {
     setItems(items.filter(k => k.id !== id))
     setDeleteConfirm(null)
+  }
+
+  if (kategorierLoading) {
+    return (
+      <DashboardLayout role="admin">
+        <div className="p-4 lg:p-8">
+          <p className="text-gray-400">Laster...</p>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   const formContent = (

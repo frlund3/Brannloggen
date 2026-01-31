@@ -1,14 +1,15 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { fylker } from '@/data/fylker'
-import { kommuner } from '@/data/kommuner'
-import { brannvesen } from '@/data/brannvesen'
-import { sentraler } from '@/data/sentraler'
+import { useFylker, useKommuner, useBrannvesen, useSentraler } from '@/hooks/useSupabaseData'
 import { useSentralScope } from '@/hooks/useSentralScope'
 
 export default function AdminInnstillingerPage() {
   const { isAdmin, is110Admin, isScoped, scope, filterFylker, filterKommuner, filterBrannvesen, filterSentraler } = useSentralScope()
+  const { data: fylker } = useFylker()
+  const { data: kommuner } = useKommuner()
+  const { data: brannvesen } = useBrannvesen()
+  const { data: sentraler } = useSentraler()
 
   const displayFylker = filterFylker(fylker)
   const displayKommuner = filterKommuner(kommuner)

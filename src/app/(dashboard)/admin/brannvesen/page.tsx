@@ -1,31 +1,27 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { brannvesen as initialBrannvesen } from '@/data/brannvesen'
-import { fylker } from '@/data/fylker'
-import { kommuner } from '@/data/kommuner'
-import { sentraler } from '@/data/sentraler'
+import { useBrannvesen, useFylker, useKommuner, useSentraler } from '@/hooks/useSupabaseData'
+import type { Brannvesen } from '@/hooks/useSupabaseData'
 import { useSentralScope } from '@/hooks/useSentralScope'
-import { useState } from 'react'
-
-interface BrannvesenItem {
-  id: string
-  navn: string
-  kort_navn: string
-  fylke_id: string
-  kommune_ids: string[]
-}
+import { useState, useEffect } from 'react'
 
 export default function AdminBrannvesenPage() {
   const { isAdmin, is110Admin, isScoped, filterBrannvesen } = useSentralScope()
-  const [items, setItems] = useState<BrannvesenItem[]>([...initialBrannvesen])
+  const { data: brannvesenData, loading: brannvesenLoading } = useBrannvesen()
+  const { data: fylkerData, loading: fylkerLoading } = useFylker()
+  const { data: kommunerData, loading: kommunerLoading } = useKommuner()
+  const { data: sentralerData, loading: sentralerLoading } = useSentraler()
+  const [items, setItems] = useState<Brannvesen[]>([])
   const [search, setSearch] = useState('')
   const [selectedFylke, setSelectedFylke] = useState('')
   const [selectedSentral, setSelectedSentral] = useState('')
   const [showAdd, setShowAdd] = useState(false)
-  const [editItem, setEditItem] = useState<BrannvesenItem | null>(null)
+  const [editItem, setEditItem] = useState<Brannvesen | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [form, setForm] = useState({ navn: '', kort_navn: '', fylke_id: '', kommune_ids: [] as string[] })
+
+  useEffect(() => { if (brannvesenData.length > 0) setItems(brannvesenData) }, [brannvesenData])
 
   // Scope items for 110-admin
   const scopedItems = isScoped ? filterBrannvesen(items) : items
@@ -34,7 +30,7 @@ export default function AdminBrannvesenPage() {
     .filter((b) => {
       if (selectedFylke && b.fylke_id !== selectedFylke) return false
       if (selectedSentral) {
-        const sentral = sentraler.find(s => s.id === selectedSentral)
+        const sentral = sentralerData.find(s => s.id === selectedSentral)
         if (sentral && !sentral.brannvesen_ids.includes(b.id)) return false
       }
       if (search && !b.navn.toLowerCase().includes(search.toLowerCase()) && !b.kort_navn.toLowerCase().includes(search.toLowerCase())) return false
@@ -42,19 +38,19 @@ export default function AdminBrannvesenPage() {
     })
     .sort((a, b) => a.navn.localeCompare(b.navn, 'no'))
 
-  const getSentral = (bvId: string) => sentraler.find(s => s.brannvesen_ids.includes(bvId))
+  const getSentral = (bvId: string) => sentralerData.find(s => s.brannvesen_ids.includes(bvId))
 
   const resetForm = () => setForm({ navn: '', kort_navn: '', fylke_id: '', kommune_ids: [] })
 
   const handleAdd = () => {
     if (!form.navn || !form.kort_navn || !form.fylke_id) return
     const id = 'bv-' + form.kort_navn.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-    setItems([...items, { id, ...form }])
+    setItems([...items, { id, navn: form.navn, kort_navn: form.kort_navn, fylke_id: form.fylke_id, kommune_ids: form.kommune_ids, aktiv: true }])
     resetForm()
     setShowAdd(false)
   }
 
-  const handleEdit = (item: BrannvesenItem) => {
+  const handleEdit = (item: Brannvesen) => {
     setEditItem(item)
     setForm({ navn: item.navn, kort_navn: item.kort_navn, fylke_id: item.fylke_id, kommune_ids: [...item.kommune_ids] })
   }
@@ -78,7 +74,17 @@ export default function AdminBrannvesenPage() {
     }))
   }
 
-  const filteredKommuner = form.fylke_id ? kommuner.filter(k => k.fylke_id === form.fylke_id) : kommuner
+  const filteredKommuner = form.fylke_id ? kommunerData.filter(k => k.fylke_id === form.fylke_id) : kommunerData
+
+  if (brannvesenLoading || fylkerLoading || kommunerLoading || sentralerLoading) {
+    return (
+      <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
+        <div className="p-4 lg:p-8">
+          <p className="text-gray-400">Laster...</p>
+        </div>
+      </DashboardLayout>
+    )
+  }
 
   const formContent = (
     <div className="space-y-4">
@@ -94,7 +100,7 @@ export default function AdminBrannvesenPage() {
         <label className="block text-sm text-gray-400 mb-1">Fylke</label>
         <select value={form.fylke_id} onChange={(e) => setForm({ ...form, fylke_id: e.target.value, kommune_ids: [] })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
           <option value="">Velg fylke</option>
-          {fylker.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
+          {fylkerData.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
         </select>
       </div>
       {form.fylke_id && (
@@ -135,11 +141,11 @@ export default function AdminBrannvesenPage() {
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk etter brannvesen..." className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 w-64" />
           <select value={selectedFylke} onChange={(e) => setSelectedFylke(e.target.value)} className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
             <option value="">Alle fylker</option>
-            {fylker.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
+            {fylkerData.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
           </select>
           <select value={selectedSentral} onChange={(e) => setSelectedSentral(e.target.value)} className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
             <option value="">Alle 110-sentraler</option>
-            {sentraler.map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
+            {sentralerData.map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
           </select>
         </div>
 
@@ -158,9 +164,9 @@ export default function AdminBrannvesenPage() {
               </thead>
               <tbody>
                 {filtered.map((b) => {
-                  const fylke = fylker.find(f => f.id === b.fylke_id)
+                  const fylke = fylkerData.find(f => f.id === b.fylke_id)
                   const sentral = getSentral(b.id)
-                  const bKommuner = b.kommune_ids.map(kid => kommuner.find(k => k.id === kid)).filter(Boolean)
+                  const bKommuner = b.kommune_ids.map(kid => kommunerData.find(k => k.id === kid)).filter(Boolean)
                   return (
                     <tr key={b.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
                       <td className="px-4 py-3"><span className="text-sm text-white font-medium">{b.navn}</span></td>

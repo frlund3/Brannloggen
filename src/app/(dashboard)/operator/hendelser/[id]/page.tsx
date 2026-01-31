@@ -3,24 +3,27 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
-import { mockHendelser } from '@/data/mock-hendelser'
-import { brannvesen } from '@/data/brannvesen'
-import { kommuner } from '@/data/kommuner'
-import { kategorier } from '@/data/kategorier'
+import { useHendelser, useBrannvesen, useKommuner, useKategorier } from '@/hooks/useSupabaseData'
 import { formatDateTime, formatTime } from '@/lib/utils'
 import { useState, use } from 'react'
 
 export default function HendelseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const hendelse = mockHendelser.find((h) => h.id === id)
+  const { data: allHendelser, loading: hendelserLoading } = useHendelser()
+  const { data: brannvesen, loading: brannvesenLoading } = useBrannvesen()
+  const { data: kommuner, loading: kommunerLoading } = useKommuner()
+  const { data: kategorier, loading: kategorierLoading } = useKategorier()
   const [newUpdate, setNewUpdate] = useState('')
   const [newNote, setNewNote] = useState('')
-  const [updates, setUpdates] = useState<{ id: string; hendelse_id: string; tekst: string; opprettet_tidspunkt: string }[]>(
-    hendelse?.oppdateringer || []
-  )
+  const [localUpdates, setLocalUpdates] = useState<{ id: string; hendelse_id: string; tekst: string; opprettet_tidspunkt: string }[]>([])
   const [internalNotes, setInternalNotes] = useState<{ id: string; notat: string; tidspunkt: string }[]>([
     { id: 'n-1', notat: 'Kontaktet eier av bygget. Forsikringsselskap varslet.', tidspunkt: new Date(Date.now() - 30 * 60000).toISOString() },
   ])
+
+  const isLoading = hendelserLoading || brannvesenLoading || kommunerLoading || kategorierLoading
+  if (isLoading) return <div className="p-8 text-center text-gray-400">Laster...</div>
+
+  const hendelse = allHendelser.find((h) => h.id === id)
 
   if (!hendelse) {
     return (
@@ -30,14 +33,15 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
     )
   }
 
+  const updates = [...(hendelse.oppdateringer || []), ...localUpdates]
   const bv = brannvesen.find((b) => b.id === hendelse.brannvesen_id)
   const kommune = kommuner.find((k) => k.id === hendelse.kommune_id)
   const kat = kategorier.find((k) => k.id === hendelse.kategori_id)
 
   const handleAddUpdate = () => {
     if (!newUpdate.trim()) return
-    setUpdates([
-      ...updates,
+    setLocalUpdates([
+      ...localUpdates,
       {
         id: `u-new-${Date.now()}`,
         hendelse_id: hendelse.id,

@@ -1,11 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { fylker } from '@/data/fylker'
-import { kommuner } from '@/data/kommuner'
-import { brannvesen } from '@/data/brannvesen'
-import { kategorier } from '@/data/kategorier'
-import { sentraler } from '@/data/sentraler'
+import { useFylker, useKommuner, useBrannvesen, useKategorier, useSentraler } from '@/hooks/useSupabaseData'
 
 interface FilterSheetProps {
   isOpen: boolean
@@ -38,7 +34,26 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange }: Filte
   const [view, setView] = useState<View>('main')
   const [selectedFylke, setSelectedFylke] = useState<string | null>(null)
 
+  const { data: fylker, loading: loadingFylker } = useFylker()
+  const { data: kommuner, loading: loadingKommuner } = useKommuner()
+  const { data: brannvesen, loading: loadingBrannvesen } = useBrannvesen()
+  const { data: kategorier, loading: loadingKategorier } = useKategorier()
+  const { data: sentraler, loading: loadingSentraler } = useSentraler()
+
+  const loading = loadingFylker || loadingKommuner || loadingBrannvesen || loadingKategorier || loadingSentraler
+
   if (!isOpen) return null
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-50">
+        <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+        <div className="absolute bottom-0 left-0 right-0 max-h-[80vh] bg-[#1a1a1a] rounded-t-2xl flex flex-col items-center justify-center py-12">
+          <p className="text-gray-400 text-sm">Laster...</p>
+        </div>
+      </div>
+    )
+  }
 
   const filteredKommuner = selectedFylke
     ? kommuner.filter((k) => k.fylke_id === selectedFylke)

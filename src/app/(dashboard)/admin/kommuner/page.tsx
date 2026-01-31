@@ -1,25 +1,22 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { kommuner as initialKommuner } from '@/data/kommuner'
-import { fylker } from '@/data/fylker'
-import { useState } from 'react'
-
-interface KommuneItem {
-  id: string
-  navn: string
-  nummer: string
-  fylke_id: string
-}
+import { useKommuner, useFylker } from '@/hooks/useSupabaseData'
+import type { Kommune } from '@/hooks/useSupabaseData'
+import { useState, useEffect } from 'react'
 
 export default function AdminKommunerPage() {
-  const [items, setItems] = useState<KommuneItem[]>([...initialKommuner])
+  const { data: kommunerData, loading: kommunerLoading } = useKommuner()
+  const { data: fylkerData, loading: fylkerLoading } = useFylker()
+  const [items, setItems] = useState<Kommune[]>([])
   const [showAdd, setShowAdd] = useState(false)
-  const [editItem, setEditItem] = useState<KommuneItem | null>(null)
+  const [editItem, setEditItem] = useState<Kommune | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [form, setForm] = useState({ navn: '', nummer: '', fylke_id: '' })
   const [search, setSearch] = useState('')
   const [filterFylke, setFilterFylke] = useState('')
+
+  useEffect(() => { if (kommunerData.length > 0) setItems(kommunerData) }, [kommunerData])
 
   const filtered = items
     .filter(k => {
@@ -36,7 +33,7 @@ export default function AdminKommunerPage() {
     setShowAdd(false)
   }
 
-  const handleEdit = (item: KommuneItem) => {
+  const handleEdit = (item: Kommune) => {
     setEditItem(item)
     setForm({ navn: item.navn, nummer: item.nummer, fylke_id: item.fylke_id })
   }
@@ -51,6 +48,16 @@ export default function AdminKommunerPage() {
   const handleDelete = (id: string) => {
     setItems(items.filter(k => k.id !== id))
     setDeleteConfirm(null)
+  }
+
+  if (kommunerLoading || fylkerLoading) {
+    return (
+      <DashboardLayout role="admin">
+        <div className="p-4 lg:p-8">
+          <p className="text-gray-400">Laster...</p>
+        </div>
+      </DashboardLayout>
+    )
   }
 
   return (
@@ -71,7 +78,7 @@ export default function AdminKommunerPage() {
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk etter kommune..." className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 w-64" />
           <select value={filterFylke} onChange={(e) => setFilterFylke(e.target.value)} className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
             <option value="">Alle fylker</option>
-            {fylker.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
+            {fylkerData.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
           </select>
         </div>
 
@@ -88,7 +95,7 @@ export default function AdminKommunerPage() {
               </thead>
               <tbody>
                 {filtered.slice(0, 100).map((k) => {
-                  const fylke = fylker.find(f => f.id === k.fylke_id)
+                  const fylke = fylkerData.find(f => f.id === k.fylke_id)
                   return (
                     <tr key={k.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
                       <td className="px-4 py-3 text-sm text-white font-medium">{k.navn}</td>
@@ -130,7 +137,7 @@ export default function AdminKommunerPage() {
                   <label className="block text-sm text-gray-400 mb-1">Fylke</label>
                   <select value={form.fylke_id} onChange={(e) => setForm({ ...form, fylke_id: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
                     <option value="">Velg fylke</option>
-                    {fylker.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
+                    {fylkerData.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
                   </select>
                 </div>
               </div>
@@ -161,7 +168,7 @@ export default function AdminKommunerPage() {
                   <label className="block text-sm text-gray-400 mb-1">Fylke</label>
                   <select value={form.fylke_id} onChange={(e) => setForm({ ...form, fylke_id: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
                     <option value="">Velg fylke</option>
-                    {fylker.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
+                    {fylkerData.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
                   </select>
                 </div>
               </div>

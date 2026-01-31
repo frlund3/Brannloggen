@@ -1,10 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { fylker } from '@/data/fylker'
-import { kategorier } from '@/data/kategorier'
-import { brannvesen } from '@/data/brannvesen'
-import { sentraler } from '@/data/sentraler'
+import { useFylker, useKategorier, useBrannvesen, useSentraler } from '@/hooks/useSupabaseData'
 import { useAuth } from '@/components/providers/AuthProvider'
 
 const STORAGE_KEY = 'brannloggen_push_prefs'
@@ -38,6 +35,11 @@ function loadPrefs(): PushPrefs {
 
 export function SettingsView() {
   const { user } = useAuth()
+  const { data: fylker, loading: loadingFylker } = useFylker()
+  const { data: kategorier, loading: loadingKategorier } = useKategorier()
+  const { data: brannvesen, loading: loadingBrannvesen } = useBrannvesen()
+  const { data: sentraler, loading: loadingSentraler } = useSentraler()
+  const loading = loadingFylker || loadingKategorier || loadingBrannvesen || loadingSentraler
   const [prefs, setPrefs] = useState<PushPrefs>(defaultPrefs)
   const [saved, setSaved] = useState(false)
 
@@ -62,7 +64,16 @@ export function SettingsView() {
   const filteredBrannvesen = useMemo(() => {
     if (prefs.fylker.length === 0) return brannvesen
     return brannvesen.filter(b => prefs.fylker.includes(b.fylke_id))
-  }, [prefs.fylker])
+  }, [prefs.fylker, brannvesen])
+
+  if (loading) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-6">
+        <h1 className="text-xl font-bold mb-1">Innstillinger</h1>
+        <p className="text-sm text-gray-400 mt-8 text-center">Laster...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6">

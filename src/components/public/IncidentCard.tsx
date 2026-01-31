@@ -3,9 +3,7 @@
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
 import { formatTime, formatTimeAgo } from '@/lib/utils'
-import { brannvesen } from '@/data/brannvesen'
-import { kategorier } from '@/data/kategorier'
-import { sentraler } from '@/data/sentraler'
+import { useBrannvesen, useKategorier, useSentraler } from '@/hooks/useSupabaseData'
 import { useState } from 'react'
 
 interface IncidentUpdate {
@@ -41,6 +39,9 @@ export function IncidentCard({
   onClick,
 }: IncidentCardProps) {
   const [showUpdates, setShowUpdates] = useState(false)
+  const { data: brannvesen } = useBrannvesen()
+  const { data: sentraler } = useSentraler()
+  const { data: kategorier } = useKategorier()
 
   const bv = brannvesen.find((b) => b.id === brannvesen_id)
   const sentral = sentraler.find((s) => s.brannvesen_ids.includes(brannvesen_id))

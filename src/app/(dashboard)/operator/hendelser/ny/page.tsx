@@ -1,15 +1,16 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { fylker } from '@/data/fylker'
-import { brannvesen } from '@/data/brannvesen'
-import { kategorier } from '@/data/kategorier'
-import { sentraler } from '@/data/sentraler'
+import { useFylker, useBrannvesen, useKategorier, useSentraler } from '@/hooks/useSupabaseData'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function NyHendelsePage() {
   const router = useRouter()
+  const { data: fylker, loading: fylkerLoading } = useFylker()
+  const { data: brannvesen, loading: brannvesenLoading } = useBrannvesen()
+  const { data: kategorier, loading: kategorierLoading } = useKategorier()
+  const { data: sentraler, loading: sentralerLoading } = useSentraler()
   const [selectedSentral, setSelectedSentral] = useState('')
   const [selectedFylke, setSelectedFylke] = useState('')
   const [formData, setFormData] = useState({
@@ -30,6 +31,9 @@ export default function NyHendelsePage() {
   const [bilderSynligPresse, setBilderSynligPresse] = useState(true)
   const [bilderSynligPublikum, setBilderSynligPublikum] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  const isLoading = fylkerLoading || brannvesenLoading || kategorierLoading || sentralerLoading
+  if (isLoading) return <div className="p-8 text-center text-gray-400">Laster...</div>
 
   const sentral = selectedSentral ? sentraler.find(s => s.id === selectedSentral) : null
 
