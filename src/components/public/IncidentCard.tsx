@@ -5,6 +5,7 @@ import { SeverityDot } from '@/components/ui/SeverityDot'
 import { formatTime, formatTimeAgo } from '@/lib/utils'
 import { brannvesen } from '@/data/brannvesen'
 import { kategorier } from '@/data/kategorier'
+import { sentraler } from '@/data/sentraler'
 import { useState } from 'react'
 
 interface IncidentUpdate {
@@ -42,6 +43,7 @@ export function IncidentCard({
   const [showUpdates, setShowUpdates] = useState(false)
 
   const bv = brannvesen.find((b) => b.id === brannvesen_id)
+  const sentral = sentraler.find((s) => s.brannvesen_ids.includes(brannvesen_id))
   const kat = kategorier.find((k) => k.id === kategori_id)
 
   return (
@@ -50,7 +52,7 @@ export function IncidentCard({
       onClick={onClick}
     >
       <div className="flex items-start justify-between gap-2 mb-1">
-        <span className="text-xs text-gray-400">{bv?.kort_navn || bv?.navn}</span>
+        <span className="text-xs text-gray-400">{sentral?.kort_navn || bv?.kort_navn || bv?.navn}</span>
         <div className="flex items-center gap-2 shrink-0">
           <StatusBadge status={status} />
         </div>

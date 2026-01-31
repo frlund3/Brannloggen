@@ -164,7 +164,7 @@ export default function OperatorHendelserPage() {
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Status</th>
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Tittel</th>
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">Kategori</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">Brannvesen</th>
+                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">110-sentral</th>
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Alvor</th>
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Opprettet</th>
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
@@ -173,6 +173,7 @@ export default function OperatorHendelserPage() {
               <tbody>
                 {hendelser.map((h) => {
                   const bv = brannvesen.find((b) => b.id === h.brannvesen_id)
+                  const sentral = sentraler.find((s) => s.brannvesen_ids.includes(h.brannvesen_id))
                   const kat = kategorier.find((k) => k.id === h.kategori_id)
                   return (
                     <tr key={h.id} className="border-b border-[#2a2a2a] hover:bg-[#222] transition-colors">
@@ -184,7 +185,7 @@ export default function OperatorHendelserPage() {
                       <td className="px-4 py-3 hidden md:table-cell">
                         {kat && <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: kat.farge + '22', color: kat.farge }}>{kat.navn}</span>}
                       </td>
-                      <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs text-gray-400">{bv?.kort_navn}</span></td>
+                      <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs text-gray-400">{sentral?.kort_navn || bv?.kort_navn}</span></td>
                       <td className="px-4 py-3 hidden lg:table-cell"><SeverityDot severity={h.alvorlighetsgrad} showLabel /></td>
                       <td className="px-4 py-3"><span className="text-xs text-gray-400">{formatDateTime(h.opprettet_tidspunkt)}</span></td>
                       <td className="px-4 py-3">
@@ -257,8 +258,8 @@ export default function OperatorHendelserPage() {
                 <p className="text-sm text-white">{kategorier.find(k => k.id === selectedH.kategori_id)?.navn || '-'}</p>
               </div>
               <div className="bg-[#0a0a0a] rounded-lg p-3">
-                <p className="text-xs text-gray-500">Brannvesen</p>
-                <p className="text-sm text-white">{brannvesen.find(b => b.id === selectedH.brannvesen_id)?.kort_navn || '-'}</p>
+                <p className="text-xs text-gray-500">110-sentral</p>
+                <p className="text-sm text-white">{sentraler.find(s => s.brannvesen_ids.includes(selectedH.brannvesen_id))?.kort_navn || brannvesen.find(b => b.id === selectedH.brannvesen_id)?.kort_navn || '-'}</p>
               </div>
             </div>
 

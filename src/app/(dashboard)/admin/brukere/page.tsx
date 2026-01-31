@@ -259,7 +259,7 @@ export default function AdminBrukerePage() {
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Bruker</th>
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">E-post</th>
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Rolle</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">110-sentraler</th>
+                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">110-sentral</th>
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Status</th>
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
                 </tr>
@@ -286,7 +286,7 @@ export default function AdminBrukerePage() {
                           {getRolleLabel(user.rolle)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 hidden md:table-cell">
+                      <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
                           {userSentraler.length > 0 ? userSentraler.map(s => (
                             <span key={s!.id} className="text-xs bg-orange-500/10 text-orange-400 px-1.5 py-0.5 rounded">{s!.kort_navn}</span>
