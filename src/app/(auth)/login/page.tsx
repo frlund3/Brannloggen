@@ -26,11 +26,23 @@ export default function LoginPage() {
       return
     }
 
+    // Get logged in user
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      window.location.href = '/'
+      return
+    }
+
     // Redirect based on role
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('brukerprofiler')
       .select('rolle')
+      .eq('user_id', user.id)
       .single()
+
+    if (profileError) {
+      console.error('Profile fetch error:', profileError)
+    }
 
     if (profile?.rolle === 'admin') {
       window.location.href = '/admin/brukere'
