@@ -14,7 +14,25 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
+
+  // Redirect to login if not authenticated
+  if (!loading && !user) {
+    window.location.href = '/login'
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <p className="text-gray-400 text-sm">Omdirigerer til innlogging...</p>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <p className="text-gray-400 text-sm">Laster...</p>
+      </div>
+    )
+  }
 
   const operatorLinks = [
     { href: '/operator/hendelser', label: 'Hendelser', icon: 'list' },
