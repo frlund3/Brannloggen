@@ -4,16 +4,19 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { fylker } from '@/data/fylker'
 import { brannvesen } from '@/data/brannvesen'
 import { kategorier } from '@/data/kategorier'
+import { sentraler } from '@/data/sentraler'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function NyHendelsePage() {
   const router = useRouter()
+  const [selectedSentral, setSelectedSentral] = useState('')
   const [selectedFylke, setSelectedFylke] = useState('')
   const [formData, setFormData] = useState({
     tittel: '',
     beskrivelse: '',
     sted: '',
+    sentral_id: '',
     brannvesen_id: '',
     fylke_id: '',
     kategori_id: '',
@@ -28,9 +31,22 @@ export default function NyHendelsePage() {
   const [bilderSynligPublikum, setBilderSynligPublikum] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const filteredBrannvesen = selectedFylke
-    ? brannvesen.filter((b) => b.fylke_id === selectedFylke).sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no'))
-    : brannvesen.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no'))
+  const sentral = selectedSentral ? sentraler.find(s => s.id === selectedSentral) : null
+
+  const filteredFylker = sentral
+    ? fylker.filter(f => sentral.fylke_ids.includes(f.id))
+    : fylker
+
+  const filteredBrannvesen = (() => {
+    let list = brannvesen
+    if (sentral) {
+      list = list.filter(b => sentral.brannvesen_ids.includes(b.id))
+    }
+    if (selectedFylke) {
+      list = list.filter(b => b.fylke_id === selectedFylke)
+    }
+    return list.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no'))
+  })()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -121,6 +137,26 @@ export default function NyHendelsePage() {
             />
           </div>
 
+          {/* 110-sentral */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">110-sentral *</label>
+            <select
+              value={selectedSentral}
+              onChange={(e) => {
+                setSelectedSentral(e.target.value)
+                setSelectedFylke('')
+                setFormData({ ...formData, sentral_id: e.target.value, fylke_id: '', brannvesen_id: '' })
+              }}
+              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+              required
+            >
+              <option value="">Velg 110-sentral</option>
+              {sentraler.map((s) => (
+                <option key={s.id} value={s.id}>{s.kort_navn}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Location */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -135,7 +171,7 @@ export default function NyHendelsePage() {
                 required
               >
                 <option value="">Velg fylke</option>
-                {fylker.map((f) => (
+                {filteredFylker.map((f) => (
                   <option key={f.id} value={f.id}>{f.navn}</option>
                 ))}
               </select>
