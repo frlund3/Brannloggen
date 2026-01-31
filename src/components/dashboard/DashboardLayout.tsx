@@ -151,14 +151,17 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
               </a>
               <button
                 onClick={() => {
-                  const supabase = createClient()
-                  supabase.auth.signOut().finally(() => {
-                    localStorage.removeItem('brannloggen_user_rolle')
-                    Object.keys(localStorage).forEach(key => {
-                      if (key.startsWith('sb-')) localStorage.removeItem(key)
-                    })
-                    window.location.href = '/'
+                  localStorage.removeItem('brannloggen_user_rolle')
+                  Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith('sb-')) localStorage.removeItem(key)
                   })
+                  document.cookie.split(';').forEach(c => {
+                    const name = c.split('=')[0].trim()
+                    if (name.startsWith('sb-')) {
+                      document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'
+                    }
+                  })
+                  window.location.href = '/'
                 }}
                 className="text-sm text-red-400 hover:text-red-300"
               >
