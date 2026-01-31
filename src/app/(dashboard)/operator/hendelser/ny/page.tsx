@@ -2,7 +2,7 @@
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { fylker } from '@/data/fylker'
-import { kommuner } from '@/data/kommuner'
+import { brannvesen } from '@/data/brannvesen'
 import { kategorier } from '@/data/kategorier'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -14,7 +14,7 @@ export default function NyHendelsePage() {
     tittel: '',
     beskrivelse: '',
     sted: '',
-    kommune_id: '',
+    brannvesen_id: '',
     fylke_id: '',
     kategori_id: '',
     alvorlighetsgrad: 'middels',
@@ -28,9 +28,9 @@ export default function NyHendelsePage() {
   const [bilderSynligPublikum, setBilderSynligPublikum] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const filteredKommuner = selectedFylke
-    ? kommuner.filter((k) => k.fylke_id === selectedFylke)
-    : []
+  const filteredBrannvesen = selectedFylke
+    ? brannvesen.filter((b) => b.fylke_id === selectedFylke).sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no'))
+    : brannvesen.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no'))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -129,7 +129,7 @@ export default function NyHendelsePage() {
                 value={selectedFylke}
                 onChange={(e) => {
                   setSelectedFylke(e.target.value)
-                  setFormData({ ...formData, fylke_id: e.target.value, kommune_id: '' })
+                  setFormData({ ...formData, fylke_id: e.target.value, brannvesen_id: '' })
                 }}
                 className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
                 required
@@ -141,17 +141,16 @@ export default function NyHendelsePage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Kommune *</label>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Brannvesen *</label>
               <select
-                value={formData.kommune_id}
-                onChange={(e) => setFormData({ ...formData, kommune_id: e.target.value })}
+                value={formData.brannvesen_id}
+                onChange={(e) => setFormData({ ...formData, brannvesen_id: e.target.value })}
                 className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
                 required
-                disabled={!selectedFylke}
               >
-                <option value="">Velg kommune</option>
-                {filteredKommuner.map((k) => (
-                  <option key={k.id} value={k.id}>{k.navn}</option>
+                <option value="">Velg brannvesen</option>
+                {filteredBrannvesen.map((b) => (
+                  <option key={b.id} value={b.id}>{b.kort_navn}</option>
                 ))}
               </select>
             </div>
