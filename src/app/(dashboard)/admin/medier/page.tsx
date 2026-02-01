@@ -132,7 +132,7 @@ export default function AdminMedierPage() {
   if (loading) {
     return (
       <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
-        <div className="p-8 text-center text-gray-400">Laster...</div>
+        <div className="p-8 text-center text-theme-secondary">Laster...</div>
       </DashboardLayout>
     )
   }
@@ -145,8 +145,8 @@ export default function AdminMedierPage() {
       <div className="p-4 lg:p-8">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-white">Mediehus</h1>
-            <p className="text-sm text-gray-400">
+            <h1 className="text-2xl font-bold text-theme">Mediehus</h1>
+            <p className="text-sm text-theme-secondary">
               {activeCount} aktive, {inactiveCount} deaktiverte mediehus
             </p>
           </div>
@@ -164,7 +164,7 @@ export default function AdminMedierPage() {
         {/* Search */}
         <div className="mb-4">
           <div className="relative">
-            <svg className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-theme-muted absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -172,34 +172,34 @@ export default function AdminMedierPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Søk etter mediehus..."
-              className="w-full pl-9 pr-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-cyan-500"
+              className="w-full pl-9 pr-3 py-2.5 bg-theme-card border border-theme-input rounded-lg text-sm text-theme focus:outline-none focus:border-cyan-500"
             />
           </div>
         </div>
 
         {/* Add/Edit form */}
         {(showAdd || editId) && (
-          <div className="mb-6 bg-[#1a1a1a] rounded-xl border border-cyan-500/30 p-4">
-            <h3 className="text-sm font-semibold text-white mb-3">
+          <div className="mb-6 bg-theme-card rounded-xl border border-cyan-500/30 p-4">
+            <h3 className="text-sm font-semibold text-theme mb-3">
               {editId ? 'Rediger mediehus' : 'Nytt mediehus'}
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Navn *</label>
+                <label className="block text-xs text-theme-muted mb-1">Navn *</label>
                 <input
                   type="text"
                   value={formNavn}
                   onChange={e => setFormNavn(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-sm text-theme focus:outline-none focus:border-cyan-500"
                   placeholder="Mediehus navn"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Type</label>
+                <label className="block text-xs text-theme-muted mb-1">Type</label>
                 <select
                   value={formType}
                   onChange={e => setFormType(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-sm text-theme focus:outline-none focus:border-cyan-500"
                 >
                   {MEDIUM_TYPES.map(t => (
                     <option key={t.value} value={t.value}>{t.label}</option>
@@ -208,7 +208,7 @@ export default function AdminMedierPage() {
               </div>
               <div className="flex items-end gap-2">
                 {editId && (
-                  <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer mb-2">
+                  <label className="flex items-center gap-2 text-sm text-theme-secondary cursor-pointer mb-2">
                     <input
                       type="checkbox"
                       checked={formAktiv}
@@ -230,7 +230,7 @@ export default function AdminMedierPage() {
               </button>
               <button
                 onClick={resetForm}
-                className="px-4 py-2 text-gray-400 hover:text-white text-sm transition-colors"
+                className="px-4 py-2 text-theme-secondary hover:text-theme text-sm transition-colors"
               >
                 Avbryt
               </button>
@@ -238,7 +238,7 @@ export default function AdminMedierPage() {
           </div>
         )}
 
-        <p className="text-xs text-gray-500 mb-3">Viser {filtered.length} av {medier.length} mediehus</p>
+        <p className="text-xs text-theme-muted mb-3">Viser {filtered.length} av {medier.length} mediehus</p>
 
         <div className="space-y-3">
           {filtered.map(m => {
@@ -246,11 +246,11 @@ export default function AdminMedierPage() {
             const presseCount = presseList.length
             const isExpanded = expandedId === m.id
             return (
-              <div key={m.id} className={`bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden ${!m.aktiv ? 'opacity-50' : ''}`}>
+              <div key={m.id} className={`bg-theme-card rounded-xl border border-theme overflow-hidden ${!m.aktiv ? 'opacity-50' : ''}`}>
                 <div className="px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm text-white font-medium">{m.navn}</p>
+                      <p className="text-sm text-theme font-medium">{m.navn}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded">{typeLabel(m.type)}</span>
                         <span className={`text-xs ${m.aktiv ? 'text-green-400' : 'text-red-400'}`}>{m.aktiv ? 'Aktiv' : 'Deaktivert'}</span>
@@ -276,16 +276,16 @@ export default function AdminMedierPage() {
                   </div>
                 </div>
                 {isExpanded && presseCount > 0 && (
-                  <div className="px-4 pb-3 border-t border-[#2a2a2a] pt-3">
-                    <p className="text-xs text-gray-400 mb-2">Tilknyttede pressebrukere:</p>
+                  <div className="px-4 pb-3 border-t border-theme pt-3">
+                    <p className="text-xs text-theme-secondary mb-2">Tilknyttede pressebrukere:</p>
                     <div className="space-y-2">
                       {presseList.map(u => (
                         <div key={u.id} className="flex items-center gap-3">
                           <div className="w-6 h-6 bg-cyan-600 rounded-full flex items-center justify-center shrink-0">
                             <span className="text-[10px] text-white font-bold">{u.fullt_navn.split(' ').map((n: string) => n[0]).join('')}</span>
                           </div>
-                          <span className="text-sm text-white">{u.fullt_navn}</span>
-                          <span className="text-xs text-gray-500">{u.epost}</span>
+                          <span className="text-sm text-theme">{u.fullt_navn}</span>
+                          <span className="text-xs text-theme-muted">{u.epost}</span>
                           <span className={`text-[10px] ml-auto ${u.aktiv ? 'text-green-400' : 'text-red-400'}`}>
                             {u.aktiv ? 'Aktiv' : 'Deaktivert'}
                           </span>
@@ -298,7 +298,7 @@ export default function AdminMedierPage() {
             )
           })}
           {filtered.length === 0 && (
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-8 text-center text-gray-500 text-sm">
+            <div className="bg-theme-card rounded-xl border border-theme p-8 text-center text-theme-muted text-sm">
               {search ? 'Ingen mediehus matcher søket' : 'Ingen mediehus registrert'}
             </div>
           )}

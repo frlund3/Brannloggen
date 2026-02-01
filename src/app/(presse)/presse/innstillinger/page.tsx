@@ -88,7 +88,7 @@ export default function PresseInnstillingerPage() {
   if (fylkerLoading || kategorierLoading || sentralerLoading || !loaded) {
     return (
       <PresseLayout>
-        <div className="p-8 text-center text-gray-400">Laster...</div>
+        <div className="p-8 text-center text-theme-secondary">Laster...</div>
       </PresseLayout>
     )
   }
@@ -109,15 +109,15 @@ export default function PresseInnstillingerPage() {
     <PresseLayout>
       <div className="py-4 max-w-2xl">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Varselinnstillinger</h1>
-          <p className="text-sm text-gray-400">Velg hva du ønsker push-varsler om</p>
+          <h1 className="text-2xl font-bold text-theme">Varselinnstillinger</h1>
+          <p className="text-sm text-theme-secondary">Velg hva du ønsker push-varsler om</p>
         </div>
 
         <div className="space-y-6">
           {/* Minimum severity */}
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-            <h2 className="text-sm font-semibold text-white mb-3">Minimum alvorlighetsgrad</h2>
-            <p className="text-xs text-gray-400 mb-3">Du mottar varsler for denne og høyere alvorlighetsgrader</p>
+          <div className="bg-theme-card rounded-xl border border-theme p-4">
+            <h2 className="text-sm font-semibold text-theme mb-3">Minimum alvorlighetsgrad</h2>
+            <p className="text-xs text-theme-secondary mb-3">Du mottar varsler for denne og høyere alvorlighetsgrader</p>
             <div className="flex gap-2 flex-wrap">
               {[
                 { value: 'lav', label: 'Lav', color: 'bg-green-500' },
@@ -130,8 +130,8 @@ export default function PresseInnstillingerPage() {
                   onClick={() => setMinAlvorlighet(sev.value)}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-colors touch-manipulation ${
                     minAlvorlighet === sev.value
-                      ? 'border-blue-500 bg-blue-500/10 text-white'
-                      : 'border-[#2a2a2a] text-gray-400 hover:border-[#3a3a3a]'
+                      ? 'border-blue-500 bg-blue-500/10 text-theme'
+                      : 'border-theme text-theme-secondary hover:border-[#3a3a3a]'
                   }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${sev.color}`} />
@@ -142,16 +142,16 @@ export default function PresseInnstillingerPage() {
           </div>
 
           {/* Only ongoing */}
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
+          <div className="bg-theme-card rounded-xl border border-theme p-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-semibold text-white">Kun pågående hendelser</h2>
-                <p className="text-xs text-gray-400 mt-0.5">Kun varsler for aktive hendelser, ikke oppdateringer på avsluttede</p>
+                <h2 className="text-sm font-semibold text-theme">Kun pågående hendelser</h2>
+                <p className="text-xs text-theme-secondary mt-0.5">Kun varsler for aktive hendelser, ikke oppdateringer på avsluttede</p>
               </div>
               <button
                 onClick={() => setKunPågående(!kunPågående)}
                 className={`w-12 h-6 rounded-full transition-colors relative shrink-0 touch-manipulation ${
-                  kunPågående ? 'bg-blue-500' : 'bg-[#2a2a2a]'
+                  kunPågående ? 'bg-blue-500' : 'bg-theme-card-hover'
                 }`}
               >
                 <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
@@ -162,11 +162,11 @@ export default function PresseInnstillingerPage() {
           </div>
 
           {/* Fylker */}
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
+          <div className="bg-theme-card rounded-xl border border-theme p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h2 className="text-sm font-semibold text-white">Fylker</h2>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <h2 className="text-sm font-semibold text-theme">Fylker</h2>
+                <p className="text-xs text-theme-secondary mt-0.5">
                   {selectedFylker.length === 0 ? 'Alle fylker (standard)' : `${selectedFylker.length} valgt`}
                 </p>
               </div>
@@ -184,7 +184,7 @@ export default function PresseInnstillingerPage() {
                   className={`text-left px-3 py-2 rounded-lg text-xs transition-colors touch-manipulation ${
                     selectedFylker.includes(f.id)
                       ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
-                      : 'text-gray-400 border border-transparent hover:bg-[#222]'
+                      : 'text-theme-secondary border border-transparent hover:bg-theme-card-hover'
                   }`}
                 >
                   {f.navn}
@@ -194,11 +194,11 @@ export default function PresseInnstillingerPage() {
           </div>
 
           {/* Kategorier */}
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
+          <div className="bg-theme-card rounded-xl border border-theme p-4">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h2 className="text-sm font-semibold text-white">Kategorier</h2>
-                <p className="text-xs text-gray-400 mt-0.5">
+                <h2 className="text-sm font-semibold text-theme">Kategorier</h2>
+                <p className="text-xs text-theme-secondary mt-0.5">
                   {selectedKategorier.length === 0 ? 'Alle kategorier (standard)' : `${selectedKategorier.length} valgt`}
                 </p>
               </div>
@@ -216,7 +216,7 @@ export default function PresseInnstillingerPage() {
                   className={`text-left px-3 py-2 rounded-lg text-xs transition-colors flex items-center gap-1.5 touch-manipulation ${
                     selectedKategorier.includes(k.id)
                       ? 'bg-blue-500/10 text-blue-400 border border-blue-500/30'
-                      : 'text-gray-400 border border-transparent hover:bg-[#222]'
+                      : 'text-theme-secondary border border-transparent hover:bg-theme-card-hover'
                   }`}
                 >
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: k.farge }} />
@@ -227,13 +227,13 @@ export default function PresseInnstillingerPage() {
           </div>
 
           {/* Kontakt 110-sentral */}
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-            <h2 className="text-sm font-semibold text-white mb-2">Kontakt 110-sentral</h2>
-            <p className="text-xs text-gray-400 mb-3">Velg en 110-sentral for å se kontaktinformasjon</p>
+          <div className="bg-theme-card rounded-xl border border-theme p-4">
+            <h2 className="text-sm font-semibold text-theme mb-2">Kontakt 110-sentral</h2>
+            <p className="text-xs text-theme-secondary mb-3">Velg en 110-sentral for å se kontaktinformasjon</p>
             <select
               value={selectedSentral}
               onChange={(e) => setSelectedSentral(e.target.value)}
-              className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 mb-3"
+              className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500 mb-3"
             >
               <option value="">Velg 110-sentral</option>
               {sentraler.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map(s => (
@@ -244,14 +244,14 @@ export default function PresseInnstillingerPage() {
               const sentral = sentraler.find(s => s.id === selectedSentral)
               if (!sentral) return null
               return sentral.kontakt_epost ? (
-                <div className="bg-[#0a0a0a] rounded-lg p-3">
-                  <p className="text-xs text-gray-400 mb-1">E-post</p>
+                <div className="bg-theme-card-inner rounded-lg p-3">
+                  <p className="text-xs text-theme-secondary mb-1">E-post</p>
                   <a href={`mailto:${sentral.kontakt_epost}`} className="text-sm text-blue-400 hover:text-blue-300">
                     {sentral.kontakt_epost}
                   </a>
                 </div>
               ) : (
-                <p className="text-xs text-gray-500">Ingen kontakt-e-post registrert for denne sentralen.</p>
+                <p className="text-xs text-theme-muted">Ingen kontakt-e-post registrert for denne sentralen.</p>
               )
             })()}
           </div>

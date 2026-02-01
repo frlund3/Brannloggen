@@ -155,7 +155,7 @@ export default function AdminLoggPage() {
   if (loading || brukereLoading) {
     return (
       <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
-        <div className="p-8 text-center text-gray-400">Laster...</div>
+        <div className="p-8 text-center text-theme-secondary">Laster...</div>
       </DashboardLayout>
     )
   }
@@ -164,14 +164,14 @@ export default function AdminLoggPage() {
     <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
       <div className="p-4 lg:p-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Aktivitetslogg</h1>
-          <p className="text-sm text-gray-400">All aktivitet fra hendelser, oppdateringer, pressemeldinger, bilder og interne notater</p>
+          <h1 className="text-2xl font-bold text-theme">Aktivitetslogg</h1>
+          <p className="text-sm text-theme-secondary">All aktivitet fra hendelser, oppdateringer, pressemeldinger, bilder og interne notater</p>
         </div>
 
         {/* Filters */}
         <div className="flex flex-wrap gap-3 mb-6">
           <div className="relative flex-1 min-w-[200px]">
-            <svg className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4 text-theme-muted absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -179,14 +179,14 @@ export default function AdminLoggPage() {
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Søk i logg..."
-              className="w-full pl-9 pr-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-blue-500"
+              className="w-full pl-9 pr-3 py-2.5 bg-theme-card border border-theme-input rounded-lg text-sm text-theme focus:outline-none focus:border-blue-500"
             />
           </div>
 
           <select
             value={handlingFilter}
             onChange={e => setHandlingFilter(e.target.value as HandlingFilter)}
-            className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-blue-500"
+            className="px-3 py-2.5 bg-theme-card border border-theme-input rounded-lg text-sm text-theme focus:outline-none focus:border-blue-500"
           >
             <option value="alle">Alle handlinger</option>
             <option value="opprettet">Opprettet</option>
@@ -202,7 +202,7 @@ export default function AdminLoggPage() {
           <select
             value={brukerFilter}
             onChange={e => setBrukerFilter(e.target.value)}
-            className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-blue-500"
+            className="px-3 py-2.5 bg-theme-card border border-theme-input rounded-lg text-sm text-theme focus:outline-none focus:border-blue-500"
           >
             <option value="">Alle brukere</option>
             {uniqueUsers.map(([id, name]) => (
@@ -212,7 +212,7 @@ export default function AdminLoggPage() {
 
           <button
             onClick={fetchEntries}
-            className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-gray-400 hover:text-white transition-colors"
+            className="px-3 py-2.5 bg-theme-card border border-theme rounded-lg text-sm text-theme-secondary hover:text-theme transition-colors"
             title="Oppdater"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -230,20 +230,20 @@ export default function AdminLoggPage() {
             { key: 'presse', label: 'Presse', count: statCounts.presse },
             { key: 'bilde', label: 'Bilder', count: statCounts.bilde },
           ].map(s => (
-            <div key={s.key} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 text-center">
-              <span className="text-lg font-bold text-white">{s.count}</span>
-              <span className="block text-xs text-gray-500">{s.label}</span>
+            <div key={s.key} className="bg-theme-card border border-theme rounded-lg p-3 text-center">
+              <span className="text-lg font-bold text-theme">{s.count}</span>
+              <span className="block text-xs text-theme-muted">{s.label}</span>
             </div>
           ))}
         </div>
 
         {entries.length === 0 && !loading && (
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-8 text-center mb-6">
-            <svg className="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="bg-theme-card border border-theme rounded-xl p-8 text-center mb-6">
+            <svg className="w-12 h-12 text-theme-dim mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            <p className="text-gray-400 mb-1">Ingen loggoppføringer ennå</p>
-            <p className="text-xs text-gray-600">Aktiviteter logges automatisk når hendelser opprettes, redigeres eller oppdateres.</p>
+            <p className="text-theme-secondary mb-1">Ingen loggoppføringer ennå</p>
+            <p className="text-xs text-theme-dim">Aktiviteter logges automatisk når hendelser opprettes, redigeres eller oppdateres.</p>
           </div>
         )}
 
@@ -252,28 +252,28 @@ export default function AdminLoggPage() {
           <>
             <div className="space-y-2">
               {filtered.slice(0, 200).map(entry => (
-                <div key={entry.id} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] px-4 py-3">
+                <div key={entry.id} className="bg-theme-card rounded-xl border border-theme px-4 py-3">
                   <div className="flex items-start gap-3">
                     <span className={`text-[10px] px-2 py-0.5 rounded shrink-0 mt-0.5 ${handlingColor(entry.handling)}`}>
                       {handlingLabel(entry.handling)}
                     </span>
                     <div className="min-w-0 flex-1">
                       {entry.hendelse_tittel ? (
-                        <p className="text-sm text-white truncate">{entry.hendelse_tittel}</p>
+                        <p className="text-sm text-theme truncate">{entry.hendelse_tittel}</p>
                       ) : (
-                        <p className="text-xs text-gray-600">{entry.tabell}</p>
+                        <p className="text-xs text-theme-dim">{entry.tabell}</p>
                       )}
                       {entry.detaljer && Object.keys(entry.detaljer).length > 0 && (
-                        <p className="text-xs text-gray-500 truncate mt-0.5">
+                        <p className="text-xs text-theme-muted truncate mt-0.5">
                           {entry.detaljer.tekst ? String(entry.detaljer.tekst) :
                            entry.detaljer.endrede_felt ? `Felt: ${(entry.detaljer.endrede_felt as string[]).join(', ')}` :
                            JSON.stringify(entry.detaljer)}
                         </p>
                       )}
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-gray-500">{formatDateTime(entry.tidspunkt)}</span>
-                        <span className="text-xs text-gray-600">&middot;</span>
-                        <span className="text-xs text-gray-400">{getUserName(entry.bruker_id) || entry.bruker_id?.slice(0, 8) || 'Ukjent'}</span>
+                        <span className="text-xs text-theme-muted">{formatDateTime(entry.tidspunkt)}</span>
+                        <span className="text-xs text-theme-dim">&middot;</span>
+                        <span className="text-xs text-theme-secondary">{getUserName(entry.bruker_id) || entry.bruker_id?.slice(0, 8) || 'Ukjent'}</span>
                       </div>
                     </div>
                   </div>
@@ -281,10 +281,10 @@ export default function AdminLoggPage() {
               ))}
             </div>
             {filtered.length === 0 && entries.length > 0 && (
-              <div className="p-8 text-center text-gray-500 text-sm">Ingen loggoppføringer matcher filteret</div>
+              <div className="p-8 text-center text-theme-muted text-sm">Ingen loggoppføringer matcher filteret</div>
             )}
             {filtered.length > 200 && (
-              <div className="p-3 text-center text-gray-500 text-xs">
+              <div className="p-3 text-center text-theme-muted text-xs">
                 Viser 200 av {filtered.length} oppføringer. Bruk filtre for å begrense.
               </div>
             )}

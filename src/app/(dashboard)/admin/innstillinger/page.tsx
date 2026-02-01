@@ -14,7 +14,7 @@ export default function AdminInnstillingerPage() {
   if (fylkerLoading || kommunerLoading || brannvesenLoading || sentralerLoading) {
     return (
       <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
-        <div className="p-8 text-center text-gray-400">Laster...</div>
+        <div className="p-8 text-center text-theme-secondary">Laster...</div>
       </DashboardLayout>
     )
   }
@@ -28,8 +28,8 @@ export default function AdminInnstillingerPage() {
     <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
       <div className="p-4 lg:p-8 max-w-3xl">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Innstillinger</h1>
-          <p className="text-sm text-gray-400">
+          <h1 className="text-2xl font-bold text-theme">Innstillinger</h1>
+          <p className="text-sm text-theme-secondary">
             {isScoped ? 'Oversikt for dine 110-sentraler' : 'Systemkonfigurasjon og oversikt'}
           </p>
         </div>
@@ -37,11 +37,11 @@ export default function AdminInnstillingerPage() {
         {/* Scoped info for 110-admin */}
         {isScoped && (
           <section className="mb-8">
-            <h2 className="text-lg font-semibold text-white mb-4">Din tilgang</h2>
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
+            <h2 className="text-lg font-semibold text-theme mb-4">Din tilgang</h2>
+            <div className="bg-theme-card rounded-xl border border-theme p-4">
               <div className="space-y-3">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Tilknyttede 110-sentraler</p>
+                  <p className="text-xs text-theme-muted mb-1">Tilknyttede 110-sentraler</p>
                   <div className="flex flex-wrap gap-1">
                     {displaySentraler.map(s => (
                       <span key={s.id} className="text-xs bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded">{s.kort_navn}</span>
@@ -49,7 +49,7 @@ export default function AdminInnstillingerPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">Fylker i scope</p>
+                  <p className="text-xs text-theme-muted mb-1">Fylker i scope</p>
                   <div className="flex flex-wrap gap-1">
                     {displayFylker.map(f => (
                       <span key={f.id} className="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded">{f.navn}</span>
@@ -63,49 +63,49 @@ export default function AdminInnstillingerPage() {
 
         {/* System stats */}
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-4">
+          <h2 className="text-lg font-semibold text-theme mb-4">
             {isScoped ? 'Oversikt' : 'Systemoversikt'}
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-              <p className="text-xs text-gray-400">110-sentraler</p>
-              <p className="text-2xl font-bold text-white">{displaySentraler.length}</p>
+            <div className="bg-theme-card rounded-xl border border-theme p-4">
+              <p className="text-xs text-theme-secondary">110-sentraler</p>
+              <p className="text-2xl font-bold text-theme">{displaySentraler.length}</p>
             </div>
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-              <p className="text-xs text-gray-400">Fylker</p>
-              <p className="text-2xl font-bold text-white">{displayFylker.length}</p>
+            <div className="bg-theme-card rounded-xl border border-theme p-4">
+              <p className="text-xs text-theme-secondary">Fylker</p>
+              <p className="text-2xl font-bold text-theme">{displayFylker.length}</p>
             </div>
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-              <p className="text-xs text-gray-400">Kommuner</p>
-              <p className="text-2xl font-bold text-white">{displayKommuner.length}</p>
+            <div className="bg-theme-card rounded-xl border border-theme p-4">
+              <p className="text-xs text-theme-secondary">Kommuner</p>
+              <p className="text-2xl font-bold text-theme">{displayKommuner.length}</p>
             </div>
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-              <p className="text-xs text-gray-400">Brannvesen</p>
-              <p className="text-2xl font-bold text-white">{displayBrannvesen.length}</p>
+            <div className="bg-theme-card rounded-xl border border-theme p-4">
+              <p className="text-xs text-theme-secondary">Brannvesen</p>
+              <p className="text-2xl font-bold text-theme">{displayBrannvesen.length}</p>
             </div>
           </div>
         </section>
 
         {/* Supabase connection */}
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-4">Database</h2>
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
+          <h2 className="text-lg font-semibold text-theme mb-4">Database</h2>
+          <div className="bg-theme-card rounded-xl border border-theme p-4">
             <div className="flex items-center gap-2 mb-3">
               <span className="w-2 h-2 bg-green-500 rounded-full" />
               <span className="text-sm text-green-400">Tilkoblet</span>
             </div>
             <dl className="space-y-2 text-xs">
               <div className="flex justify-between">
-                <dt className="text-gray-500">Provider</dt>
-                <dd className="text-white">Supabase</dd>
+                <dt className="text-theme-muted">Provider</dt>
+                <dd className="text-theme">Supabase</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">URL</dt>
-                <dd className="text-white font-mono">{process.env.NEXT_PUBLIC_SUPABASE_URL?.replace('https://', '').split('.')[0]}...</dd>
+                <dt className="text-theme-muted">URL</dt>
+                <dd className="text-theme font-mono">{process.env.NEXT_PUBLIC_SUPABASE_URL?.replace('https://', '').split('.')[0]}...</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-gray-500">Bildelagring</dt>
-                <dd className="text-white">Supabase Storage</dd>
+                <dt className="text-theme-muted">Bildelagring</dt>
+                <dd className="text-theme">Supabase Storage</dd>
               </div>
             </dl>
           </div>
@@ -113,9 +113,9 @@ export default function AdminInnstillingerPage() {
 
         {/* Link to activity log */}
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-4">Aktivitetslogg</h2>
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-            <p className="text-sm text-gray-400 mb-3">
+          <h2 className="text-lg font-semibold text-theme mb-4">Aktivitetslogg</h2>
+          <div className="bg-theme-card rounded-xl border border-theme p-4">
+            <p className="text-sm text-theme-secondary mb-3">
               All aktivitet i systemet logges og kan filtreres etter bruker, type og tidspunkt.
             </p>
             <a

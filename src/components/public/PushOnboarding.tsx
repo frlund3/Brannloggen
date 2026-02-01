@@ -76,10 +76,10 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={handleSkip} />
+      <div className="absolute inset-0 bg-theme-overlay backdrop-blur-sm" onClick={handleSkip} />
 
       {/* Dialog */}
-      <div className="relative w-full max-w-md bg-[#141414] rounded-t-2xl sm:rounded-2xl border border-[#2a2a2a] h-[85vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom">
+      <div className="relative w-full max-w-md bg-theme-card rounded-t-2xl sm:rounded-2xl border border-theme h-[85vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom">
 
         {/* STEP: Intro */}
         {step === 'intro' && (
@@ -90,7 +90,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
               </svg>
             </div>
             <h2 className="text-xl font-bold mb-2">Varsler fra Brannloggen</h2>
-            <p className="text-sm text-gray-400 mb-6">
+            <p className="text-sm text-theme-secondary mb-6">
               Velg hvilke hendelser du vil bli varslet om. Du kan endre dette senere i innstillinger.
             </p>
             <button
@@ -101,7 +101,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
             </button>
             <button
               onClick={handleSkip}
-              className="mt-3 text-sm text-gray-500 hover:text-gray-400"
+              className="mt-3 text-sm text-theme-muted hover:text-theme-secondary"
             >
               Hopp over
             </button>
@@ -111,12 +111,12 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
         {/* STEP: Sentraler */}
         {step === 'sentraler' && (
           <div className="flex flex-col flex-1 min-h-0">
-            <div className="p-4 border-b border-[#2a2a2a]">
+            <div className="p-4 border-b border-theme">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold">110-sentraler</h2>
-                <span className="text-xs text-gray-500">Steg 1/3</span>
+                <span className="text-xs text-theme-muted">Steg 1/3</span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">Velg sentraler du er interessert i. Ingen valgt = alle.</p>
+              <p className="text-xs text-theme-secondary mt-1">Velg sentraler du er interessert i. Ingen valgt = alle.</p>
             </div>
             <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-1">
               {sentraler.map(s => (
@@ -126,13 +126,13 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-colors ${
                     selectedSentraler.includes(s.id)
                       ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
-                      : 'bg-[#1a1a1a] text-white border border-transparent hover:border-[#3a3a3a]'
+                      : 'bg-theme-card text-theme border border-transparent hover:border-[#3a3a3a]'
                   }`}
                 >
                   <div>
                     <span className="text-sm font-medium">{s.kort_navn}</span>
                     {s.navn !== s.kort_navn && (
-                      <span className="text-xs text-gray-500 ml-2">{s.navn}</span>
+                      <span className="text-xs text-theme-muted ml-2">{s.navn}</span>
                     )}
                   </div>
                   {selectedSentraler.includes(s.id) && (
@@ -143,8 +143,8 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
                 </button>
               ))}
             </div>
-            <div className="p-4 border-t border-[#2a2a2a] flex gap-3">
-              <button onClick={() => setStep('intro')} className="flex-1 py-2.5 bg-[#1a1a1a] text-gray-400 rounded-xl text-sm">
+            <div className="p-4 border-t border-theme flex gap-3">
+              <button onClick={() => setStep('intro')} className="flex-1 py-2.5 bg-theme-card text-theme-secondary rounded-xl text-sm">
                 Tilbake
               </button>
               <button onClick={() => setStep('fylker')} className="flex-1 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-medium">
@@ -157,12 +157,12 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
         {/* STEP: Fylker */}
         {step === 'fylker' && (
           <div className="flex flex-col flex-1 min-h-0">
-            <div className="p-4 border-b border-[#2a2a2a]">
+            <div className="p-4 border-b border-theme">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold">Fylker</h2>
-                <span className="text-xs text-gray-500">Steg 2/3</span>
+                <span className="text-xs text-theme-muted">Steg 2/3</span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">Velg fylker du vil ha varsler fra. Ingen valgt = alle.</p>
+              <p className="text-xs text-theme-secondary mt-1">Velg fylker du vil ha varsler fra. Ingen valgt = alle.</p>
             </div>
             <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-1">
               {fylker.map(f => (
@@ -172,7 +172,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-colors ${
                     selectedFylker.includes(f.id)
                       ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
-                      : 'bg-[#1a1a1a] text-white border border-transparent hover:border-[#3a3a3a]'
+                      : 'bg-theme-card text-theme border border-transparent hover:border-[#3a3a3a]'
                   }`}
                 >
                   <span className="text-sm font-medium">{f.navn}</span>
@@ -184,8 +184,8 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
                 </button>
               ))}
             </div>
-            <div className="p-4 border-t border-[#2a2a2a] flex gap-3">
-              <button onClick={() => setStep('sentraler')} className="flex-1 py-2.5 bg-[#1a1a1a] text-gray-400 rounded-xl text-sm">
+            <div className="p-4 border-t border-theme flex gap-3">
+              <button onClick={() => setStep('sentraler')} className="flex-1 py-2.5 bg-theme-card text-theme-secondary rounded-xl text-sm">
                 Tilbake
               </button>
               <button onClick={() => setStep('kategorier')} className="flex-1 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-medium">
@@ -198,16 +198,16 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
         {/* STEP: Kategorier */}
         {step === 'kategorier' && (
           <div className="flex flex-col flex-1 min-h-0">
-            <div className="p-4 border-b border-[#2a2a2a]">
+            <div className="p-4 border-b border-theme">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold">Hendelsestyper</h2>
-                <span className="text-xs text-gray-500">Steg 3/3</span>
+                <span className="text-xs text-theme-muted">Steg 3/3</span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">Velg typer hendelser. Ingen valgt = alle typer.</p>
+              <p className="text-xs text-theme-secondary mt-1">Velg typer hendelser. Ingen valgt = alle typer.</p>
             </div>
             <div className="flex-1 overflow-y-auto min-h-0 p-4">
               {/* Popular categories */}
-              <p className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Vanlige</p>
+              <p className="text-xs text-theme-muted mb-2 font-medium uppercase tracking-wide">Vanlige</p>
               <div className="space-y-1 mb-4">
                 {popularKategorier.map(k => (
                   <button
@@ -216,7 +216,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-colors ${
                       selectedKategorier.includes(k.id)
                         ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
-                        : 'bg-[#1a1a1a] text-white border border-transparent hover:border-[#3a3a3a]'
+                        : 'bg-theme-card text-theme border border-transparent hover:border-[#3a3a3a]'
                     }`}
                   >
                     <div className="flex items-center gap-2">
@@ -249,7 +249,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${
                         selectedKategorier.includes(k.id)
                           ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
-                          : 'bg-[#1a1a1a] text-white border border-transparent hover:border-[#3a3a3a]'
+                          : 'bg-theme-card text-theme border border-transparent hover:border-[#3a3a3a]'
                       }`}
                     >
                       <div className="flex items-center gap-2">
@@ -267,15 +267,15 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
               )}
 
               {/* Only ongoing toggle */}
-              <div className="mt-4 bg-[#1a1a1a] rounded-lg p-3 border border-[#2a2a2a] flex items-center justify-between">
+              <div className="mt-4 bg-theme-card rounded-lg p-3 border border-theme flex items-center justify-between">
                 <div>
-                  <span className="text-sm text-white">Kun pågående hendelser</span>
-                  <p className="text-xs text-gray-500">Ikke varsle om avsluttede</p>
+                  <span className="text-sm text-theme">Kun pågående hendelser</span>
+                  <p className="text-xs text-theme-muted">Ikke varsle om avsluttede</p>
                 </div>
                 <button
                   onClick={() => setOnlyOngoing(!onlyOngoing)}
                   className={`w-12 h-7 rounded-full transition-colors relative touch-manipulation shrink-0 ${
-                    onlyOngoing ? 'bg-orange-500' : 'bg-gray-600'
+                    onlyOngoing ? 'bg-orange-500' : 'bg-theme-card-hover'
                   }`}
                 >
                   <div className={`w-5.5 h-5.5 w-[22px] h-[22px] bg-white rounded-full absolute top-[3px] transition-transform ${
@@ -284,8 +284,8 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
                 </button>
               </div>
             </div>
-            <div className="p-4 border-t border-[#2a2a2a] flex gap-3">
-              <button onClick={() => setStep('fylker')} className="flex-1 py-2.5 bg-[#1a1a1a] text-gray-400 rounded-xl text-sm">
+            <div className="p-4 border-t border-theme flex gap-3">
+              <button onClick={() => setStep('fylker')} className="flex-1 py-2.5 bg-theme-card text-theme-secondary rounded-xl text-sm">
                 Tilbake
               </button>
               <button onClick={() => setStep('confirm')} className="flex-1 py-2.5 bg-orange-500 text-white rounded-xl text-sm font-medium">
@@ -304,7 +304,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
               </svg>
             </div>
             <h2 className="text-xl font-bold mb-2">Klar til å aktivere</h2>
-            <div className="text-sm text-gray-400 mb-4 space-y-1">
+            <div className="text-sm text-theme-secondary mb-4 space-y-1">
               {summaryCount === 0 ? (
                 <p>Du vil motta varsler om alle hendelser i hele Norge.</p>
               ) : (
@@ -322,7 +322,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
                 </>
               )}
             </div>
-            <p className="text-xs text-gray-500 mb-6">
+            <p className="text-xs text-theme-muted mb-6">
               Du vil bli spurt om tillatelse til å sende varsler. Du kan endre innstillingene når som helst.
             </p>
             <button
@@ -334,7 +334,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
             </button>
             <button
               onClick={() => setStep('kategorier')}
-              className="mt-3 text-sm text-gray-500 hover:text-gray-400"
+              className="mt-3 text-sm text-theme-muted hover:text-theme-secondary"
             >
               Tilbake
             </button>

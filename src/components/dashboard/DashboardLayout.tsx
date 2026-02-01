@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/components/providers/AuthProvider'
+import { useTheme } from '@/components/providers/ThemeProvider'
 import { createClient } from '@/lib/supabase/client'
 
 interface DashboardLayoutProps {
@@ -15,6 +16,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const pathname = usePathname()
   const { user, rolle, loading } = useAuth()
+  const { theme, toggleTheme } = useTheme()
 
   // Redirect to login if not authenticated (only after loading is done)
   if (!loading && !user && !rolle) {
@@ -22,8 +24,8 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       window.location.href = '/login'
     }
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <p className="text-gray-400 text-sm">Omdirigerer til innlogging...</p>
+      <div className="min-h-screen bg-theme flex items-center justify-center">
+        <p className="text-theme-secondary text-sm">Omdirigerer til innlogging...</p>
       </div>
     )
   }
@@ -31,8 +33,8 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   // Show loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <p className="text-gray-400 text-sm">Laster...</p>
+      <div className="min-h-screen bg-theme flex items-center justify-center">
+        <p className="text-theme-secondary text-sm">Laster...</p>
       </div>
     )
   }
@@ -79,8 +81,8 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       window.location.href = '/presse/hendelser'
     }
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <p className="text-gray-400 text-sm">Omdirigerer...</p>
+      <div className="min-h-screen bg-theme flex items-center justify-center">
+        <p className="text-theme-secondary text-sm">Omdirigerer...</p>
       </div>
     )
   }
@@ -135,17 +137,26 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-theme">
       {/* Mobile header */}
-      <header className="lg:hidden sticky top-0 z-40 bg-[#0a0a0a]/95 backdrop-blur border-b border-[#2a2a2a] px-4 py-3">
+      <header className="lg:hidden sticky top-0 z-40 bg-theme/95 backdrop-blur border-b border-theme px-4 py-3">
         <div className="flex items-center justify-between">
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 -m-2 touch-manipulation">
-            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-6 h-6 text-theme" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <span className="text-sm font-semibold text-white">{headerLabel}</span>
-          <a href="/" className="py-2 px-3 -mr-3 text-sm text-blue-400 touch-manipulation">Forside</a>
+          <span className="text-sm font-semibold text-theme">{headerLabel}</span>
+          <div className="flex items-center gap-2">
+            <button onClick={toggleTheme} className="p-2 text-theme-secondary hover:text-theme touch-manipulation" title={theme === 'dark' ? 'Bytt til lyst tema' : 'Bytt til mørkt tema'}>
+              {theme === 'dark' ? (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+              )}
+            </button>
+            <a href="/" className="py-2 px-3 -mr-3 text-sm text-blue-400 touch-manipulation">Forside</a>
+          </div>
         </div>
       </header>
 
@@ -153,11 +164,11 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         {/* Sidebar */}
         <aside
           className={cn(
-            'fixed lg:relative inset-y-0 left-0 z-50 w-64 min-h-screen bg-[#111] border-r border-[#2a2a2a] transform transition-transform lg:transform-none',
+            'fixed lg:relative inset-y-0 left-0 z-50 w-64 min-h-screen bg-theme-sidebar border-r border-theme transform transition-transform lg:transform-none',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           )}
         >
-          <div className="p-4 border-b border-[#2a2a2a]">
+          <div className="p-4 border-b border-theme">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
@@ -166,8 +177,8 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                   </svg>
                 </div>
                 <div>
-                  <h1 className="text-sm font-bold text-white">Brannloggen</h1>
-                  <p className="text-xs text-gray-400">{roleLabel}</p>
+                  <h1 className="text-sm font-bold text-theme">Brannloggen</h1>
+                  <p className="text-xs text-theme-secondary">{roleLabel}</p>
                 </div>
               </div>
               <a
@@ -189,7 +200,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                   'flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors touch-manipulation',
                   pathname === link.href
                     ? 'bg-blue-500/10 text-blue-400'
-                    : 'text-gray-400 hover:text-white hover:bg-[#1a1a1a]'
+                    : 'text-theme-secondary hover:text-theme hover:bg-theme-card'
                 )}
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -200,7 +211,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             ))}
           </nav>
 
-          <div className="absolute bottom-0 left-0 right-0 border-t border-[#2a2a2a]">
+          <div className="absolute bottom-0 left-0 right-0 border-t border-theme">
             {/* Presse shortcut button */}
             <div className="px-3 pt-3 pb-2">
               <a
@@ -214,7 +225,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                 </div>
                 <div>
                   <span className="text-sm font-semibold text-cyan-300 group-hover:text-cyan-200 transition-colors">Presseportal</span>
-                  <span className="block text-[11px] text-cyan-500/70">Åpne pressesiden →</span>
+                  <span className="block text-[11px] text-cyan-500/70">Åpne pressesiden</span>
                 </div>
               </a>
             </div>
@@ -227,12 +238,19 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                 </span>
               </div>
               <div>
-                <p className="text-sm text-white truncate max-w-[160px]">{user?.email ?? 'Bruker'}</p>
-                <p className="text-xs text-gray-400">{roleLabel}</p>
+                <p className="text-sm text-theme truncate max-w-[160px]">{user?.email ?? 'Bruker'}</p>
+                <p className="text-xs text-theme-secondary">{roleLabel}</p>
               </div>
             </div>
             <div className="flex items-center gap-4 mt-1">
-              <a href="/" className="py-2 text-sm text-gray-400 hover:text-white touch-manipulation">
+              <button onClick={toggleTheme} className="py-2 text-sm text-theme-secondary hover:text-theme touch-manipulation" title={theme === 'dark' ? 'Lyst tema' : 'Mørkt tema'}>
+                {theme === 'dark' ? (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                ) : (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                )}
+              </button>
+              <a href="/" className="py-2 text-sm text-theme-secondary hover:text-theme touch-manipulation">
                 Forside
               </a>
               <button
@@ -264,7 +282,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         {/* Overlay */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            className="fixed inset-0 bg-theme-overlay z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}

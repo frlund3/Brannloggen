@@ -91,7 +91,7 @@ export default function AdminKommunerPage() {
     return (
       <DashboardLayout role="admin">
         <div className="p-4 lg:p-8">
-          <p className="text-gray-400">Laster...</p>
+          <p className="text-theme-secondary">Laster...</p>
         </div>
       </DashboardLayout>
     )
@@ -102,8 +102,8 @@ export default function AdminKommunerPage() {
       <div className="p-4 lg:p-8">
         <div className="mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-white">Kommuner</h1>
-            <p className="text-sm text-gray-400 mb-3">{items.length} kommuner registrert</p>
+            <h1 className="text-2xl font-bold text-theme">Kommuner</h1>
+            <p className="text-sm text-theme-secondary mb-3">{items.length} kommuner registrert</p>
           </div>
           <button onClick={() => { setForm({ navn: '', nummer: '', fylke_id: '' }); setShowAdd(true) }} className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors inline-flex items-center gap-2 touch-manipulation">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -112,24 +112,24 @@ export default function AdminKommunerPage() {
         </div>
 
         <div className="flex gap-3 mb-6 flex-wrap">
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk etter kommune..." className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 w-full sm:w-64" />
-          <select value={filterFylke} onChange={(e) => setFilterFylke(e.target.value)} className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk etter kommune..." className="px-4 py-2 bg-theme-card border border-theme rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500 w-full sm:w-64" />
+          <select value={filterFylke} onChange={(e) => setFilterFylke(e.target.value)} className="px-4 py-2 bg-theme-card border border-theme rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
             <option value="">Alle fylker</option>
             {fylkerData.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
           </select>
         </div>
 
-        <p className="text-xs text-gray-500 mb-3">Viser {Math.min(filtered.length, 100)} av {filtered.length} kommuner{filtered.length > 100 ? ' (bruk søk eller filter for å se flere)' : ''}</p>
+        <p className="text-xs text-theme-muted mb-3">Viser {Math.min(filtered.length, 100)} av {filtered.length} kommuner{filtered.length > 100 ? ' (bruk søk eller filter for å se flere)' : ''}</p>
 
         <div className="space-y-2">
           {filtered.slice(0, 100).map((k) => {
             const fylke = fylkerData.find(f => f.id === k.fylke_id)
             return (
-              <div key={k.id} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] px-4 py-3">
+              <div key={k.id} className="bg-theme-card rounded-xl border border-theme px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm text-white font-medium">{k.navn}</p>
-                    <p className="text-xs text-gray-500">Nr. {k.nummer}</p>
+                    <p className="text-sm text-theme font-medium">{k.navn}</p>
+                    <p className="text-xs text-theme-muted">Nr. {k.nummer}</p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     {fylke && <span className="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded hidden sm:inline">{fylke.navn}</span>}
@@ -145,21 +145,21 @@ export default function AdminKommunerPage() {
         {/* Add modal */}
         {showAdd && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setShowAdd(false)} />
-            <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-md mx-4">
-              <h2 className="text-lg font-bold text-white mb-4">Ny kommune</h2>
+            <div className="absolute inset-0 bg-theme-overlay" onClick={() => setShowAdd(false)} />
+            <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-md mx-4">
+              <h2 className="text-lg font-bold text-theme mb-4">Ny kommune</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Navn</label>
-                  <input type="text" value={form.navn} onChange={(e) => setForm({ ...form, navn: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+                  <label className="block text-sm text-theme-secondary mb-1">Navn</label>
+                  <input type="text" value={form.navn} onChange={(e) => setForm({ ...form, navn: e.target.value })} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Kommunenummer</label>
-                  <input type="text" value={form.nummer} onChange={(e) => setForm({ ...form, nummer: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+                  <label className="block text-sm text-theme-secondary mb-1">Kommunenummer</label>
+                  <input type="text" value={form.nummer} onChange={(e) => setForm({ ...form, nummer: e.target.value })} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Fylke</label>
-                  <select value={form.fylke_id} onChange={(e) => setForm({ ...form, fylke_id: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
+                  <label className="block text-sm text-theme-secondary mb-1">Fylke</label>
+                  <select value={form.fylke_id} onChange={(e) => setForm({ ...form, fylke_id: e.target.value })} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
                     <option value="">Velg fylke</option>
                     {fylkerData.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
                   </select>
@@ -167,7 +167,7 @@ export default function AdminKommunerPage() {
               </div>
               <div className="flex gap-3 mt-6">
                 <button onClick={handleAdd} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">Legg til</button>
-                <button onClick={() => setShowAdd(false)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors touch-manipulation">Avbryt</button>
+                <button onClick={() => setShowAdd(false)} className="px-4 py-2.5 bg-theme border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors touch-manipulation">Avbryt</button>
               </div>
             </div>
           </div>
@@ -176,21 +176,21 @@ export default function AdminKommunerPage() {
         {/* Edit modal */}
         {editItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setEditItem(null)} />
-            <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-md mx-4">
-              <h2 className="text-lg font-bold text-white mb-4">Rediger kommune</h2>
+            <div className="absolute inset-0 bg-theme-overlay" onClick={() => setEditItem(null)} />
+            <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-md mx-4">
+              <h2 className="text-lg font-bold text-theme mb-4">Rediger kommune</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Navn</label>
-                  <input type="text" value={form.navn} onChange={(e) => setForm({ ...form, navn: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+                  <label className="block text-sm text-theme-secondary mb-1">Navn</label>
+                  <input type="text" value={form.navn} onChange={(e) => setForm({ ...form, navn: e.target.value })} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Kommunenummer</label>
-                  <input type="text" value={form.nummer} onChange={(e) => setForm({ ...form, nummer: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+                  <label className="block text-sm text-theme-secondary mb-1">Kommunenummer</label>
+                  <input type="text" value={form.nummer} onChange={(e) => setForm({ ...form, nummer: e.target.value })} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Fylke</label>
-                  <select value={form.fylke_id} onChange={(e) => setForm({ ...form, fylke_id: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
+                  <label className="block text-sm text-theme-secondary mb-1">Fylke</label>
+                  <select value={form.fylke_id} onChange={(e) => setForm({ ...form, fylke_id: e.target.value })} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
                     <option value="">Velg fylke</option>
                     {fylkerData.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
                   </select>
@@ -198,7 +198,7 @@ export default function AdminKommunerPage() {
               </div>
               <div className="flex gap-3 mt-6">
                 <button onClick={handleSaveEdit} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">Lagre</button>
-                <button onClick={() => setEditItem(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors touch-manipulation">Avbryt</button>
+                <button onClick={() => setEditItem(null)} className="px-4 py-2.5 bg-theme border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors touch-manipulation">Avbryt</button>
               </div>
             </div>
           </div>
@@ -207,13 +207,13 @@ export default function AdminKommunerPage() {
         {/* Delete confirm */}
         {deleteConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setDeleteConfirm(null)} />
-            <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-sm mx-4">
-              <h2 className="text-lg font-bold text-white mb-2">Slett kommune?</h2>
-              <p className="text-sm text-gray-400 mb-6">Er du sikker på at du vil slette {items.find(k => k.id === deleteConfirm)?.navn}?</p>
+            <div className="absolute inset-0 bg-theme-overlay" onClick={() => setDeleteConfirm(null)} />
+            <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-sm mx-4">
+              <h2 className="text-lg font-bold text-theme mb-2">Slett kommune?</h2>
+              <p className="text-sm text-theme-secondary mb-6">Er du sikker på at du vil slette {items.find(k => k.id === deleteConfirm)?.navn}?</p>
               <div className="flex gap-3">
                 <button onClick={() => handleDelete(deleteConfirm!)} className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">Slett</button>
-                <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors touch-manipulation">Avbryt</button>
+                <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2.5 bg-theme border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors touch-manipulation">Avbryt</button>
               </div>
             </div>
           </div>

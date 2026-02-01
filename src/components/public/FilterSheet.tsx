@@ -51,13 +51,13 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
 
   if (loading) {
     if (isSidebar) {
-      return <div className="h-full flex items-center justify-center"><p className="text-gray-400 text-sm">Laster...</p></div>
+      return <div className="h-full flex items-center justify-center"><p className="text-theme-secondary text-sm">Laster...</p></div>
     }
     return (
       <div className="fixed inset-0 z-50">
-        <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-        <div className="absolute bottom-0 left-0 right-0 max-h-[80vh] bg-[#1a1a1a] rounded-t-2xl flex flex-col items-center justify-center py-12">
-          <p className="text-gray-400 text-sm">Laster...</p>
+        <div className="absolute inset-0 bg-theme-overlay" onClick={onClose} />
+        <div className="absolute bottom-0 left-0 right-0 max-h-[80vh] bg-theme-card rounded-t-2xl flex flex-col items-center justify-center py-12">
+          <p className="text-theme-secondary text-sm">Laster...</p>
         </div>
       </div>
     )
@@ -110,7 +110,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
         <div className="max-h-64 overflow-y-auto py-1">
           <button
             onClick={toggleAll}
-            className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-[#222] transition-colors border-b border-[#2a2a2a] mb-1"
+            className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-theme-card-hover transition-colors border-b border-theme mb-1"
           >
             <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${allSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
               {allSelected && (
@@ -119,7 +119,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
                 </svg>
               )}
             </div>
-            <span className={`text-sm font-medium ${allSelected ? 'text-blue-400' : 'text-gray-400'}`}>{allSelected ? 'Fjern alle' : 'Velg alle'}</span>
+            <span className={`text-sm font-medium ${allSelected ? 'text-blue-400' : 'text-theme-secondary'}`}>{allSelected ? 'Fjern alle' : 'Velg alle'}</span>
           </button>
           {items.map(item => {
             const isSelected = selected.includes(item.id)
@@ -127,7 +127,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
               <button
                 key={item.id}
                 onClick={() => toggleArrayFilter(filterKey, item.id)}
-                className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-[#222] transition-colors"
+                className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-theme-card-hover transition-colors"
               >
                 <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
                   {isSelected && (
@@ -149,10 +149,10 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
       return (
         <button
           onClick={() => toggleSection(section)}
-          className="w-full flex items-center justify-between px-4 py-3 border-b border-[#2a2a2a] text-left hover:bg-[#222] transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3 border-b border-theme text-left hover:bg-theme-card-hover transition-colors"
         >
           <div className="flex-1 min-w-0">
-            <span className="text-sm text-white">{label}</span>
+            <span className="text-sm text-theme">{label}</span>
             {!isOpen && selectedTags.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-1">
                 {selectedTags.slice(0, 3).map((tag, i) => (
@@ -164,7 +164,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
               </div>
             )}
           </div>
-          <svg className={`w-4 h-4 text-gray-500 transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className={`w-4 h-4 text-theme-muted transition-transform shrink-0 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </button>
@@ -172,9 +172,9 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
     }
 
     return (
-      <div className="h-full overflow-y-auto bg-[#1a1a1a] flex flex-col">
-        <div className="px-4 py-3 border-b border-[#2a2a2a]">
-          <h2 className="text-sm font-semibold text-white">Filter</h2>
+      <div className="h-full overflow-y-auto bg-theme-card flex flex-col">
+        <div className="px-4 py-3 border-b border-theme">
+          <h2 className="text-sm font-semibold text-theme">Filter</h2>
         </div>
 
         {/* 110-sentral */}
@@ -213,7 +213,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
             <div className="max-h-64 overflow-y-auto py-1">
               <button
                 onClick={toggleAllKat}
-                className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-[#222] transition-colors border-b border-[#2a2a2a] mb-1"
+                className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-theme-card-hover transition-colors border-b border-theme mb-1"
               >
                 <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${allKatSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
                   {allKatSelected && (
@@ -222,7 +222,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
                     </svg>
                   )}
                 </div>
-                <span className={`text-sm font-medium ${allKatSelected ? 'text-blue-400' : 'text-gray-400'}`}>{allKatSelected ? 'Fjern alle' : 'Velg alle'}</span>
+                <span className={`text-sm font-medium ${allKatSelected ? 'text-blue-400' : 'text-theme-secondary'}`}>{allKatSelected ? 'Fjern alle' : 'Velg alle'}</span>
               </button>
               {kategorier.map(kat => {
                 const isSelected = filters.kategori_ids.includes(kat.id)
@@ -230,7 +230,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
                   <button
                     key={kat.id}
                     onClick={() => toggleArrayFilter('kategori_ids', kat.id)}
-                    className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-[#222] transition-colors"
+                    className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-theme-card-hover transition-colors"
                   >
                     <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
                       {isSelected && (
@@ -262,7 +262,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
               <button
                 key={opt.label}
                 onClick={() => onFiltersChange({ ...filters, status: opt.value })}
-                className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-[#222] transition-colors"
+                className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-theme-card-hover transition-colors"
               >
                 <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${filters.status === opt.value ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
                   {filters.status === opt.value && <div className="w-2 h-2 rounded-full bg-white" />}
@@ -275,7 +275,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
 
         {/* Reset */}
         {activeFilterCount > 0 && (
-          <div className="px-4 py-3 mt-auto border-t border-[#2a2a2a]">
+          <div className="px-4 py-3 mt-auto border-t border-theme">
             <button
               onClick={() => onFiltersChange(emptyFilters)}
               className="w-full py-2 rounded-lg bg-red-500/10 text-red-400 text-xs border border-red-500/20 hover:bg-red-500/20"
@@ -299,7 +299,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
 
   const renderMain = () => (
     <>
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a2a]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-theme">
         <button onClick={onClose} className="text-blue-400 text-sm flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -321,13 +321,13 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
           <button
             key={item.view}
             onClick={() => setView(item.view)}
-            className="w-full flex items-center justify-between py-3 border-b border-[#2a2a2a] text-left"
+            className="w-full flex items-center justify-between py-3 border-b border-theme text-left"
           >
             <div>
               <span className="text-white">{item.label}</span>
               {item.count > 0 && <span className="ml-2 text-xs text-blue-400">({item.count} valgt)</span>}
             </div>
-            <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5 text-theme-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
@@ -352,7 +352,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
 
   const renderListView = (title: string, items: { id: string; navn: string }[], filterKey: keyof FilterState, backView: string = 'main') => (
     <>
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a2a]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-theme">
         <button onClick={() => { setView(backView); setSelectedFylke(null) }} className="text-blue-400 text-sm flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           Tilbake
@@ -364,8 +364,8 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
         {items.map(item => {
           const isSelected = (filters[filterKey] as string[]).includes(item.id)
           return (
-            <button key={item.id} onClick={() => toggleArrayFilter(filterKey, item.id)} className="w-full flex items-center justify-between py-3 border-b border-[#2a2a2a] text-left">
-              <span className={isSelected ? 'text-blue-400 font-medium' : 'text-white'}>{item.navn}</span>
+            <button key={item.id} onClick={() => toggleArrayFilter(filterKey, item.id)} className="w-full flex items-center justify-between py-3 border-b border-theme text-left">
+              <span className={isSelected ? 'text-blue-400 font-medium' : 'text-theme'}>{item.navn}</span>
               {isSelected && <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
             </button>
           )
@@ -379,7 +379,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
 
   const renderFylkeView = () => (
     <>
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a2a]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-theme">
         <button onClick={() => setView('main')} className="text-blue-400 text-sm flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           Tilbake
@@ -392,12 +392,12 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
           const isSelected = filters.fylke_ids.includes(f.id)
           const kommuneCount = kommuner.filter(k => k.fylke_id === f.id).length
           return (
-            <div key={f.id} className="border-b border-[#2a2a2a]">
+            <div key={f.id} className="border-b border-theme">
               <div className="flex items-center justify-between py-3">
-                <button onClick={() => toggleArrayFilter('fylke_ids', f.id)} className={`text-left flex-1 ${isSelected ? 'text-blue-400 font-medium' : 'text-white'}`}>
-                  {f.navn} <span className="text-xs text-gray-500 ml-2">({kommuneCount} kommuner)</span>
+                <button onClick={() => toggleArrayFilter('fylke_ids', f.id)} className={`text-left flex-1 ${isSelected ? 'text-blue-400 font-medium' : 'text-theme'}`}>
+                  {f.navn} <span className="text-xs text-theme-muted ml-2">({kommuneCount} kommuner)</span>
                 </button>
-                <button onClick={() => { setSelectedFylke(f.id); setView('kommune') }} className="text-gray-400 hover:text-white p-1">
+                <button onClick={() => { setSelectedFylke(f.id); setView('kommune') }} className="text-theme-secondary hover:text-theme p-1">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </button>
               </div>
@@ -413,7 +413,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
 
   const renderStatusView = () => (
     <>
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a2a]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-theme">
         <button onClick={() => setView('main')} className="text-blue-400 text-sm flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           Tilbake
@@ -423,8 +423,8 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
       </div>
       <div className="p-4 space-y-1">
         {[{ value: null, label: 'Alle' }, { value: 'pågår', label: 'Pågår' }, { value: 'avsluttet', label: 'Avsluttet' }].map(opt => (
-          <button key={opt.label} onClick={() => onFiltersChange({ ...filters, status: opt.value })} className="w-full flex items-center justify-between py-3 border-b border-[#2a2a2a] text-left">
-            <span className={filters.status === opt.value ? 'text-blue-400 font-medium' : 'text-white'}>{opt.label}</span>
+          <button key={opt.label} onClick={() => onFiltersChange({ ...filters, status: opt.value })} className="w-full flex items-center justify-between py-3 border-b border-theme text-left">
+            <span className={filters.status === opt.value ? 'text-blue-400 font-medium' : 'text-theme'}>{opt.label}</span>
             {filters.status === opt.value && <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
           </button>
         ))}
@@ -444,7 +444,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
       {view === 'sentral' && renderListView('110-sentral', sentraler.map(s => ({ id: s.id, navn: s.kort_navn })), 'sentral_ids')}
       {view === 'tema' && (
         <>
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a2a]">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-theme">
             <button onClick={() => setView('main')} className="text-blue-400 text-sm flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
               Tilbake
@@ -456,12 +456,12 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
             {kategorier.map(kat => {
               const isSelected = filters.kategori_ids.includes(kat.id)
               return (
-                <button key={kat.id} onClick={() => toggleArrayFilter('kategori_ids', kat.id)} className="w-full flex items-center justify-between py-3 border-b border-[#2a2a2a] text-left">
+                <button key={kat.id} onClick={() => toggleArrayFilter('kategori_ids', kat.id)} className="w-full flex items-center justify-between py-3 border-b border-theme text-left">
                   <div className="flex items-center gap-2">
                     <span className="shrink-0" style={{ color: kat.farge }}>
                       <CategoryIcon iconName={kat.ikon} className="w-4 h-4" />
                     </span>
-                    <span className={isSelected ? 'text-blue-400 font-medium' : 'text-white'}>{kat.navn}</span>
+                    <span className={isSelected ? 'text-blue-400 font-medium' : 'text-theme'}>{kat.navn}</span>
                   </div>
                   {isSelected && <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
                 </button>
@@ -479,9 +479,9 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
 
   return (
     <div className="fixed inset-0 z-50">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div className="absolute bottom-0 left-0 right-0 max-h-[80vh] bg-[#1a1a1a] rounded-t-2xl flex flex-col">
-        <div className="w-10 h-1 bg-gray-600 rounded-full mx-auto mt-3 mb-1" />
+      <div className="absolute inset-0 bg-theme-overlay" onClick={onClose} />
+      <div className="absolute bottom-0 left-0 right-0 max-h-[80vh] bg-theme-card rounded-t-2xl flex flex-col">
+        <div className="w-10 h-1 bg-theme-card-hover rounded-full mx-auto mt-3 mb-1" />
         {content}
       </div>
     </div>
