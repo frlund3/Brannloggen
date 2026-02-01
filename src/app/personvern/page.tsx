@@ -1,17 +1,25 @@
+'use client'
+
+import { useSentraler } from '@/hooks/useSupabaseData'
+
 export default function PersonvernPage() {
+  const { data: sentraler, loading } = useSentraler()
+
+  const sentralerMedEpost = sentraler.filter(s => (s as Record<string, unknown>).kontakt_epost)
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
       <div className="max-w-2xl mx-auto px-4 py-8">
         <a href="/" className="text-sm text-blue-400 hover:text-blue-300 mb-6 inline-block">&larr; Tilbake til forsiden</a>
 
-        <h1 className="text-2xl font-bold mb-6">Personvernerklaering</h1>
+        <h1 className="text-2xl font-bold mb-6">Personvernerklæring</h1>
 
         <div className="space-y-6 text-sm text-gray-300 leading-relaxed">
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">1. Behandlingsansvarlig</h2>
             <p>
               Brannloggen er en tjeneste for formidling av hendelser fra norske brannvesen.
-              Kontakt oss via e-post for spoersmaal om personvern.
+              Kontakt oss via e-post for spørsmål om personvern.
             </p>
           </section>
 
@@ -28,7 +36,7 @@ export default function PersonvernPage() {
               Vi samler ikke inn navn, e-postadresse eller annen personlig informasjon fra vanlige brukere.
             </p>
 
-            <h3 className="text-sm font-semibold text-gray-200 mt-3 mb-1">For innloggede brukere (operatoerer/admin/presse)</h3>
+            <h3 className="text-sm font-semibold text-gray-200 mt-3 mb-1">For innloggede brukere (operatører/admin/presse)</h3>
             <ul className="list-disc list-inside space-y-1 text-gray-400">
               <li>Fullt navn og e-postadresse</li>
               <li>Rolle og tilknytning til 110-sentraler</li>
@@ -40,7 +48,7 @@ export default function PersonvernPage() {
             <h2 className="text-lg font-semibold text-white mb-2">3. Behandlingsgrunnlag</h2>
             <ul className="list-disc list-inside space-y-1 text-gray-400">
               <li><strong className="text-gray-300">Samtykke:</strong> Push-varsler aktiveres kun etter ditt eksplisitte samtykke.</li>
-              <li><strong className="text-gray-300">Berettiget interesse:</strong> For innloggede operatoerer som bruker systemet i tjeneste.</li>
+              <li><strong className="text-gray-300">Berettiget interesse:</strong> For innloggede operatører som bruker systemet i tjeneste.</li>
               <li><strong className="text-gray-300">Informasjon av allmenn interesse:</strong> Formidling av branninformasjon til publikum.</li>
             </ul>
           </section>
@@ -48,7 +56,7 @@ export default function PersonvernPage() {
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">4. Deling av data</h2>
             <p>
-              Vi deler ikke personopplysninger med tredjeparter utover det som er noedvendig
+              Vi deler ikke personopplysninger med tredjeparter utover det som er nødvendig
               for drift av tjenesten:
             </p>
             <ul className="list-disc list-inside space-y-1 text-gray-400 mt-2">
@@ -60,8 +68,8 @@ export default function PersonvernPage() {
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">5. Lagring og sletting</h2>
             <p>
-              Push-tokens lagres saa lenge varsler er aktive. Innloggede brukerprofiler
-              lagres saa lenge kontoen er aktiv. Handlingsloggen oppbevares i inntil 12 maaneder.
+              Push-tokens lagres så lenge varsler er aktive. Innloggede brukerprofiler
+              lagres så lenge kontoen er aktiv. Handlingsloggen oppbevares i inntil 12 måneder.
             </p>
           </section>
 
@@ -72,11 +80,11 @@ export default function PersonvernPage() {
               <li>Innsyn i hvilke data vi har om deg</li>
               <li>Retting av uriktige opplysninger</li>
               <li>Sletting av dine data</li>
-              <li>Aa trekke tilbake samtykke for push-varsler</li>
-              <li>Aa klage til Datatilsynet</li>
+              <li>Å trekke tilbake samtykke for push-varsler</li>
+              <li>Å klage til Datatilsynet</li>
             </ul>
             <p className="mt-2">
-              For aa slette push-varsler: deaktiver varsler i appen eller slett appen.
+              For å slette push-varsler: deaktiver varsler i appen eller slett appen.
               Push-tokenet vil da automatisk bli ugyldig.
             </p>
           </section>
@@ -84,24 +92,47 @@ export default function PersonvernPage() {
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">7. Informasjonskapsler (cookies)</h2>
             <p>
-              Vi bruker kun noedvendige informasjonskapsler for autentisering (innlogging).
-              Vi bruker ikke analyse- eller markedsfoerings-cookies.
+              Vi bruker kun nødvendige informasjonskapsler for autentisering (innlogging).
+              Vi bruker ikke analyse- eller markedsføringscookies.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">8. Sikkerhet</h2>
             <p>
-              All dataoverfoering er kryptert med TLS. Tilgang til data er begrenset
+              All dataoverføring er kryptert med TLS. Tilgang til data er begrenset
               gjennom rollebasert tilgangskontroll (RLS). Push-tokens er kun tilgjengelig
               for administratorer.
             </p>
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-white mb-2">9. Endringer</h2>
+            <h2 className="text-lg font-semibold text-white mb-2">9. Kontakt 110-sentraler</h2>
+            <p className="mb-3">
+              For spørsmål om personvern knyttet til en spesifikk 110-sentral, kontakt dem direkte:
+            </p>
+            {loading ? (
+              <p className="text-gray-500 text-xs">Laster kontaktinformasjon...</p>
+            ) : sentralerMedEpost.length > 0 ? (
+              <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] divide-y divide-[#2a2a2a]">
+                {sentralerMedEpost.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map(s => (
+                  <div key={s.id} className="px-4 py-3 flex items-center justify-between">
+                    <span className="text-sm text-white">{s.kort_navn}</span>
+                    <a href={`mailto:${(s as Record<string, unknown>).kontakt_epost}`} className="text-sm text-blue-400 hover:text-blue-300">
+                      {(s as Record<string, unknown>).kontakt_epost as string}
+                    </a>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-xs">Ingen kontakt-e-poster registrert ennå.</p>
+            )}
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-white mb-2">10. Endringer</h2>
             <p>
-              Denne personvernerkl&aelig;ringen kan oppdateres. Vesentlige endringer vil
+              Denne personvernerklæringen kan oppdateres. Vesentlige endringer vil
               bli varslet i appen.
             </p>
           </section>

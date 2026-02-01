@@ -1,11 +1,10 @@
 'use client'
 
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { PresseLayout } from '@/components/presse/PresseLayout'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
 import { useHendelser, useBrannvesen, useKommuner, useKategorier, useFylker } from '@/hooks/useSupabaseData'
 import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
-import { useSentralScope } from '@/hooks/useSentralScope'
 import { formatDateTime, formatTime, formatTimeAgo } from '@/lib/utils'
 import { useState } from 'react'
 
@@ -16,26 +15,20 @@ export default function PresseHendelserPage() {
   const { data: kommuner } = useKommuner()
   const { data: kategorier } = useKategorier()
   const { data: fylker } = useFylker()
-  const { isAdmin, is110Admin, filterByBrannvesen } = useSentralScope()
   const [filter, setFilter] = useState<'alle' | 'pågår' | 'avsluttet'>('alle')
   const [selectedFylke, setSelectedFylke] = useState('')
   const [selectedKategori, setSelectedKategori] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  const effectiveRole = isAdmin ? 'admin' : is110Admin ? '110-admin' : 'operator'
-
   if (hendelserLoading) {
     return (
-      <DashboardLayout role={effectiveRole}>
+      <PresseLayout>
         <div className="p-8 text-center text-gray-400">Laster...</div>
-      </DashboardLayout>
+      </PresseLayout>
     )
   }
 
-  // Scope hendelser to user's sentraler for operator/110-admin
-  const scopedHendelser = filterByBrannvesen(hendelser)
-
-  const filtered = scopedHendelser.filter((h) => {
+  const filtered = hendelser.filter((h) => {
     if (filter !== 'alle' && h.status !== filter) return false
     if (selectedFylke && h.fylke_id !== selectedFylke) return false
     if (selectedKategori && h.kategori_id !== selectedKategori) return false
@@ -43,8 +36,8 @@ export default function PresseHendelserPage() {
   })
 
   return (
-    <DashboardLayout role={effectiveRole}>
-      <div className="p-4 lg:p-8">
+    <PresseLayout>
+      <div className="py-4">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-white">Hendelser</h1>
           <p className="text-sm text-gray-400">Presseoversikt med utvidet informasjon</p>
@@ -95,15 +88,15 @@ export default function PresseHendelserPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
           <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
             <p className="text-xs text-gray-400">Totalt</p>
-            <p className="text-2xl font-bold text-white">{scopedHendelser.length}</p>
+            <p className="text-2xl font-bold text-white">{hendelser.length}</p>
           </div>
           <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
             <p className="text-xs text-gray-400">Pågår nå</p>
-            <p className="text-2xl font-bold text-red-400">{scopedHendelser.filter(h => h.status === 'pågår').length}</p>
+            <p className="text-2xl font-bold text-red-400">{hendelser.filter(h => h.status === 'pågår').length}</p>
           </div>
           <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
             <p className="text-xs text-gray-400">Siste 24t</p>
-            <p className="text-2xl font-bold text-blue-400">{scopedHendelser.filter(h => {
+            <p className="text-2xl font-bold text-blue-400">{hendelser.filter(h => {
               const t = new Date(h.opprettet_tidspunkt).getTime()
               return Date.now() - t < 24 * 60 * 60 * 1000
             }).length}</p>
@@ -224,11 +217,15 @@ export default function PresseHendelserPage() {
                         <h4 className="text-sm font-semibold text-gray-400 mb-2">
                           Tidslinje ({h.oppdateringer.length} oppdateringer)
                         </h4>
-                        <div className="space-y-2 border-l-2 border-blue-500/30 pl-3">
-                          {h.oppdateringer.map((upd) => (
-                            <div key={upd.id}>
+                        <div className="relative ml-1">
+                          {h.oppdateringer.map((upd, i) => (
+                            <div key={upd.id} className="relative pl-5 pb-4 last:pb-0">
+                              {i < h.oppdateringer!.length - 1 && (
+                                <div className="absolute left-[5px] top-[10px] bottom-0 w-px bg-blue-500/30" />
+                              )}
+                              <div className="absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 border-blue-500 bg-[#1a1a1a]" />
                               <span className="text-xs text-gray-500">{formatTime(upd.opprettet_tidspunkt)}</span>
-                              <p className="text-sm text-gray-300">{upd.tekst}</p>
+                              <p className="text-sm text-gray-300 mt-0.5">{upd.tekst}</p>
                             </div>
                           ))}
                         </div>
@@ -247,6 +244,6 @@ export default function PresseHendelserPage() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </PresseLayout>
   )
 }

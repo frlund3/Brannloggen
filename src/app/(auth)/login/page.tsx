@@ -148,8 +148,11 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <a href="/" className="text-sm text-gray-400 hover:text-white">
+        <div className="mt-6 text-center space-y-2">
+          <a href="/presse-registrering" className="block text-sm text-cyan-400 hover:text-cyan-300">
+            Er du journalist? Registrer deg her
+          </a>
+          <a href="/" className="block text-sm text-gray-400 hover:text-white">
             Tilbake til forsiden
           </a>
         </div>

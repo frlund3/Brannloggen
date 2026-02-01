@@ -55,6 +55,7 @@ export function usePushRegistration() {
       const { error: dbError } = await (supabase.from('push_abonnenter') as ReturnType<typeof supabase.from>)
         .upsert(
           {
+            id: deviceId,
             device_id: deviceId,
             platform,
             push_token: token,

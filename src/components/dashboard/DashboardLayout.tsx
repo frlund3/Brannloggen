@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
-  role: 'operator' | 'admin' | '110-admin' | 'presse'
+  role: 'operator' | 'admin' | '110-admin'
 }
 
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
@@ -52,7 +52,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     { href: '/admin/fylker', label: 'Fylker', icon: 'map' },
     { href: '/admin/kommuner', label: 'Kommuner', icon: 'map' },
     { href: '/admin/kategorier', label: 'Kategorier', icon: 'tag' },
-    { href: '/admin/statistikk', label: 'Statistikk', icon: 'chart' },
+    { href: '/admin/statistikk', label: 'Statistikk Varslinger', icon: 'chart' },
     { href: '/admin/innstillinger', label: 'Innstillinger', icon: 'settings' },
   ]
 
@@ -61,39 +61,41 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     { href: '/admin/brukere', label: 'Brukere', icon: 'users' },
     { href: '/admin/brannvesen', label: 'Brannvesen', icon: 'truck' },
     { href: '/admin/sentraler', label: '110-sentraler', icon: 'phone' },
-    { href: '/admin/statistikk', label: 'Statistikk', icon: 'chart' },
+    { href: '/admin/statistikk', label: 'Statistikk Varslinger', icon: 'chart' },
     { href: '/admin/innstillinger', label: 'Innstillinger', icon: 'settings' },
-  ]
-
-  const presseLinks = [
-    { href: '/presse/hendelser', label: 'Presse', icon: 'press' },
-    { href: '/presse/innstillinger', label: 'Pressevarsler', icon: 'settings' },
   ]
 
   // Determine effective role: use actual rolle from auth if available
   const effectiveRole = rolle || role
+
+  // Presse users should use PresseLayout, redirect them
+  if (effectiveRole === 'presse') {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/presse/hendelser'
+    }
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <p className="text-gray-400 text-sm">Omdirigerer...</p>
+      </div>
+    )
+  }
+
   const links = effectiveRole === 'admin'
-    ? [...operatorLinks, ...adminLinks, ...presseLinks]
+    ? [...operatorLinks, ...adminLinks, { href: '/admin/pressebrukere', label: 'Pressebrukere', icon: 'press' }]
     : effectiveRole === '110-admin'
-    ? [...operatorLinks, ...admin110Links, ...presseLinks]
-    : effectiveRole === 'presse'
-    ? presseLinks
-    : [...operatorLinks, ...presseLinks]
+    ? [...operatorLinks, ...admin110Links, { href: '/admin/pressebrukere', label: 'Pressebrukere', icon: 'press' }]
+    : [...operatorLinks]
 
   const roleLabel = effectiveRole === 'admin'
     ? 'Administrator'
     : effectiveRole === '110-admin'
     ? '110-sentral Admin'
-    : effectiveRole === 'presse'
-    ? 'Pressekonto'
     : '110-Sentral CMS'
 
   const headerLabel = effectiveRole === 'admin'
     ? 'Admin'
     : effectiveRole === '110-admin'
     ? '110-Admin'
-    : effectiveRole === 'presse'
-    ? 'Presse'
     : '110-Sentral'
 
   const getIcon = (icon: string) => {
