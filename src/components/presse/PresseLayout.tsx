@@ -5,6 +5,7 @@ import { useTheme } from '@/components/providers/ThemeProvider'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { logActivity } from '@/lib/logActivity'
 
 const tabs = [
   { href: '/presse/hendelser', label: 'Hendelser' },
@@ -48,6 +49,8 @@ export function PresseLayout({ children }: { children: React.ReactNode }) {
         document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'
       }
     })
+    // Log logout before signing out
+    logActivity({ handling: 'utlogget', tabell: 'auth' })
     const supabase = createClient()
     supabase.auth.signOut().then(() => {
       window.location.href = '/'

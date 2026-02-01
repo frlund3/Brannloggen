@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { logActivity } from '@/lib/logActivity'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -64,25 +65,40 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    const supabase = createClient()
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    try {
+      // Use server-side rate-limited login endpoint
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
 
-    if (authError) {
-      setError(authError.message)
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Innlogging feilet')
+        setLoading(false)
+        return
+      }
+
+      // Re-sync client session after server-side login
+      const supabase = createClient()
+      const { data: authData } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      const userId = authData?.user?.id || data.user?.id
+      if (userId) {
+        // Log successful login
+        logActivity({ handling: 'innlogget', tabell: 'auth', detaljer: { metode: 'passord' } })
+        await redirectByRole(userId)
+      } else {
+        window.location.href = '/'
+      }
+    } catch {
+      setError('Kunne ikke koble til serveren')
       setLoading(false)
-      return
-    }
-
-    // Wait a moment for cookies to be written, then do a full page navigation
-    // Full page load ensures middleware properly reads the new auth cookies
-    const userId = authData.user?.id
-    if (userId) {
-      await redirectByRole(userId)
-    } else {
-      window.location.href = '/'
     }
   }
 

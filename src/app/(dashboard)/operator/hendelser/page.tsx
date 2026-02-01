@@ -14,6 +14,7 @@ import { useState, useMemo, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { logActivity } from '@/lib/logActivity'
+import { validateImageFileFull } from '@/lib/file-validation'
 
 export default function OperatorHendelserPage() {
   const { data: allHendelser, loading: hendelserLoading, refetch } = useHendelser({ excludeDeactivated: true })
@@ -101,8 +102,15 @@ export default function OperatorHendelserPage() {
 
   const uploadImage = useCallback(async (file: File, hendelseId: string): Promise<string | null> => {
     try {
+      // Validate file before upload
+      const validation = await validateImageFileFull(file)
+      if (!validation.valid) {
+        toast.error(validation.error || 'Ugyldig fil')
+        return null
+      }
+
       const supabase = createClient()
-      const ext = file.name.split('.').pop()
+      const ext = file.name.split('.').pop()?.toLowerCase()
       const fileName = `${hendelseId}/${Date.now()}.${ext}`
       const { error } = await supabase.storage.from('hendelsesbilder').upload(fileName, file)
       if (error) throw error
@@ -626,10 +634,19 @@ export default function OperatorHendelserPage() {
             const isExpanded = expandedId === h.id
             const hasPresse = !!h.presse_tekst || presseCount > 0
 
+            const statusStripeColor = h.status === 'pågår' ? 'bg-red-500' : 'bg-gray-600'
+            const durationStripeColor = h.status === 'pågår' ? 'bg-amber-500' : 'bg-emerald-600'
+            const statusLabel = h.status === 'pågår' ? 'PÅGÅR' : 'AVSLUTTET'
+
             return (
-              <div key={h.id} className="bg-theme-card rounded-xl border border-theme overflow-hidden transition-all shadow-sm hover:shadow-md" style={
-                h.status === 'pågår' ? { borderLeftWidth: '6px', borderLeftColor: '#f97316' } : h.status === 'avsluttet' ? { borderLeftWidth: '6px', borderLeftColor: '#16a34a' } : undefined
-              }>
+              <div key={h.id} className="bg-theme-card rounded-xl border border-theme overflow-hidden transition-all shadow-sm hover:shadow-md flex">
+                {/* Status color stripe with vertical text */}
+                <div className={`w-7 shrink-0 ${statusStripeColor} flex items-center justify-center`}>
+                  <span className="text-[10px] font-bold text-white tracking-widest [writing-mode:vertical-lr] rotate-180 select-none">
+                    {statusLabel}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
                 {/* Card header - clickable */}
                 <div
                   className="p-4 cursor-pointer hover:bg-theme-card-hover transition-colors"
@@ -938,6 +955,13 @@ export default function OperatorHendelserPage() {
                     </div>
                   )
                 })()}
+                </div>
+                {/* Duration color stripe with vertical text */}
+                <div className={`w-7 shrink-0 ${durationStripeColor} flex items-center justify-center`}>
+                  <span className="text-[10px] font-bold text-white tracking-widest [writing-mode:vertical-lr] rotate-180 select-none">
+                    {formatDuration(h.opprettet_tidspunkt, h.avsluttet_tidspunkt)}
+                  </span>
+                </div>
               </div>
             )
           })}

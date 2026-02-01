@@ -28,6 +28,7 @@ interface IncidentCardProps {
   opprettet_av: string
   opprettet_tidspunkt: string
   oppdatert_tidspunkt: string
+  avsluttet_tidspunkt?: string | null
   presse_tekst?: string | null
   bilde_url?: string | null
   oppdateringer?: IncidentUpdate[]
@@ -58,14 +59,19 @@ export function IncidentCard({
 
   const activeUpdates = oppdateringer.filter(u => !u.deaktivert)
   const stripeColor = status === 'pågår' ? 'bg-red-500' : 'bg-gray-600'
+  const statusLabel = status === 'pågår' ? 'PÅGÅR' : 'AVSLUTTET'
 
   return (
     <div
       className="rounded-xl bg-theme-card border border-theme hover:bg-theme-card-hover transition-colors cursor-pointer flex overflow-hidden"
       onClick={onClick}
     >
-      {/* Status color stripe */}
-      <div className={`w-1 shrink-0 ${stripeColor}`} />
+      {/* Status color stripe with vertical text */}
+      <div className={`w-7 shrink-0 ${stripeColor} flex items-center justify-center`}>
+        <span className="text-[10px] font-bold text-white tracking-widest [writing-mode:vertical-lr] rotate-180 select-none">
+          {statusLabel}
+        </span>
+      </div>
       <div className="p-4 flex-1 min-w-0">
       <div className="flex items-start justify-between gap-2 mb-1">
         <span className="text-xs text-theme-secondary">{sentral?.kort_navn || bv?.kort_navn || bv?.navn}</span>
