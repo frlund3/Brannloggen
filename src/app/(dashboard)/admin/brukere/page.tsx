@@ -358,70 +358,49 @@ export default function AdminBrukerePage() {
           ))}
         </div>
 
-        {/* Table */}
-        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[#2a2a2a]">
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Bruker</th>
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">E-post</th>
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Rolle</th>
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">110-sentral</th>
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">Status</th>
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((user) => {
-                  const userSentraler = user.sentral_ids.map(sId => sentraler.find(s => s.id === sId)).filter(Boolean)
-                  // 110-admin cannot edit other admins or 110-admins
-                  const canEdit = isAdmin || (is110Admin && user.rolle !== 'admin' && user.rolle !== '110-admin')
-                  const canDelete = isAdmin
-                  return (
-                    <tr key={user.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
-                      <td className="px-3 sm:px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center shrink-0">
-                            <span className="text-xs text-white font-bold">{user.fullt_navn.split(' ').map(n => n[0]).join('')}</span>
-                          </div>
-                          <span className="text-sm text-white font-medium">{user.fullt_navn}</span>
-                        </div>
-                      </td>
-                      <td className="px-3 sm:px-4 py-3 hidden md:table-cell"><span className="text-sm text-gray-400">{user.epost}</span></td>
-                      <td className="px-3 sm:px-4 py-3">
-                        <span className={`text-xs px-2 py-0.5 rounded ${getRolleColor(user.rolle)}`}>
-                          {getRolleLabel(user.rolle)}
-                        </span>
-                      </td>
-                      <td className="px-3 sm:px-4 py-3 hidden sm:table-cell">
-                        <div className="flex flex-wrap gap-1">
-                          {userSentraler.length > 0 ? userSentraler.map(s => (
-                            <span key={s!.id} className="text-xs bg-orange-500/10 text-orange-400 px-1.5 py-0.5 rounded">{s!.kort_navn}</span>
-                          )) : <span className="text-xs text-gray-600">-</span>}
-                        </div>
-                      </td>
-                      <td className="px-3 sm:px-4 py-3 hidden sm:table-cell">
-                        <span className={`text-xs ${user.aktiv ? 'text-green-400' : 'text-red-400'}`}>{user.aktiv ? 'Aktiv' : 'Deaktivert'}</span>
-                      </td>
-                      <td className="px-3 sm:px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          {canEdit && <button onClick={() => handleEdit(user)} className="text-xs text-blue-400 hover:text-blue-300 py-1 touch-manipulation">Rediger</button>}
-                          <button onClick={() => handleToggleActive(user.id)} className={`text-xs py-1 touch-manipulation ${user.aktiv ? 'text-orange-400 hover:text-orange-300' : 'text-green-400 hover:text-green-300'}`}>
-                            {user.aktiv ? 'Deaktiver' : 'Aktiver'}
-                          </button>
-                          {canDelete && <button onClick={() => setDeleteConfirm(user.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation">Slett</button>}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className="px-4 py-3 border-t border-[#2a2a2a]">
-            <p className="text-xs text-gray-500">Viser {filtered.length} av {scopedBrukere.length} brukere</p>
-          </div>
+        {/* User cards */}
+        <div className="space-y-3">
+          {filtered.map((user) => {
+            const userSentraler = user.sentral_ids.map(sId => sentraler.find(s => s.id === sId)).filter(Boolean)
+            const canEdit = isAdmin || (is110Admin && user.rolle !== 'admin' && user.rolle !== '110-admin')
+            const canDelete = isAdmin
+            return (
+              <div key={user.id} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center shrink-0">
+                    <span className="text-sm text-white font-bold">{user.fullt_navn.split(' ').map(n => n[0]).join('')}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm text-white font-medium">{user.fullt_navn}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded ${getRolleColor(user.rolle)}`}>
+                        {getRolleLabel(user.rolle)}
+                      </span>
+                      <span className={`text-xs ${user.aktiv ? 'text-green-400' : 'text-red-400'}`}>
+                        {user.aktiv ? 'Aktiv' : 'Deaktivert'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-0.5 truncate">{user.epost}</p>
+                    {userSentraler.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {userSentraler.map(s => (
+                          <span key={s!.id} className="text-xs bg-orange-500/10 text-orange-400 px-1.5 py-0.5 rounded">{s!.kort_navn}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#2a2a2a]">
+                  {canEdit && <button onClick={() => handleEdit(user)} className="text-xs text-blue-400 hover:text-blue-300 py-1 touch-manipulation">Rediger</button>}
+                  <button onClick={() => handleToggleActive(user.id)} className={`text-xs py-1 touch-manipulation ${user.aktiv ? 'text-orange-400 hover:text-orange-300' : 'text-green-400 hover:text-green-300'}`}>
+                    {user.aktiv ? 'Deaktiver' : 'Aktiver'}
+                  </button>
+                  {canDelete && <button onClick={() => setDeleteConfirm(user.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation">Slett</button>}
+                </div>
+              </div>
+            )
+          })}
+          <p className="text-xs text-gray-500">Viser {filtered.length} av {scopedBrukere.length} brukere</p>
         </div>
 
         {/* Add modal */}

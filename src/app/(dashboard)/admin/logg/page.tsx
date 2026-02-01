@@ -249,64 +249,46 @@ export default function AdminLoggPage() {
 
         {/* Log entries */}
         {entries.length > 0 && (
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-[#2a2a2a]">
-                    <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium w-[140px]">Tidspunkt</th>
-                    <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium w-[160px]">Handling</th>
-                    <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Hendelse</th>
-                    <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Detaljer</th>
-                    <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell w-[150px]">Bruker</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.slice(0, 200).map(entry => (
-                    <tr key={entry.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
-                      <td className="px-4 py-3">
-                        <span className="text-xs text-gray-500 whitespace-nowrap">{formatDateTime(entry.tidspunkt)}</span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`text-[10px] px-2 py-0.5 rounded ${handlingColor(entry.handling)}`}>
-                          {handlingLabel(entry.handling)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {entry.hendelse_tittel ? (
-                          <span className="text-sm text-white truncate block max-w-[250px]">{entry.hendelse_tittel}</span>
-                        ) : (
-                          <span className="text-xs text-gray-600">{entry.tabell}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 hidden lg:table-cell">
-                        {entry.detaljer && Object.keys(entry.detaljer).length > 0 ? (
-                          <span className="text-xs text-gray-500 truncate block max-w-[300px]">
-                            {entry.detaljer.tekst ? String(entry.detaljer.tekst) :
-                             entry.detaljer.endrede_felt ? `Felt: ${(entry.detaljer.endrede_felt as string[]).join(', ')}` :
-                             JSON.stringify(entry.detaljer)}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-600">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 hidden md:table-cell">
+          <>
+            <div className="space-y-2">
+              {filtered.slice(0, 200).map(entry => (
+                <div key={entry.id} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] px-4 py-3">
+                  <div className="flex items-start gap-3">
+                    <span className={`text-[10px] px-2 py-0.5 rounded shrink-0 mt-0.5 ${handlingColor(entry.handling)}`}>
+                      {handlingLabel(entry.handling)}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      {entry.hendelse_tittel ? (
+                        <p className="text-sm text-white truncate">{entry.hendelse_tittel}</p>
+                      ) : (
+                        <p className="text-xs text-gray-600">{entry.tabell}</p>
+                      )}
+                      {entry.detaljer && Object.keys(entry.detaljer).length > 0 && (
+                        <p className="text-xs text-gray-500 truncate mt-0.5">
+                          {entry.detaljer.tekst ? String(entry.detaljer.tekst) :
+                           entry.detaljer.endrede_felt ? `Felt: ${(entry.detaljer.endrede_felt as string[]).join(', ')}` :
+                           JSON.stringify(entry.detaljer)}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-gray-500">{formatDateTime(entry.tidspunkt)}</span>
+                        <span className="text-xs text-gray-600">&middot;</span>
                         <span className="text-xs text-gray-400">{getUserName(entry.bruker_id) || entry.bruker_id?.slice(0, 8) || 'Ukjent'}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
             {filtered.length === 0 && entries.length > 0 && (
               <div className="p-8 text-center text-gray-500 text-sm">Ingen loggoppføringer matcher filteret</div>
             )}
             {filtered.length > 200 && (
-              <div className="p-3 text-center text-gray-500 text-xs border-t border-[#2a2a2a]">
+              <div className="p-3 text-center text-gray-500 text-xs">
                 Viser 200 av {filtered.length} oppføringer. Bruk filtre for å begrense.
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </DashboardLayout>

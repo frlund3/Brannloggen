@@ -157,55 +157,30 @@ export default function AdminPressebrukerePage() {
               Ingen ventende søknader
             </div>
           ) : (
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[#2a2a2a]">
-                      <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Navn</th>
-                      <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">E-post</th>
-                      <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Mediehus</th>
-                      <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">Telefon</th>
-                      <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">Dato</th>
-                      <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Handling</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {soknader.map((s) => (
-                      <tr key={s.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
-                        <td className="px-4 py-3">
-                          <div>
-                            <span className="text-sm text-white font-medium">{s.fullt_navn}</span>
-                            <span className="block sm:hidden text-xs text-gray-400">{s.epost}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 hidden sm:table-cell"><span className="text-sm text-gray-400">{s.epost}</span></td>
-                        <td className="px-4 py-3"><span className="text-sm text-cyan-400">{getMediumNavn(s.medium_id) || s.mediehus}</span></td>
-                        <td className="px-4 py-3 hidden md:table-cell"><span className="text-sm text-gray-400">{s.telefon || '-'}</span></td>
-                        <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs text-gray-500">{new Date(s.opprettet).toLocaleDateString('nb-NO')}</span></td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleAction(s.id, 'godkjent')}
-                              disabled={processing === s.id}
-                              className="text-xs px-3 py-1.5 bg-green-500/10 text-green-400 rounded-lg hover:bg-green-500/20 disabled:opacity-50 touch-manipulation"
-                            >
-                              {processing === s.id ? '...' : 'Godkjenn'}
-                            </button>
-                            <button
-                              onClick={() => setAvvisModal(s.id)}
-                              disabled={processing === s.id}
-                              className="text-xs px-3 py-1.5 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 disabled:opacity-50 touch-manipulation"
-                            >
-                              Avvis
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="space-y-3">
+              {soknader.map((s) => (
+                <div key={s.id} className="bg-[#1a1a1a] rounded-xl border border-orange-500/30 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm text-white font-medium">{s.fullt_navn}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{s.epost}</p>
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        <span className="text-xs bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded">{getMediumNavn(s.medium_id) || s.mediehus}</span>
+                        {s.telefon && <span className="text-xs text-gray-500">{s.telefon}</span>}
+                        <span className="text-xs text-gray-600">{new Date(s.opprettet).toLocaleDateString('nb-NO')}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button onClick={() => handleAction(s.id, 'godkjent')} disabled={processing === s.id} className="text-xs px-3 py-1.5 bg-green-500/10 text-green-400 rounded-lg hover:bg-green-500/20 disabled:opacity-50 touch-manipulation">
+                        {processing === s.id ? '...' : 'Godkjenn'}
+                      </button>
+                      <button onClick={() => setAvvisModal(s.id)} disabled={processing === s.id} className="text-xs px-3 py-1.5 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 disabled:opacity-50 touch-manipulation">
+                        Avvis
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -221,62 +196,30 @@ export default function AdminPressebrukerePage() {
               Ingen pressebrukere registrert
             </div>
           ) : (
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[#2a2a2a]">
-                      <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Navn</th>
-                      <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">E-post</th>
-                      <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Mediehus</th>
-                      <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">Status</th>
-                      <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {presseBrukere.map((u) => (
-                      <tr key={u.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center shrink-0">
-                              <span className="text-xs text-white font-bold">{u.fullt_navn.split(' ').map(n => n[0]).join('')}</span>
-                            </div>
-                            <div>
-                              <span className="text-sm text-white font-medium">{u.fullt_navn}</span>
-                              <span className="block sm:hidden text-xs text-gray-400">{u.epost}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 hidden sm:table-cell"><span className="text-sm text-gray-400">{u.epost}</span></td>
-                        <td className="px-4 py-3">
-                          <span className="text-sm text-cyan-400">{getMediumNavn(u.medium_id) || '-'}</span>
-                        </td>
-                        <td className="px-4 py-3 hidden sm:table-cell">
-                          <span className={`text-xs ${u.aktiv ? 'text-green-400' : 'text-red-400'}`}>{u.aktiv ? 'Aktiv' : 'Deaktivert'}</span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => handleToggleActive(u.id, u.aktiv)}
-                              className={`text-xs py-1 touch-manipulation ${u.aktiv ? 'text-orange-400 hover:text-orange-300' : 'text-green-400 hover:text-green-300'}`}
-                            >
-                              {u.aktiv ? 'Deaktiver' : 'Aktiver'}
-                            </button>
-                            {isAdmin && (
-                              <button
-                                onClick={() => handleDelete(u.id)}
-                                className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation"
-                              >
-                                Slett
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="space-y-3">
+              {presseBrukere.map((u) => (
+                <div key={u.id} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center shrink-0">
+                      <span className="text-xs text-white font-bold">{u.fullt_navn.split(' ').map(n => n[0]).join('')}</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-white font-medium">{u.fullt_navn}</p>
+                      <p className="text-xs text-gray-400">{u.epost}</p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-xs text-cyan-400 hidden sm:inline">{getMediumNavn(u.medium_id) || '-'}</span>
+                      <span className={`text-xs ${u.aktiv ? 'text-green-400' : 'text-red-400'}`}>{u.aktiv ? 'Aktiv' : 'Deaktivert'}</span>
+                      <button onClick={() => handleToggleActive(u.id, u.aktiv)} className={`text-xs py-1 touch-manipulation ${u.aktiv ? 'text-orange-400 hover:text-orange-300' : 'text-green-400 hover:text-green-300'}`}>
+                        {u.aktiv ? 'Deaktiver' : 'Aktiver'}
+                      </button>
+                      {isAdmin && (
+                        <button onClick={() => handleDelete(u.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation">Slett</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

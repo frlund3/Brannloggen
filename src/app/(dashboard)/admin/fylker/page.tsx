@@ -16,6 +16,7 @@ export default function AdminFylkerPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const [form, setForm] = useState({ navn: '', nummer: '' })
   const [search, setSearch] = useState('')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => { if (fylkerData.length > 0) setItems(fylkerData) }, [fylkerData])
 
@@ -108,35 +109,41 @@ export default function AdminFylkerPage() {
 
         <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk etter fylke..." className="mb-6 px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 w-full sm:w-64" />
 
-        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-[#2a2a2a]">
-                <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Navn</th>
-                <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Nummer</th>
-                <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Kommuner</th>
-                <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((f) => {
-                const antallKommuner = kommunerData.filter(k => k.fylke_id === f.id).length
-                return (
-                  <tr key={f.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
-                    <td className="px-4 py-3 text-sm text-white font-medium">{f.navn}</td>
-                    <td className="px-4 py-3 text-sm text-gray-400">{f.nummer}</td>
-                    <td className="px-4 py-3 text-sm text-gray-400">{antallKommuner}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => handleEdit(f)} className="text-xs text-blue-400 hover:text-blue-300 touch-manipulation">Rediger</button>
-                        <button onClick={() => setDeleteConfirm(f.id)} className="text-xs text-red-400 hover:text-red-300 touch-manipulation">Slett</button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+        <div className="space-y-3">
+          {filtered.map((f) => {
+            const fKommuner = kommunerData.filter(k => k.fylke_id === f.id).sort((a, b) => a.navn.localeCompare(b.navn, 'no'))
+            const isExpanded = expandedId === f.id
+            return (
+              <div key={f.id} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
+                <div className="px-4 py-3">
+                  <button onClick={() => setExpandedId(isExpanded ? null : f.id)} className="flex items-center gap-3 text-left w-full touch-manipulation">
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                    <div>
+                      <p className="text-sm text-white font-medium">{f.navn}</p>
+                      <p className="text-xs text-gray-500">Nr. {f.nummer} &middot; {fKommuner.length} kommuner</p>
+                    </div>
+                  </button>
+                  <div className="flex items-center gap-3 mt-2 ml-7">
+                    <button onClick={() => handleEdit(f)} className="text-xs text-blue-400 hover:text-blue-300 py-1 touch-manipulation">Rediger</button>
+                    <button onClick={() => setDeleteConfirm(f.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation">Slett</button>
+                  </div>
+                </div>
+                {isExpanded && (
+                  <div className="px-4 pb-3 border-t border-[#2a2a2a] pt-3">
+                    <p className="text-xs text-gray-400 mb-2">Kommuner ({fKommuner.length})</p>
+                    <div className="flex flex-wrap gap-1">
+                      {fKommuner.map(k => (
+                        <span key={k.id} className="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded">{k.navn}</span>
+                      ))}
+                      {fKommuner.length === 0 && <span className="text-xs text-gray-500">Ingen kommuner</span>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
 
         {/* Add modal */}

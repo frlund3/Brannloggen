@@ -266,6 +266,85 @@ export default function AdminRapporterPage() {
         .sort((a, b) => b.avgMin - a.avgMin)
     }, [filteredHendelser, kategorier])
 
+    // Varighet per brannvesen
+    const varighetPerBrannvesen = useMemo(() => {
+      const sums: Record<string, { total: number; count: number }> = {}
+      filteredHendelser.forEach(h => {
+        const dur = beregnVarighet(h)
+        if (dur !== null) {
+          if (!sums[h.brannvesen_id]) sums[h.brannvesen_id] = { total: 0, count: 0 }
+          sums[h.brannvesen_id].total += dur
+          sums[h.brannvesen_id].count += 1
+        }
+      })
+      return availableBrannvesen
+        .map(b => ({
+          ...b,
+          avgMin: sums[b.id] ? Math.round(sums[b.id].total / sums[b.id].count) : 0,
+          sampleCount: sums[b.id]?.count || 0,
+        }))
+        .filter(b => b.sampleCount > 0)
+        .sort((a, b) => b.avgMin - a.avgMin)
+        .slice(0, 20)
+    }, [filteredHendelser, availableBrannvesen])
+
+    // Varighet per sentral
+    const varighetPerSentral = useMemo(() => {
+      const sums: Record<string, { total: number; count: number }> = {}
+      filteredHendelser.forEach(h => {
+        const dur = beregnVarighet(h)
+        const sId = brannvesenToSentral[h.brannvesen_id]
+        if (dur !== null && sId) {
+          if (!sums[sId]) sums[sId] = { total: 0, count: 0 }
+          sums[sId].total += dur
+          sums[sId].count += 1
+        }
+      })
+      return availableSentraler
+        .map(s => ({
+          ...s,
+          avgMin: sums[s.id] ? Math.round(sums[s.id].total / sums[s.id].count) : 0,
+          sampleCount: sums[s.id]?.count || 0,
+        }))
+        .filter(s => s.sampleCount > 0)
+        .sort((a, b) => b.avgMin - a.avgMin)
+    }, [filteredHendelser, availableSentraler, brannvesenToSentral])
+
+    // Varighet per alvorlighetsgrad
+    const varighetPerAlvor = useMemo(() => {
+      const order = ['kritisk', 'høy', 'middels', 'lav']
+      const colors: Record<string, string> = { kritisk: '#dc2626', høy: '#f97316', middels: '#eab308', lav: '#22c55e' }
+      const labels: Record<string, string> = { kritisk: 'Kritisk', høy: 'Høy', middels: 'Middels', lav: 'Lav' }
+      const sums: Record<string, { total: number; count: number }> = {}
+      filteredHendelser.forEach(h => {
+        const dur = beregnVarighet(h)
+        if (dur !== null) {
+          if (!sums[h.alvorlighetsgrad]) sums[h.alvorlighetsgrad] = { total: 0, count: 0 }
+          sums[h.alvorlighetsgrad].total += dur
+          sums[h.alvorlighetsgrad].count += 1
+        }
+      })
+      return order
+        .map(key => ({
+          key,
+          label: labels[key],
+          color: colors[key],
+          avgMin: sums[key] ? Math.round(sums[key].total / sums[key].count) : 0,
+          sampleCount: sums[key]?.count || 0,
+        }))
+        .filter(a => a.sampleCount > 0)
+    }, [filteredHendelser])
+
+    // KPI: median varighet, lengste, korteste
+    const varighetStats = useMemo(() => {
+      const durations = filteredHendelser.map(beregnVarighet).filter((v): v is number => v !== null).sort((a, b) => a - b)
+      if (durations.length === 0) return null
+      const median = durations[Math.floor(durations.length / 2)]
+      const longest = durations[durations.length - 1]
+      const shortest = durations[0]
+      return { median, longest, shortest, count: durations.length }
+    }, [filteredHendelser])
+
     // Over tid
     const overTid = useMemo(() => {
       if (filteredHendelser.length === 0) return []
@@ -516,6 +595,16 @@ export default function AdminRapporterPage() {
             <KpiCard label="Oppdateringer" value={kpis.totalOppdateringer} color="text-blue-400" />
           </div>
 
+          {/* Duration stats row */}
+          {varighetStats && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <KpiCard label="Median varighet" value={formaterVarighet(varighetStats.median)} color="text-amber-400" />
+              <KpiCard label="Lengste varighet" value={formaterVarighet(varighetStats.longest)} color="text-red-400" />
+              <KpiCard label="Korteste varighet" value={formaterVarighet(varighetStats.shortest)} color="text-green-400" />
+              <KpiCard label="Avsluttede hendelser" value={varighetStats.count} color="text-gray-400" />
+            </div>
+          )}
+
           {/* Report sections - two column grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* 1. Per kategori */}
@@ -600,7 +689,52 @@ export default function AdminRapporterPage() {
               ))}
             </ReportCard>
 
-            {/* 8. Per bruker */}
+            {/* 8. Varighet per brannvesen */}
+            <ReportCard title="Gj.snittlig varighet per brannvesen (topp 20)">
+              {varighetPerBrannvesen.length === 0 && <p className="text-sm text-gray-500">Ingen avsluttede hendelser</p>}
+              {varighetPerBrannvesen.map(b => (
+                <HorizontalBar
+                  key={b.id}
+                  label={b.kort_navn}
+                  count={b.avgMin}
+                  max={varighetPerBrannvesen[0]?.avgMin || 1}
+                  color="#3b82f6"
+                  suffix={` (${formaterVarighet(b.avgMin)}, n=${b.sampleCount})`}
+                />
+              ))}
+            </ReportCard>
+
+            {/* 9. Varighet per sentral */}
+            <ReportCard title="Gj.snittlig varighet per 110-sentral">
+              {varighetPerSentral.length === 0 && <p className="text-sm text-gray-500">Ingen avsluttede hendelser</p>}
+              {varighetPerSentral.map(s => (
+                <HorizontalBar
+                  key={s.id}
+                  label={s.kort_navn}
+                  count={s.avgMin}
+                  max={varighetPerSentral[0]?.avgMin || 1}
+                  color="#f97316"
+                  suffix={` (${formaterVarighet(s.avgMin)}, n=${s.sampleCount})`}
+                />
+              ))}
+            </ReportCard>
+
+            {/* 10. Varighet per alvorlighetsgrad */}
+            <ReportCard title="Gj.snittlig varighet per alvorlighetsgrad">
+              {varighetPerAlvor.length === 0 && <p className="text-sm text-gray-500">Ingen avsluttede hendelser</p>}
+              {varighetPerAlvor.map(a => (
+                <HorizontalBar
+                  key={a.key}
+                  label={a.label}
+                  count={a.avgMin}
+                  max={Math.max(...varighetPerAlvor.map(x => x.avgMin), 1)}
+                  color={a.color}
+                  suffix={` (${formaterVarighet(a.avgMin)}, n=${a.sampleCount})`}
+                />
+              ))}
+            </ReportCard>
+
+            {/* 11. Per bruker */}
             <ReportCard title="Aktivitet per operatør">
               {perBruker.length === 0 && <p className="text-sm text-gray-500">Ingen data</p>}
               {perBruker.slice(0, 15).map(b => (

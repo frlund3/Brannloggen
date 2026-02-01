@@ -119,40 +119,27 @@ export default function AdminKommunerPage() {
           </select>
         </div>
 
-        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[#2a2a2a]">
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Navn</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Nummer</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Fylke</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.slice(0, 100).map((k) => {
-                  const fylke = fylkerData.find(f => f.id === k.fylke_id)
-                  return (
-                    <tr key={k.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
-                      <td className="px-4 py-3 text-sm text-white font-medium">{k.navn}</td>
-                      <td className="px-4 py-3 text-sm text-gray-400">{k.nummer}</td>
-                      <td className="px-4 py-3 text-sm text-gray-400">{fylke?.navn || '-'}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => handleEdit(k)} className="text-xs text-blue-400 hover:text-blue-300 touch-manipulation">Rediger</button>
-                          <button onClick={() => setDeleteConfirm(k.id)} className="text-xs text-red-400 hover:text-red-300 touch-manipulation">Slett</button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className="px-4 py-3 border-t border-[#2a2a2a]">
-            <p className="text-xs text-gray-500">Viser {Math.min(filtered.length, 100)} av {filtered.length} kommuner{filtered.length > 100 ? ' (bruk søk eller filter for å se flere)' : ''}</p>
-          </div>
+        <p className="text-xs text-gray-500 mb-3">Viser {Math.min(filtered.length, 100)} av {filtered.length} kommuner{filtered.length > 100 ? ' (bruk søk eller filter for å se flere)' : ''}</p>
+
+        <div className="space-y-2">
+          {filtered.slice(0, 100).map((k) => {
+            const fylke = fylkerData.find(f => f.id === k.fylke_id)
+            return (
+              <div key={k.id} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm text-white font-medium">{k.navn}</p>
+                    <p className="text-xs text-gray-500">Nr. {k.nummer}</p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    {fylke && <span className="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded hidden sm:inline">{fylke.navn}</span>}
+                    <button onClick={() => handleEdit(k)} className="text-xs text-blue-400 hover:text-blue-300 py-1 touch-manipulation">Rediger</button>
+                    <button onClick={() => setDeleteConfirm(k.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation">Slett</button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
 
         {/* Add modal */}
