@@ -23,7 +23,7 @@ const corsHeaders = {
 interface QueueItem {
   id: number
   hendelse_id: string
-  event_type: 'ny_hendelse' | 'oppdatering' | 'status_endring'
+  event_type: 'ny_hendelse' | 'oppdatering' | 'status_endring' | 'presseoppdatering' | 'pressemelding'
   payload: Record<string, unknown>
   processed: boolean
 }
@@ -204,6 +204,10 @@ function buildTitle(item: QueueItem): string {
       return '📋 Ny oppdatering'
     case 'status_endring':
       return `⚡ Status endret: ${item.payload.ny_status || ''}`
+    case 'presseoppdatering':
+      return '📰 Ny pressemelding'
+    case 'pressemelding':
+      return `📰 Pressemelding: ${item.payload.tittel || 'Ukjent'}`
     default:
       return 'Brannloggen'
   }
@@ -217,6 +221,10 @@ function buildBody(item: QueueItem): string {
       return (item.payload.tekst as string)?.slice(0, 200) || ''
     case 'status_endring':
       return `${item.payload.tittel || ''}: ${item.payload.gammel_status} → ${item.payload.ny_status}`
+    case 'presseoppdatering':
+      return (item.payload.tekst as string)?.slice(0, 200) || ''
+    case 'pressemelding':
+      return (item.payload.presse_tekst as string)?.slice(0, 200) || ''
     default:
       return ''
   }
