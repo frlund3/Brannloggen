@@ -5,7 +5,7 @@ import { useSentraler } from '@/hooks/useSupabaseData'
 export default function PersonvernPage() {
   const { data: sentraler, loading } = useSentraler()
 
-  const sentralerMedEpost = sentraler.filter(s => (s as Record<string, unknown>).kontakt_epost)
+  const sentralerMedEpost = sentraler.filter(s => s.kontakt_epost)
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -118,8 +118,8 @@ export default function PersonvernPage() {
                 {sentralerMedEpost.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map(s => (
                   <div key={s.id} className="px-4 py-3 flex items-center justify-between">
                     <span className="text-sm text-white">{s.kort_navn}</span>
-                    <a href={`mailto:${(s as Record<string, unknown>).kontakt_epost}`} className="text-sm text-blue-400 hover:text-blue-300">
-                      {(s as Record<string, unknown>).kontakt_epost as string}
+                    <a href={`mailto:${s.kontakt_epost}`} className="text-sm text-blue-400 hover:text-blue-300">
+                      {s.kontakt_epost}
                     </a>
                   </div>
                 ))}
