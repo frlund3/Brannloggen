@@ -139,7 +139,6 @@ export default function AdminBrukerePage() {
     setBrukere(brukere.map(u => u.id === id ? { ...u, aktiv: !u.aktiv } : u))
     try {
       const supabase = createClient()
-      // @ts-expect-error supabase types not generated
       const { error } = await supabase.from('brukerprofiler').update({ aktiv: !user.aktiv } as any).eq('id', id)
       if (error) throw error
       invalidateCache()
@@ -168,7 +167,6 @@ export default function AdminBrukerePage() {
     setEditUser(null)
     try {
       const supabase = createClient()
-      // @ts-expect-error supabase types not generated
       const { error } = await supabase.from('brukerprofiler').update(updated as any).eq('id', editUser.id)
       if (error) throw error
       invalidateCache()

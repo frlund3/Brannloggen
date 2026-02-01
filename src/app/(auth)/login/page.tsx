@@ -13,7 +13,7 @@ export default function LoginPage() {
   // Check if already logged in
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }: { data: { session: any } }) => {
       if (session) {
         // Already logged in - redirect based on role
         redirectByRole(session.user.id)

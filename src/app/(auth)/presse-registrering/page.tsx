@@ -19,7 +19,6 @@ export default function PresseRegistreringPage() {
 
     try {
       const supabase = createClient()
-      // @ts-expect-error table not in generated types yet
       const { error: insertError } = await supabase.from('presse_soknader').insert({
         fullt_navn: fulltNavn,
         epost,
