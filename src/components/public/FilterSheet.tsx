@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useFylker, useKommuner, useBrannvesen, useKategorier, useSentraler } from '@/hooks/useSupabaseData'
+import { CategoryIcon } from '@/components/ui/CategoryIcon'
 
 interface FilterSheetProps {
   isOpen: boolean
@@ -92,29 +93,56 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
 
   // ─── SIDEBAR MODE: Accordion ───
   if (isSidebar) {
-    const renderCheckList = (items: { id: string; label: string }[], filterKey: keyof FilterState) => (
-      <div className="max-h-48 overflow-y-auto py-1">
-        {items.map(item => {
-          const isSelected = (filters[filterKey] as string[]).includes(item.id)
-          return (
-            <button
-              key={item.id}
-              onClick={() => toggleArrayFilter(filterKey, item.id)}
-              className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-[#222] transition-colors"
-            >
-              <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
-                {isSelected && (
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
-              </div>
-              <span className={`text-sm ${isSelected ? 'text-blue-400' : 'text-gray-300'}`}>{item.label}</span>
-            </button>
-          )
-        })}
-      </div>
-    )
+    const renderCheckList = (items: { id: string; label: string }[], filterKey: keyof FilterState) => {
+      const selected = filters[filterKey] as string[]
+      const allSelected = items.length > 0 && items.every(i => selected.includes(i.id))
+      const toggleAll = () => {
+        if (allSelected) {
+          // Remove all items in this list from filter
+          onFiltersChange({ ...filters, [filterKey]: selected.filter(id => !items.some(i => i.id === id)) })
+        } else {
+          // Add all items in this list to filter
+          const newIds = [...new Set([...selected, ...items.map(i => i.id)])]
+          onFiltersChange({ ...filters, [filterKey]: newIds })
+        }
+      }
+      return (
+        <div className="max-h-64 overflow-y-auto py-1">
+          <button
+            onClick={toggleAll}
+            className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-[#222] transition-colors border-b border-[#2a2a2a] mb-1"
+          >
+            <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${allSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
+              {allSelected && (
+                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
+            <span className={`text-sm font-medium ${allSelected ? 'text-blue-400' : 'text-gray-400'}`}>{allSelected ? 'Fjern alle' : 'Velg alle'}</span>
+          </button>
+          {items.map(item => {
+            const isSelected = selected.includes(item.id)
+            return (
+              <button
+                key={item.id}
+                onClick={() => toggleArrayFilter(filterKey, item.id)}
+                className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-[#222] transition-colors"
+              >
+                <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
+                  {isSelected && (
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+                <span className={`text-sm ${isSelected ? 'text-blue-400' : 'text-gray-300'}`}>{item.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      )
+    }
 
     const renderSectionHeader = (section: Section, label: string, selectedTags: string[]) => {
       const isOpen = openSection === section
@@ -172,10 +200,55 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
 
         {/* Kategori */}
         {renderSectionHeader('kategori', 'Kategori', getSelectedNames(filters.kategori_ids, kategorier))}
-        {openSection === 'kategori' && renderCheckList(
-          kategorier.map(k => ({ id: k.id, label: k.navn })),
-          'kategori_ids'
-        )}
+        {openSection === 'kategori' && (() => {
+          const allKatSelected = kategorier.length > 0 && kategorier.every(k => filters.kategori_ids.includes(k.id))
+          const toggleAllKat = () => {
+            if (allKatSelected) {
+              onFiltersChange({ ...filters, kategori_ids: filters.kategori_ids.filter(id => !kategorier.some(k => k.id === id)) })
+            } else {
+              onFiltersChange({ ...filters, kategori_ids: [...new Set([...filters.kategori_ids, ...kategorier.map(k => k.id)])] })
+            }
+          }
+          return (
+            <div className="max-h-64 overflow-y-auto py-1">
+              <button
+                onClick={toggleAllKat}
+                className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-[#222] transition-colors border-b border-[#2a2a2a] mb-1"
+              >
+                <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${allKatSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
+                  {allKatSelected && (
+                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+                <span className={`text-sm font-medium ${allKatSelected ? 'text-blue-400' : 'text-gray-400'}`}>{allKatSelected ? 'Fjern alle' : 'Velg alle'}</span>
+              </button>
+              {kategorier.map(kat => {
+                const isSelected = filters.kategori_ids.includes(kat.id)
+                return (
+                  <button
+                    key={kat.id}
+                    onClick={() => toggleArrayFilter('kategori_ids', kat.id)}
+                    className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-[#222] transition-colors"
+                  >
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
+                      {isSelected && (
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <span className="shrink-0" style={{ color: kat.farge }}>
+                      <CategoryIcon iconName={kat.ikon} className="w-3.5 h-3.5" />
+                    </span>
+                    <span className={`text-sm ${isSelected ? 'text-blue-400' : 'text-gray-300'}`}>{kat.navn}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )
+        })()}
 
         {/* Status */}
         {renderSectionHeader('status', 'Status', filters.status ? [filters.status === 'pågår' ? 'Pågår' : 'Avsluttet'] : [])}
@@ -369,7 +442,37 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
       {view === 'kommune' && renderListView('Kommuner', filteredKommuner, 'kommune_ids', 'fylke')}
       {view === 'brannvesen' && renderListView('Brannvesen', filteredBrannvesen.map(b => ({ id: b.id, navn: b.kort_navn })), 'brannvesen_ids')}
       {view === 'sentral' && renderListView('110-sentral', sentraler.map(s => ({ id: s.id, navn: s.kort_navn })), 'sentral_ids')}
-      {view === 'tema' && renderListView('Kategori', kategorier.map(k => ({ id: k.id, navn: k.navn })), 'kategori_ids')}
+      {view === 'tema' && (
+        <>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#2a2a2a]">
+            <button onClick={() => setView('main')} className="text-blue-400 text-sm flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+              Tilbake
+            </button>
+            <h2 className="text-base font-semibold">Kategori</h2>
+            <div className="w-16" />
+          </div>
+          <div className="overflow-y-auto flex-1 p-4">
+            {kategorier.map(kat => {
+              const isSelected = filters.kategori_ids.includes(kat.id)
+              return (
+                <button key={kat.id} onClick={() => toggleArrayFilter('kategori_ids', kat.id)} className="w-full flex items-center justify-between py-3 border-b border-[#2a2a2a] text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="shrink-0" style={{ color: kat.farge }}>
+                      <CategoryIcon iconName={kat.ikon} className="w-4 h-4" />
+                    </span>
+                    <span className={isSelected ? 'text-blue-400 font-medium' : 'text-white'}>{kat.navn}</span>
+                  </div>
+                  {isSelected && <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                </button>
+              )
+            })}
+          </div>
+          <div className="p-4">
+            <button onClick={onClose} className="w-full py-3 rounded-xl bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors">Vis hendelser</button>
+          </div>
+        </>
+      )}
       {view === 'status' && renderStatusView()}
     </>
   )

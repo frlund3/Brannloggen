@@ -1,6 +1,8 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { CategoryIcon } from '@/components/ui/CategoryIcon'
+import { IconPicker } from '@/components/ui/IconPicker'
 import { useKategorier, invalidateCache } from '@/hooks/useSupabaseData'
 import type { Kategori } from '@/hooks/useSupabaseData'
 import { useState, useEffect } from 'react'
@@ -92,10 +94,7 @@ export default function AdminKategorierPage() {
         <label className="block text-sm text-gray-400 mb-1">Navn</label>
         <input type="text" value={form.navn} onChange={(e) => setForm({ ...form, navn: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
       </div>
-      <div>
-        <label className="block text-sm text-gray-400 mb-1">Ikon (navn)</label>
-        <input type="text" value={form.ikon} onChange={(e) => setForm({ ...form, ikon: e.target.value })} placeholder="Flame, Car, Waves..." className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
-      </div>
+      <IconPicker value={form.ikon} onChange={(v) => setForm({ ...form, ikon: v })} color={form.farge} />
       <div>
         <label className="block text-sm text-gray-400 mb-1">Farge</label>
         <div className="flex items-center gap-3">
@@ -128,7 +127,9 @@ export default function AdminKategorierPage() {
           {items.map((kat, i) => (
             <div key={kat.id} className={`flex items-center justify-between px-4 py-3 ${i < items.length - 1 ? 'border-b border-[#2a2a2a]' : ''}`}>
               <div className="flex items-center gap-3">
-                <span className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: kat.farge }} />
+                <span className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center" style={{ backgroundColor: kat.farge + '22', color: kat.farge }}>
+                  <CategoryIcon iconName={kat.ikon} className="w-4 h-4" />
+                </span>
                 <div>
                   <p className="text-sm text-white font-medium">{kat.navn}</p>
                   {kat.beskrivelse && <p className="text-xs text-gray-500">{kat.beskrivelse}</p>}

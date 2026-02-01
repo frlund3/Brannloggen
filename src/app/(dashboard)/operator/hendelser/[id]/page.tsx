@@ -3,6 +3,7 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
+import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { useHendelser, useBrannvesen, useKommuner, useKategorier } from '@/hooks/useSupabaseData'
 import { invalidateCache } from '@/hooks/useSupabaseData'
 import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
@@ -168,9 +169,10 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
             <SeverityDot severity={hendelse.alvorlighetsgrad} showLabel />
             {kat && (
               <span
-                className="text-xs px-2 py-0.5 rounded"
+                className="text-xs px-2 py-0.5 rounded inline-flex items-center gap-1"
                 style={{ backgroundColor: kat.farge + '22', color: kat.farge }}
               >
+                <CategoryIcon iconName={kat.ikon} className="w-3 h-3" />
                 {kat.navn}
               </span>
             )}

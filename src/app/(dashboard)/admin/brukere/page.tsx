@@ -219,7 +219,6 @@ export default function AdminBrukerePage() {
     switch (rolle) {
       case 'admin': return 'Admin'
       case '110-admin': return '110-Admin'
-      case 'presse': return 'Presse'
       default: return 'Operatør'
     }
   }
@@ -228,7 +227,6 @@ export default function AdminBrukerePage() {
     switch (rolle) {
       case 'admin': return 'bg-purple-500/20 text-purple-400'
       case '110-admin': return 'bg-orange-500/20 text-orange-400'
-      case 'presse': return 'bg-cyan-500/20 text-cyan-400'
       default: return 'bg-blue-500/20 text-blue-400'
     }
   }
@@ -325,10 +323,6 @@ export default function AdminBrukerePage() {
                 <span className="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 shrink-0 h-fit">Operatør</span>
                 <p className="text-xs text-gray-400">Hendelser, ny hendelse, rapporter og presse — begrenset til sine tildelte 110-sentraler.</p>
               </div>
-              <div className="flex gap-3">
-                <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 shrink-0 h-fit">Presse</span>
-                <p className="text-xs text-gray-400">Lesevisning av pressemeldinger og hendelser. Pressevarsler-innstillinger.</p>
-              </div>
             </div>
           </div>
         )}
@@ -355,7 +349,6 @@ export default function AdminBrukerePage() {
             ...(isAdmin ? [{ label: 'Administratorer', value: scopedBrukere.filter(u => u.rolle === 'admin').length, color: 'text-purple-400' }] : []),
             { label: '110-admin', value: scopedBrukere.filter(u => u.rolle === '110-admin').length, color: 'text-orange-400' },
             { label: 'Operatører', value: scopedBrukere.filter(u => u.rolle === 'operator').length, color: 'text-blue-400' },
-            ...(isAdmin ? [{ label: 'Presse', value: scopedBrukere.filter(u => u.rolle === 'presse').length, color: 'text-cyan-400' }] : []),
             { label: 'Deaktivert', value: scopedBrukere.filter(u => !u.aktiv).length, color: 'text-red-400' },
           ].map((stat) => (
             <div key={stat.label} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
