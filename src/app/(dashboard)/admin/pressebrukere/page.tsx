@@ -27,6 +27,7 @@ export default function AdminPressebrukerePage() {
   const [processing, setProcessing] = useState<string | null>(null)
   const [avvisModal, setAvvisModal] = useState<string | null>(null)
   const [avvisningsgrunn, setAvvisningsgrunn] = useState('')
+  const [sendingResetTo, setSendingResetTo] = useState<string | null>(null)
 
   const fetchSoknader = useCallback(async () => {
     try {
@@ -121,6 +122,26 @@ export default function AdminPressebrukerePage() {
     }
   }
 
+  const handleSendReset = async (epost: string, id: string) => {
+    setSendingResetTo(id)
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: epost }),
+      })
+      if (res.status === 429) {
+        toast.error('For mange forespørsler. Vent noen minutter.')
+      } else {
+        toast.success(`E-post for nytt passord sendt til ${epost}`)
+      }
+    } catch {
+      toast.error('Kunne ikke sende e-post')
+    } finally {
+      setSendingResetTo(null)
+    }
+  }
+
   const loading = brukereLoading || soknaderLoading || medierLoading
 
   if (loading) {
@@ -206,6 +227,9 @@ export default function AdminPressebrukerePage() {
                     <div className="flex items-center gap-3 shrink-0">
                       <span className="text-xs text-cyan-400 hidden sm:inline">{getMediumNavn(u.medium_id) || '-'}</span>
                       <span className={`text-xs ${u.aktiv ? 'text-green-400' : 'text-red-400'}`}>{u.aktiv ? 'Aktiv' : 'Deaktivert'}</span>
+                      <button onClick={() => handleSendReset(u.epost || '', u.id)} disabled={sendingResetTo === u.id} className="text-xs text-cyan-400 hover:text-cyan-300 disabled:opacity-50 py-1 touch-manipulation">
+                        {sendingResetTo === u.id ? 'Sender...' : 'Nytt passord'}
+                      </button>
                       <button onClick={() => handleToggleActive(u.id, u.aktiv)} className={`text-xs py-1 touch-manipulation ${u.aktiv ? 'text-orange-400 hover:text-orange-300' : 'text-green-400 hover:text-green-300'}`}>
                         {u.aktiv ? 'Deaktiver' : 'Aktiver'}
                       </button>

@@ -40,6 +40,7 @@ export default function AdminBrukerePage() {
   const [filterRolle, setFilterRolle] = useState('')
   const [adding, setAdding] = useState(false)
   const [showRoleInfo, setShowRoleInfo] = useState(false)
+  const [sendingResetTo, setSendingResetTo] = useState<string | null>(null)
 
   // Sync DB data into local state once loaded
   useEffect(() => {
@@ -187,6 +188,26 @@ export default function AdminBrukerePage() {
     } catch (err) {
       setBrukere(prev)
       toast.error('Kunne ikke slette bruker: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
+  }
+
+  const handleSendReset = async (user: UserItem) => {
+    setSendingResetTo(user.id)
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.epost }),
+      })
+      if (res.status === 429) {
+        toast.error('For mange forespørsler. Vent noen minutter.')
+      } else {
+        toast.success(`E-post for nytt passord sendt til ${user.epost}`)
+      }
+    } catch {
+      toast.error('Kunne ikke sende e-post')
+    } finally {
+      setSendingResetTo(null)
     }
   }
 
@@ -388,6 +409,9 @@ export default function AdminBrukerePage() {
                 </div>
                 <div className="flex items-center gap-3 mt-3 pt-3 border-t border-theme">
                   {canEdit && <button onClick={() => handleEdit(user)} className="text-xs text-blue-400 hover:text-blue-300 py-1 touch-manipulation">Rediger</button>}
+                  <button onClick={() => handleSendReset(user)} disabled={sendingResetTo === user.id} className="text-xs text-cyan-400 hover:text-cyan-300 disabled:opacity-50 py-1 touch-manipulation">
+                    {sendingResetTo === user.id ? 'Sender...' : 'Send nytt passord'}
+                  </button>
                   <button onClick={() => handleToggleActive(user.id)} className={`text-xs py-1 touch-manipulation ${user.aktiv ? 'text-orange-400 hover:text-orange-300' : 'text-green-400 hover:text-green-300'}`}>
                     {user.aktiv ? 'Deaktiver' : 'Aktiver'}
                   </button>
