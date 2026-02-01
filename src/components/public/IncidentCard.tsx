@@ -4,7 +4,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { formatTime, formatTimeAgo } from '@/lib/utils'
-import { useBrannvesen, useKategorier, useSentraler, useBrukerprofiler } from '@/hooks/useSupabaseData'
+import { useBrannvesen, useKategorier, useSentraler } from '@/hooks/useSupabaseData'
 import { useState } from 'react'
 
 interface IncidentUpdate {
@@ -52,13 +52,6 @@ export function IncidentCard({
   const { data: brannvesen } = useBrannvesen()
   const { data: sentraler } = useSentraler()
   const { data: kategorier } = useKategorier()
-  const { data: brukerprofiler } = useBrukerprofiler()
-
-  const getUserName = (userId: string) => {
-    const profil = brukerprofiler.find(b => b.user_id === userId)
-    return profil?.fullt_navn || null
-  }
-
   const bv = brannvesen.find((b) => b.id === brannvesen_id)
   const sentral = sentraler.find((s) => s.brannvesen_ids.includes(brannvesen_id))
   const kat = kategorier.find((k) => k.id === kategori_id)
@@ -98,11 +91,6 @@ export function IncidentCard({
       </div>
 
       <p className="text-sm text-gray-300 leading-relaxed">{beskrivelse}</p>
-
-      {/* Opprettet av */}
-      {opprettet_av && getUserName(opprettet_av) && (
-        <p className="text-xs text-gray-500 mt-1">Av: {getUserName(opprettet_av)}</p>
-      )}
 
       {/* Hendelsebilde */}
       {bilde_url && (
@@ -160,9 +148,6 @@ export function IncidentCard({
                   <div className="absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 border-blue-500 bg-[#1a1a1a]" />
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-500 font-medium">{formatTime(update.opprettet_tidspunkt)}</span>
-                    {getUserName(update.opprettet_av) && (
-                      <span className="text-xs text-gray-600">Av: {getUserName(update.opprettet_av)}</span>
-                    )}
                   </div>
                   <p className="text-sm text-gray-300 mt-0.5">{update.tekst}</p>
                   {update.bilde_url && (
