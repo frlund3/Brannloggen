@@ -1,4 +1,4 @@
--- Create medier (media companies) table
+-- Create medier (media companies) table (idempotent)
 CREATE TABLE IF NOT EXISTS medier (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   navn TEXT NOT NULL UNIQUE,
