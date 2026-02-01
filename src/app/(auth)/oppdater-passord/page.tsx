@@ -71,6 +71,11 @@ export default function OppdaterPassordPage() {
       return
     }
 
+    if (!/[a-zA-ZæøåÆØÅ]/.test(password) || !/\d/.test(password)) {
+      setError('Passordet må inneholde minst én bokstav og ett tall')
+      return
+    }
+
     if (password !== confirmPassword) {
       setError('Passordene er ikke like')
       return
@@ -79,13 +84,16 @@ export default function OppdaterPassordPage() {
     setLoading(true)
 
     try {
-      const supabase = createClient()
-      const { error } = await supabase.auth.updateUser({ password })
+      const res = await fetch('/api/auth/update-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      })
 
-      if (error) {
-        setError('Kunne ikke oppdatere passordet. Prøv igjen.')
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Kunne ikke oppdatere passordet. Prøv igjen.')
       } else {
-        await supabase.auth.signOut()
         setDone(true)
       }
     } catch {

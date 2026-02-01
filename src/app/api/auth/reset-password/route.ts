@@ -31,13 +31,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Ugyldig e-postadresse' }, { status: 400 })
     }
 
-    const origin = req.headers.get('origin') || 'https://brannloggen.no'
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || req.headers.get('origin') || 'https://brannloggen.no'
     const supabase = await createServerSupabaseClient()
 
     // resetPasswordForEmail sends the email via Supabase's configured SMTP
+    // Route through auth callback for PKCE code exchange, then redirect to oppdater-passord
     // Always return success regardless of result to prevent email enumeration
     await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/oppdater-passord`,
+      redirectTo: `${siteUrl}/auth/callback?next=/oppdater-passord`,
     })
 
     return NextResponse.json({ success: true })

@@ -46,25 +46,31 @@ export default function PresseRegistreringPage() {
     setError('')
 
     try {
-      const supabase = createClient()
       const selectedMedium = medier.find(m => m.id === mediumId)
-      const { error: insertError } = await supabase.from('presse_soknader').insert({
-        fullt_navn: fulltNavn,
-        epost,
-        mediehus: selectedMedium?.navn || mediehus,
-        medium_id: mediumId || null,
-        telefon: telefon || null,
+      const res = await fetch('/api/presse-soknad', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullt_navn: fulltNavn,
+          epost,
+          mediehus: selectedMedium?.navn || mediehus,
+          medium_id: mediumId || null,
+          telefon: telefon || null,
+        }),
       })
 
-      if (insertError) {
-        if (insertError.code === '23505') {
-          setError('Det finnes allerede en søknad med denne e-postadressen.')
-        } else {
-          setError(insertError.message)
-        }
+      if (res.status === 429) {
+        setError('For mange forespørsler. Vent litt og prøv igjen.')
         return
       }
 
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Noe gikk galt')
+        return
+      }
+
+      // Always show success (even for duplicates, to prevent email enumeration)
       setSuccess(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Noe gikk galt')

@@ -93,7 +93,7 @@ export function NotificationBell() {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-[11px] text-blue-400 hover:text-blue-300"
+                  className="text-[11px] font-medium text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-500/10 px-2 py-1 rounded-md transition-colors"
                 >
                   Merk alle lest
                 </button>
