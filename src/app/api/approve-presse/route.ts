@@ -106,13 +106,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'En bruker med denne e-postadressen finnes allerede' }, { status: 400 })
     }
 
-    // 9. Create auth user
-    const tempPassword = crypto.randomUUID()
-    const { data: newAuthUser, error: authError } = await adminClient.auth.admin.createUser({
-      email: soknad.epost,
-      password: tempPassword,
-      email_confirm: true,
-    })
+    // 9. Create auth user and send invitation email
+    const { data: newAuthUser, error: authError } = await adminClient.auth.admin.inviteUserByEmail(soknad.epost)
 
     if (authError) {
       return NextResponse.json({ error: authError.message }, { status: 400 })
@@ -145,12 +140,6 @@ export async function POST(req: NextRequest) {
         behandlet_tidspunkt: new Date().toISOString(),
       })
       .eq('id', soknad_id)
-
-    // 12. Send password reset email
-    await adminClient.auth.admin.generateLink({
-      type: 'recovery',
-      email: soknad.epost,
-    })
 
     return NextResponse.json({
       success: true,

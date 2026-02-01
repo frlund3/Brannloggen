@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { logActivity } from '@/lib/logActivity'
+import { NotificationBell } from '@/components/ui/NotificationBell'
 
 const tabs = [
   { href: '/presse/hendelser', label: 'Hendelser' },
@@ -86,6 +87,8 @@ export function PresseLayout({ children }: { children: React.ReactNode }) {
             <span className="text-sm font-bold text-theme">Brannloggen</span>
             <span className="text-[10px] font-bold text-cyan-300 bg-cyan-500/20 border border-cyan-500/30 px-2 py-0.5 rounded uppercase tracking-wider">Presse</span>
           </div>
+          <div className="flex items-center gap-2">
+          <NotificationBell />
           <button
             onClick={toggleTheme}
             className="p-1.5 rounded-lg hover:bg-theme-card-hover transition-colors text-theme-secondary"
@@ -97,6 +100,7 @@ export function PresseLayout({ children }: { children: React.ReactNode }) {
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
             )}
           </button>
+          </div>
         </div>
 
         {/* Tab navigation */}
