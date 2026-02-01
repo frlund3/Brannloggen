@@ -170,7 +170,7 @@ export default function PresseHendelserPage() {
                     )}
                   </div>
 
-                  <p className="text-sm text-gray-300">{h.beskrivelse}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">{h.beskrivelse}</p>
 
                   {/* Hendelsebilde */}
                   {h.bilde_url && (
@@ -186,7 +186,7 @@ export default function PresseHendelserPage() {
                       </span>
                     )}
                     {hasPresse && (
-                      <span className="text-xs text-cyan-400 flex items-center gap-1">
+                      <span className="text-xs text-cyan-700 dark:text-cyan-400 flex items-center gap-1">
                         <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
                         Presseinformasjon
                       </span>
@@ -218,12 +218,12 @@ export default function PresseHendelserPage() {
 
                     {/* ── Hovedpressemelding ── */}
                     {h.presse_tekst && (
-                      <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg p-3">
+                      <div className="bg-cyan-50 dark:bg-cyan-500/5 border border-cyan-300 dark:border-cyan-500/20 rounded-lg p-3">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="text-[10px] text-cyan-500/60 uppercase font-semibold">Hovedpressemelding</p>
-                          <span className="text-[10px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded font-bold">KUN PRESSE</span>
+                          <p className="text-[10px] text-cyan-700 dark:text-cyan-500/60 uppercase font-semibold">Hovedpressemelding</p>
+                          <span className="text-[10px] bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 px-1.5 py-0.5 rounded font-bold">KUN PRESSE</span>
                         </div>
-                        <p className="text-sm text-gray-300 whitespace-pre-line">{h.presse_tekst}</p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{h.presse_tekst}</p>
                       </div>
                     )}
 
@@ -237,9 +237,9 @@ export default function PresseHendelserPage() {
                         <div className="relative ml-1">
                           {timelineItems.map((item, i) => {
                             const cfgMap = {
-                              publikum: { dot: 'border-blue-500', badge: 'bg-blue-500/15 text-blue-400', label: 'Publikum', textColor: 'text-gray-300' },
-                              presse: { dot: 'border-cyan-500', badge: 'bg-cyan-500/20 text-cyan-400', label: 'KUN PRESSE', textColor: 'text-cyan-100' },
-                              status: { dot: 'border-gray-500', badge: 'bg-gray-500/20 text-theme-secondary', label: 'Status', textColor: 'text-theme-secondary' },
+                              publikum: { dot: 'border-blue-500', badge: 'bg-blue-100 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400', label: 'Publikum', textColor: 'text-gray-700 dark:text-gray-300' },
+                              presse: { dot: 'border-cyan-500', badge: 'bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-400', label: 'KUN PRESSE', textColor: 'text-cyan-800 dark:text-cyan-100' },
+                              status: { dot: 'border-gray-400 dark:border-gray-500', badge: 'bg-gray-100 dark:bg-gray-500/20 text-gray-600 dark:text-theme-secondary', label: 'Status', textColor: 'text-gray-600 dark:text-theme-secondary' },
                             }
                             const cfg = cfgMap[item.type]
                             const nextCfg = i < timelineItems.length - 1 ? cfgMap[timelineItems[i + 1].type] : null
@@ -247,11 +247,11 @@ export default function PresseHendelserPage() {
                             return (
                               <div key={item.id} className="relative pl-5 pb-4 last:pb-0">
                                 {nextCfg && (
-                                  <div className={`absolute left-[5px] top-[10px] bottom-0 w-px ${
-                                    timelineItems[i + 1].type === 'presse' ? 'bg-cyan-500/30' : timelineItems[i + 1].type === 'publikum' ? 'bg-blue-500/30' : 'bg-gray-500/30'
+                                  <div className={`absolute left-[5px] top-[10px] bottom-0 w-[2px] ${
+                                    timelineItems[i + 1].type === 'presse' ? 'bg-cyan-400/50 dark:bg-cyan-500/40' : timelineItems[i + 1].type === 'publikum' ? 'bg-blue-400/50 dark:bg-blue-500/40' : 'bg-gray-300 dark:bg-gray-500/30'
                                   }`} />
                                 )}
-                                <div className={`absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 ${cfg.dot} bg-theme-card`} />
+                                <div className={`absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 ${cfg.dot} bg-white dark:bg-theme-card`} />
                                 {item.type === 'status' ? (
                                   <div className="flex items-center gap-2">
                                     <span className="text-xs text-theme-muted">{formatTime(item.opprettet_tidspunkt)}</span>

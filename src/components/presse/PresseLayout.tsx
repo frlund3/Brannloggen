@@ -80,12 +80,12 @@ export function PresseLayout({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      <header className="sticky top-0 z-40 bg-[#0f1114]/95 backdrop-blur border-b border-cyan-500/20">
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0f1114]/95 backdrop-blur border-b border-gray-200 dark:border-cyan-500/20">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img src="/icon-192.png" alt="Brannloggen" className="w-8 h-8 rounded-lg" />
             <span className="text-sm font-bold text-theme">Brannloggen</span>
-            <span className="text-[10px] font-bold text-cyan-300 bg-cyan-500/20 border border-cyan-500/30 px-2 py-0.5 rounded uppercase tracking-wider">Presse</span>
+            <span className="text-[10px] font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-100 dark:bg-cyan-500/20 border border-cyan-300 dark:border-cyan-500/30 px-2 py-0.5 rounded uppercase tracking-wider">Presse</span>
           </div>
           <div className="flex items-center gap-2">
           <NotificationBell />

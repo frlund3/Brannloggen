@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/components/providers/AuthProvider'
@@ -16,9 +16,27 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [pendingPresseCount, setPendingPresseCount] = useState(0)
   const pathname = usePathname()
   const { user, rolle, loading } = useAuth()
   const { theme, toggleTheme } = useTheme()
+
+  // Fetch pending presse_soknader count for badge
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const supabase = createClient()
+        const { count, error } = await supabase
+          .from('presse_soknader')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'venter')
+        if (!error && count !== null) setPendingPresseCount(count)
+      } catch {
+        // RLS may block if not admin
+      }
+    }
+    if (user) fetchPendingCount()
+  }, [user])
 
   // Redirect to login if not authenticated (only after loading is done)
   if (!loading && !user && !rolle) {
@@ -44,13 +62,13 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   // Operator links - shared between operator, admin, and 110-admin
   const operatorLinks = [
     { href: '/operator/hendelser', label: 'Hendelser', icon: 'list' },
+    { href: '/admin/ny-visning', label: 'Ny visning', icon: 'list' },
     { href: '/operator/hendelser/ny', label: 'Ny hendelse', icon: 'plus' },
     { href: '/admin/rapporter', label: 'Rapporter', icon: 'report' },
   ]
 
   // Full admin links
   const adminLinks = [
-    { href: '/admin/ny-visning', label: 'Ny visning', icon: 'list' },
     { href: '/admin/logg', label: 'Aktivitetslogg', icon: 'clock' },
     { href: '/admin/brukere', label: 'Brukere', icon: 'users' },
     { href: '/admin/brannvesen', label: 'Brannvesen', icon: 'truck' },
@@ -65,13 +83,10 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
 
   // 110-admin links - scoped admin with limited admin pages
   const admin110Links = [
-    { href: '/admin/ny-visning', label: 'Ny visning', icon: 'list' },
-    { href: '/admin/logg', label: 'Aktivitetslogg', icon: 'clock' },
     { href: '/admin/brukere', label: 'Brukere', icon: 'users' },
     { href: '/admin/brannvesen', label: 'Brannvesen', icon: 'truck' },
     { href: '/admin/sentraler', label: '110-sentraler', icon: 'phone' },
     { href: '/admin/statistikk', label: 'Statistikk Varslinger', icon: 'chart' },
-    { href: '/admin/innstillinger', label: 'Innstillinger', icon: 'settings' },
   ]
 
   // Determine effective role: use actual rolle from auth if available
@@ -89,11 +104,17 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     )
   }
 
+  // Operator-specific admin pages (scoped to their 110-sentral)
+  const operatorAdminLinks = [
+    { href: '/admin/statistikk', label: 'Statistikk Varslinger', icon: 'chart' },
+    { href: '/admin/pressebrukere', label: 'Pressebrukere', icon: 'press' },
+  ]
+
   const links = effectiveRole === 'admin'
     ? [...operatorLinks, ...adminLinks, { href: '/admin/pressebrukere', label: 'Pressebrukere', icon: 'press' }]
     : effectiveRole === '110-admin'
       ? [...operatorLinks, ...admin110Links, { href: '/admin/pressebrukere', label: 'Pressebrukere', icon: 'press' }]
-      : [...operatorLinks]
+      : [...operatorLinks, ...operatorAdminLinks]
 
   const roleLabel = effectiveRole === 'admin'
     ? 'Administrator'
@@ -158,7 +179,29 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
               )}
             </button>
-            <a href="/" className="py-2 px-3 -mr-3 text-sm text-blue-400 touch-manipulation">Forside</a>
+            <a href="/" className="py-2 text-sm text-blue-400 touch-manipulation">Forside</a>
+            <button
+              onClick={async () => {
+                await logActivity({ handling: 'utlogget', tabell: 'auth' })
+                const supabase = createClient()
+                await supabase.auth.signOut()
+                localStorage.removeItem('brannloggen_user_rolle')
+                localStorage.removeItem('brannloggen_user_sentral_ids')
+                Object.keys(localStorage).forEach(key => {
+                  if (key.startsWith('sb-')) localStorage.removeItem(key)
+                })
+                document.cookie.split(';').forEach(c => {
+                  const name = c.split('=')[0].trim()
+                  if (name.startsWith('sb-')) {
+                    document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'
+                  }
+                })
+                window.location.href = '/'
+              }}
+              className="py-2 -mr-3 text-sm text-red-400 touch-manipulation"
+            >
+              Logg ut
+            </button>
           </div>
         </div>
       </header>
@@ -193,72 +236,31 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             </div>
           </div>
 
-          <nav className="p-2 space-y-1 overflow-y-auto pb-52" style={{ maxHeight: 'calc(100vh - 70px)' }}>
-            {links.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                onClick={() => setSidebarOpen(false)}
-                className={cn(
-                  'flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors touch-manipulation',
-                  pathname === link.href
-                    ? 'bg-blue-500/10 text-blue-400'
-                    : 'text-theme-secondary hover:text-theme hover:bg-theme-card'
-                )}
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  {getIcon(link.icon)}
-                </svg>
-                {link.label}
-              </a>
-            ))}
-          </nav>
-
-          <div className="absolute bottom-0 left-0 right-0 border-t border-theme">
-            {/* Presse shortcut button */}
-            <div className="px-3 pt-3 pb-2">
-              <a
-                href="/presse/hendelser"
-                className="group flex items-center gap-3 px-4 py-3 bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 dark:bg-gradient-to-r dark:from-cyan-600/20 dark:to-teal-600/20 dark:hover:from-cyan-600/30 dark:hover:to-teal-600/30 dark:border-cyan-500/30 dark:hover:border-cyan-400/50 rounded-xl transition-all"
-              >
-                <div className="w-9 h-9 bg-cyan-100 text-cyan-600 dark:bg-gradient-to-br dark:from-cyan-500 dark:to-teal-500 dark:text-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm dark:shadow-lg dark:shadow-cyan-500/20 dark:group-hover:shadow-cyan-500/40 transition-shadow">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                  </svg>
-                </div>
-                <div>
-                  <span className="text-sm font-semibold text-cyan-700 dark:text-cyan-300 group-hover:text-cyan-900 dark:group-hover:text-cyan-200 transition-colors">Presseportal</span>
-                  <span className="block text-[11px] text-cyan-600/70 dark:text-cyan-500/70">Åpne pressesiden</span>
-                </div>
-              </a>
-            </div>
-
-            <div className="px-4 pb-4">
-              <div className="flex items-center gap-2 mb-3">
+          {/* User info, Presseportal & actions — above nav */}
+          <div className="border-b border-theme">
+            <div className="px-4 py-3">
+              <div className="flex items-center gap-2 mb-2">
                 <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
                   <span className="text-xs text-white font-bold">
                     {(user?.email?.substring(0, 2) ?? 'U').toUpperCase()}
                   </span>
                 </div>
-                <div>
-                  <p className="text-sm text-theme truncate max-w-[160px]">{user?.email ?? 'Bruker'}</p>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-theme truncate">{user?.email ?? 'Bruker'}</p>
                   <p className="text-xs text-theme-secondary">{roleLabel}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 mt-1">
-                <button onClick={toggleTheme} className="py-2 text-sm text-theme-secondary hover:text-theme touch-manipulation" title={theme === 'dark' ? 'Lyst tema' : 'Mørkt tema'}>
+              <div className="flex items-center gap-4">
+                <button onClick={toggleTheme} className="py-1 text-sm text-theme-secondary hover:text-theme touch-manipulation" title={theme === 'dark' ? 'Lyst tema' : 'Mørkt tema'}>
                   {theme === 'dark' ? (
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                   ) : (
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                   )}
                 </button>
-                <a href="/" className="py-2 text-sm text-theme-secondary hover:text-theme touch-manipulation">
-                  Forside
-                </a>
+                <a href="/" className="py-1 text-sm text-theme-secondary hover:text-theme touch-manipulation">Forside</a>
                 <button
                   onClick={async () => {
-                    // Log logout before signing out
                     await logActivity({ handling: 'utlogget', tabell: 'auth' })
                     const supabase = createClient()
                     await supabase.auth.signOut()
@@ -275,13 +277,57 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                     })
                     window.location.href = '/'
                   }}
-                  className="py-2 text-sm text-red-400 hover:text-red-300 touch-manipulation"
+                  className="py-1 text-sm text-red-400 hover:text-red-300 touch-manipulation"
                 >
                   Logg ut
                 </button>
               </div>
             </div>
+
+            {/* Presse shortcut */}
+            <div className="px-3 pb-3">
+              <a
+                href="/presse/hendelser"
+                className="group flex items-center gap-3 px-4 py-3 bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 dark:bg-gradient-to-r dark:from-cyan-600/20 dark:to-teal-600/20 dark:hover:from-cyan-600/30 dark:hover:to-teal-600/30 dark:border-cyan-500/30 dark:hover:border-cyan-400/50 rounded-xl transition-all"
+              >
+                <div className="w-9 h-9 bg-cyan-100 text-cyan-600 dark:bg-gradient-to-br dark:from-cyan-500 dark:to-teal-500 dark:text-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm dark:shadow-lg dark:shadow-cyan-500/20 dark:group-hover:shadow-cyan-500/40 transition-shadow">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                  </svg>
+                </div>
+                <div>
+                  <span className="text-sm font-semibold text-gray-900 dark:text-cyan-300 group-hover:text-black dark:group-hover:text-cyan-200 transition-colors">Presseportal</span>
+                  <span className="block text-[11px] text-gray-600 dark:text-cyan-500/70">Åpne pressesiden</span>
+                </div>
+              </a>
+            </div>
           </div>
+
+          <nav className="p-2 space-y-1 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+            {links.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={() => setSidebarOpen(false)}
+                className={cn(
+                  'flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors touch-manipulation',
+                  pathname === link.href
+                    ? 'bg-blue-500/10 text-blue-400'
+                    : 'text-theme-secondary hover:text-theme hover:bg-theme-card'
+                )}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  {getIcon(link.icon)}
+                </svg>
+                {link.label}
+                {link.href === '/admin/pressebrukere' && pendingPresseCount > 0 && (
+                  <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {pendingPresseCount}
+                  </span>
+                )}
+              </a>
+            ))}
+          </nav>
         </aside>
 
         {/* Overlay */}

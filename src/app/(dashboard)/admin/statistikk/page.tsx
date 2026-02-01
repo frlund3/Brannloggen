@@ -12,7 +12,7 @@ function formatDateTime(iso: string) {
 }
 
 export default function AdminStatistikkPage() {
-  const { is110Admin, isScoped, filterSentraler } = useSentralScope()
+  const { is110Admin, isOperator, isScoped, filterSentraler } = useSentralScope()
   const { data: sentraler, loading: sentralerLoading } = useSentraler()
   const { data: fylker, loading: fylkerLoading } = useFylker()
   const { data: kategorier, loading: kategorierLoading } = useKategorier()
@@ -23,7 +23,7 @@ export default function AdminStatistikkPage() {
 
   if (sentralerLoading || fylkerLoading || kategorierLoading || abonnenterLoading) {
     return (
-      <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
+      <DashboardLayout role={is110Admin ? '110-admin' : isOperator ? 'operator' : 'admin'}>
         <div className="p-8 text-center text-theme-secondary">Laster...</div>
       </DashboardLayout>
     )
@@ -101,7 +101,7 @@ export default function AdminStatistikkPage() {
   }
 
   return (
-    <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
+    <DashboardLayout role={is110Admin ? '110-admin' : isOperator ? 'operator' : 'admin'}>
       <div className="p-4 lg:p-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-theme">Statistikk Varslinger</h1>

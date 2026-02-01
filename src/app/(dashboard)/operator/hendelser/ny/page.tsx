@@ -4,6 +4,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { useFylker, useBrannvesen, useKategorier, useSentraler, useKommuner } from '@/hooks/useSupabaseData'
 import { invalidateCache } from '@/hooks/useSupabaseData'
+import { useSentralScope } from '@/hooks/useSentralScope'
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -16,8 +17,13 @@ export default function NyHendelsePage() {
   const { data: fylker, loading: fylkerLoading } = useFylker()
   const { data: brannvesen, loading: brannvesenLoading } = useBrannvesen()
   const { data: kategorier, loading: kategorierLoading } = useKategorier()
-  const { data: sentraler, loading: sentralerLoading } = useSentraler()
+  const { data: allSentraler, loading: sentralerLoading } = useSentraler()
   const { data: kommuner, loading: kommunerLoading } = useKommuner()
+  const { isAdmin, isScoped, scope, filterSentraler, filterFylker, filterBrannvesen, filterKommuner } = useSentralScope()
+
+  // Scope sentraler for 110-admin/operator
+  const sentraler = useMemo(() => filterSentraler(allSentraler), [filterSentraler, allSentraler])
+
   const [selectedSentral, setSelectedSentral] = useState('')
   const [selectedFylke, setSelectedFylke] = useState('')
   const [formData, setFormData] = useState(() => {
@@ -176,17 +182,30 @@ export default function NyHendelsePage() {
     }
   }
 
+  // Auto-select sentral if scoped user has only one
+  useEffect(() => {
+    if (isScoped && sentraler.length === 1 && !selectedSentral) {
+      setSelectedSentral(sentraler[0].id)
+      setFormData(prev => ({ ...prev, sentral_id: sentraler[0].id }))
+    }
+  }, [isScoped, sentraler, selectedSentral])
+
   const isLoading = fylkerLoading || brannvesenLoading || kategorierLoading || sentralerLoading || kommunerLoading
   if (isLoading) return <div className="p-8 text-center text-theme-secondary">Laster...</div>
 
   const sentral = selectedSentral ? sentraler.find(s => s.id === selectedSentral) : null
 
+  // Apply scope first, then filter by selected sentral/fylke
+  const scopedFylker = isScoped ? filterFylker(fylker) : fylker
+  const scopedBrannvesen = isScoped ? filterBrannvesen(brannvesen) : brannvesen
+  const scopedKommuner = isScoped ? filterKommuner(kommuner) : kommuner
+
   const filteredFylker = sentral
-    ? fylker.filter(f => sentral.fylke_ids.includes(f.id))
-    : fylker
+    ? scopedFylker.filter(f => sentral.fylke_ids.includes(f.id))
+    : scopedFylker
 
   const filteredBrannvesen = (() => {
-    let list = brannvesen
+    let list = scopedBrannvesen
     if (sentral) {
       list = list.filter(b => sentral.brannvesen_ids.includes(b.id))
     }
@@ -196,7 +215,7 @@ export default function NyHendelsePage() {
     return list.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no'))
   })()
 
-  const filteredKommuner = selectedFylke ? kommuner.filter(k => k.fylke_id === selectedFylke) : kommuner
+  const filteredKommuner = selectedFylke ? scopedKommuner.filter(k => k.fylke_id === selectedFylke) : scopedKommuner
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -570,14 +589,14 @@ export default function NyHendelsePage() {
           </div>
 
           {/* Press info */}
-          <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-xl p-4">
+          <div className="bg-cyan-50 dark:bg-cyan-500/5 border border-cyan-300 dark:border-cyan-500/20 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
-              <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-cyan-700 dark:text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
               </svg>
-              <h3 className="text-sm font-semibold text-cyan-400">Pressemelding</h3>
+              <h3 className="text-sm font-semibold text-cyan-700 dark:text-cyan-400">Pressemelding</h3>
             </div>
-            <p className="text-xs text-cyan-400/70 mb-2">
+            <p className="text-xs text-cyan-800/60 dark:text-cyan-400/70 mb-2">
               Kun synlig for akkreditert presse. Ikke synlig for publikum.
             </p>
             <textarea
@@ -585,7 +604,7 @@ export default function NyHendelsePage() {
               onChange={(e) => setPresseInfo(e.target.value)}
               placeholder="F.eks. kontaktperson, pressekonferanse tidspunkt, ekstra bakgrunn..."
               rows={3}
-              className="w-full px-3 py-2 bg-theme-input border border-cyan-500/20 rounded-lg text-theme text-sm focus:outline-none focus:border-cyan-500/50 resize-none"
+              className="w-full px-3 py-2 bg-theme-input border border-cyan-300 dark:border-cyan-500/20 rounded-lg text-theme text-sm focus:outline-none focus:border-cyan-500 resize-none"
             />
             <ImageUploadButton
               file={presseBilde}

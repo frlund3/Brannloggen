@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
 export default function AdminSentralerPage() {
-  const { isAdmin, is110Admin, isScoped, filterSentraler } = useSentralScope()
+  const { isAdmin, is110Admin, isScoped, filterSentraler, filterFylker, filterBrannvesen: filterBrannvesenScope } = useSentralScope()
   const { data: sentralerData, loading: sentralerLoading } = useSentraler()
   const { data: fylkerData, loading: fylkerLoading } = useFylker()
   const { data: brannvesenData, loading: brannvesenLoading } = useBrannvesen()
@@ -97,10 +97,12 @@ export default function AdminSentralerPage() {
     }))
   }
 
-  // Filter brannvesen by selected fylker
+  // Scope data for 110-admin/operator, then filter brannvesen by selected fylker
+  const scopedFylker = isScoped ? filterFylker(fylkerData) : fylkerData
+  const scopedBrannvesen = isScoped ? filterBrannvesenScope(brannvesenData) : brannvesenData
   const filteredBrannvesen = form.fylke_ids.length > 0
-    ? brannvesenData.filter(b => form.fylke_ids.includes(b.fylke_id))
-    : brannvesenData
+    ? scopedBrannvesen.filter(b => form.fylke_ids.includes(b.fylke_id))
+    : scopedBrannvesen
 
   const displayItems = isScoped ? filterSentraler(items) : items
 
@@ -131,7 +133,7 @@ export default function AdminSentralerPage() {
       <div>
         <label className="block text-sm text-theme-secondary mb-2">Fylker</label>
         <div className="max-h-40 overflow-y-auto bg-theme-card-inner border border-theme rounded-lg p-2 space-y-1">
-          {fylkerData.map(f => (
+          {scopedFylker.map(f => (
             <label key={f.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-theme-card cursor-pointer">
               <input type="checkbox" checked={form.fylke_ids.includes(f.id)} onChange={() => toggleFylke(f.id)} className="rounded border-gray-600" />
               <span className="text-sm text-theme">{f.navn}</span>

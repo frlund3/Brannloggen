@@ -25,7 +25,13 @@ export default function OperatorHendelserPage() {
   const { data: kommuner, loading: kommunerLoading } = useKommuner()
   const { data: sentraler, loading: sentralerLoading } = useSentraler()
   const { data: brukerprofiler } = useBrukerprofiler()
-  const { isAdmin, is110Admin, isScoped, hasAdminAccess, filterByBrannvesen } = useSentralScope()
+  const { isAdmin, is110Admin, isScoped, hasAdminAccess, filterByBrannvesen, filterSentraler, filterBrannvesen: filterBrannvesenScope, filterFylker, filterKommuner } = useSentralScope()
+
+  // Scoped data for dropdowns
+  const scopedSentraler = useMemo(() => filterSentraler(sentraler), [filterSentraler, sentraler])
+  const scopedBrannvesen = useMemo(() => filterBrannvesenScope(brannvesen), [filterBrannvesenScope, brannvesen])
+  const scopedFylker = useMemo(() => filterFylker(fylker), [filterFylker, fylker])
+  const scopedKommuner = useMemo(() => filterKommuner(kommuner), [filterKommuner, kommuner])
 
   const getUserName = (userId: string) => {
     const profil = brukerprofiler.find(b => b.user_id === userId)
@@ -130,12 +136,12 @@ export default function OperatorHendelserPage() {
   const isLoading = hendelserLoading || brannvesenLoading || kategorierLoading || fylkerLoading || kommunerLoading || sentralerLoading
   if (isLoading) return <div className="p-8 text-center text-theme-secondary">Laster...</div>
 
-  const filteredKommuner = filterFylke ? kommuner.filter(k => k.fylke_id === filterFylke) : kommuner
+  const filteredKommuner = filterFylke ? scopedKommuner.filter(k => k.fylke_id === filterFylke) : scopedKommuner
   const filteredBrannvesenList = filterSentral
-    ? brannvesen.filter(b => sentraler.find(s => s.id === filterSentral)?.brannvesen_ids.includes(b.id))
+    ? scopedBrannvesen.filter(b => scopedSentraler.find(s => s.id === filterSentral)?.brannvesen_ids.includes(b.id))
     : filterFylke
-    ? brannvesen.filter(b => b.fylke_id === filterFylke)
-    : brannvesen
+    ? scopedBrannvesen.filter(b => b.fylke_id === filterFylke)
+    : scopedBrannvesen
 
   const hendelser = scopedHendelser
     .filter((h) => {
@@ -600,11 +606,11 @@ export default function OperatorHendelserPage() {
             </select>
             <select value={filterSentral} onChange={(e) => setFilterSentral(e.target.value)} className="px-3 py-2.5 bg-theme-card border border-theme-input rounded-lg text-theme text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle 110-sentraler</option>
-              {sentraler.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
+              {scopedSentraler.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
             </select>
             <select value={filterFylke} onChange={(e) => { setFilterFylke(e.target.value); setFilterKommune(''); setFilterBrannvesen('') }} className="px-3 py-2.5 bg-theme-card border border-theme-input rounded-lg text-theme text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle fylker</option>
-              {fylker.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
+              {scopedFylker.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
             </select>
             {filterFylke && (
               <select value={filterKommune} onChange={(e) => setFilterKommune(e.target.value)} className="px-3 py-2.5 bg-theme-card border border-theme-input rounded-lg text-theme text-xs focus:outline-none focus:border-blue-500">
@@ -842,12 +848,12 @@ export default function OperatorHendelserPage() {
 
                       {/* Hovedpressemelding */}
                       {h.presse_tekst && (
-                        <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg p-3">
+                        <div className="bg-cyan-50 dark:bg-cyan-500/5 border border-cyan-300 dark:border-cyan-500/20 rounded-lg p-3">
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <p className="text-[10px] text-cyan-600 uppercase font-semibold">Hovedpressemelding</p>
-                                <span className="text-[10px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded font-bold">KUN PRESSE</span>
+                                <p className="text-[10px] text-cyan-700 dark:text-cyan-500 uppercase font-semibold">Hovedpressemelding</p>
+                                <span className="text-[10px] bg-cyan-100 dark:bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 px-1.5 py-0.5 rounded font-bold">KUN PRESSE</span>
                               </div>
                               <p className="text-sm text-theme-secondary whitespace-pre-line">{h.presse_tekst}</p>
                             </div>
@@ -874,9 +880,9 @@ export default function OperatorHendelserPage() {
                               return (
                                 <div key={item.id} className="relative pl-5 pb-4 last:pb-0">
                                   {i < timeline.length - 1 && (
-                                    <div className={`absolute left-[5px] top-[10px] bottom-0 w-px ${typeConfig[timeline[i + 1].type].line}`} />
+                                    <div className={`absolute left-[5px] top-[10px] bottom-0 w-[2px] ${typeConfig[timeline[i + 1].type].line}`} />
                                   )}
-                                  <div className={`absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 ${cfg.border} bg-theme-sidebar`} />
+                                  <div className={`absolute left-0 top-[6px] w-[12px] h-[12px] rounded-full border-2 ${cfg.border} bg-white dark:bg-theme-sidebar`} />
 
                                   {isStatusItem ? (
                                     <div className="flex items-center gap-2 flex-wrap">
@@ -932,7 +938,7 @@ export default function OperatorHendelserPage() {
                                           ><DeactivateIcon /></button>
                                         </div>
                                       </div>
-                                      <p className={`text-sm mt-0.5 ${item.type === 'presse' ? 'text-cyan-300' : item.type === 'intern' ? 'text-yellow-300' : 'text-theme-secondary'}`}>{item.tekst}</p>
+                                      <p className={`text-sm mt-0.5 ${item.type === 'presse' ? 'text-cyan-800 dark:text-cyan-300' : item.type === 'intern' ? 'text-yellow-800 dark:text-yellow-300' : 'text-theme-secondary'}`}>{item.tekst}</p>
                                       {item.bilde_url && (
                                         <img src={item.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />
                                       )}
@@ -1093,14 +1099,14 @@ export default function OperatorHendelserPage() {
                   <label className="block text-xs text-theme-muted mb-1">110-sentral</label>
                   <select value={editSentralId} onChange={(e) => { setEditSentralId(e.target.value); setEditBrannvesenId('') }} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
                     <option value="">Velg 110-sentral</option>
-                    {sentraler.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
+                    {scopedSentraler.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs text-theme-muted mb-1">Brannvesen</label>
                   <select value={editBrannvesenId} onChange={(e) => setEditBrannvesenId(e.target.value)} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
                     <option value="">Velg brannvesen</option>
-                    {(editSentralId ? brannvesen.filter(b => sentraler.find(s => s.id === editSentralId)?.brannvesen_ids.includes(b.id)) : brannvesen).sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(b => <option key={b.id} value={b.id}>{b.kort_navn}</option>)}
+                    {(editSentralId ? scopedBrannvesen.filter(b => scopedSentraler.find(s => s.id === editSentralId)?.brannvesen_ids.includes(b.id)) : scopedBrannvesen).sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(b => <option key={b.id} value={b.id}>{b.kort_navn}</option>)}
                   </select>
                 </div>
               </div>

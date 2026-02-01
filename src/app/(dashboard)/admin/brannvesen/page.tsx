@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
 export default function AdminBrannvesenPage() {
-  const { isAdmin, is110Admin, isScoped, filterBrannvesen } = useSentralScope()
+  const { isAdmin, is110Admin, isScoped, filterBrannvesen, filterFylker, filterSentraler } = useSentralScope()
   const { data: brannvesenData, loading: brannvesenLoading } = useBrannvesen()
   const { data: fylkerData, loading: fylkerLoading } = useFylker()
   const { data: kommunerData, loading: kommunerLoading } = useKommuner()
@@ -137,7 +137,7 @@ export default function AdminBrannvesenPage() {
         <label className="block text-sm text-theme-secondary mb-1">Fylke</label>
         <select value={form.fylke_id} onChange={(e) => setForm({ ...form, fylke_id: e.target.value, kommune_ids: [] })} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
           <option value="">Velg fylke</option>
-          {fylkerData.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
+          {(isScoped ? filterFylker(fylkerData) : fylkerData).map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
         </select>
       </div>
       {form.fylke_id && (
@@ -176,11 +176,11 @@ export default function AdminBrannvesenPage() {
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk etter brannvesen..." className="px-4 py-2.5 bg-theme-card border border-theme rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500 w-full sm:w-64" />
           <select value={selectedFylke} onChange={(e) => setSelectedFylke(e.target.value)} className="px-4 py-2 bg-theme-card border border-theme rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
             <option value="">Alle fylker</option>
-            {fylkerData.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
+            {(isScoped ? filterFylker(fylkerData) : fylkerData).map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
           </select>
           <select value={selectedSentral} onChange={(e) => setSelectedSentral(e.target.value)} className="px-4 py-2 bg-theme-card border border-theme rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
             <option value="">Alle 110-sentraler</option>
-            {sentralerData.map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
+            {(isScoped ? filterSentraler(sentralerData) : sentralerData).map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
           </select>
         </div>
 

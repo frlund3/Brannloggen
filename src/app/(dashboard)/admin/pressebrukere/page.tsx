@@ -19,7 +19,7 @@ interface PresseSoknad {
 }
 
 export default function AdminPressebrukerePage() {
-  const { isAdmin, is110Admin } = useSentralScope()
+  const { isAdmin, is110Admin, isOperator } = useSentralScope()
   const { data: brukere, loading: brukereLoading } = useBrukerprofiler()
   const { data: medier, loading: medierLoading } = useMedier()
   const [soknader, setSoknader] = useState<PresseSoknad[]>([])
@@ -146,14 +146,14 @@ export default function AdminPressebrukerePage() {
 
   if (loading) {
     return (
-      <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
+      <DashboardLayout role={is110Admin ? '110-admin' : isOperator ? 'operator' : 'admin'}>
         <div className="p-8 text-center text-theme-secondary">Laster...</div>
       </DashboardLayout>
     )
   }
 
   return (
-    <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
+    <DashboardLayout role={is110Admin ? '110-admin' : isOperator ? 'operator' : 'admin'}>
       <div className="p-4 lg:p-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-theme">Pressebrukere</h1>
