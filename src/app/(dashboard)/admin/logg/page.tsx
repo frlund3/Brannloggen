@@ -149,7 +149,7 @@ export default function AdminLoggPage() {
   const uniqueUsers = useMemo(() => {
     const map = new Map<string, string>()
     for (const e of logEntries) {
-      if (e.bruker_navn && !map.has(e.bruker_id)) {
+      if (e.bruker_navn && e.bruker_id && !map.has(e.bruker_id)) {
         map.set(e.bruker_id, e.bruker_navn)
       }
     }
