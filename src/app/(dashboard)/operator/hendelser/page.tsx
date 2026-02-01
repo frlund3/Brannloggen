@@ -7,7 +7,7 @@ import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { useHendelser, useBrannvesen, useKategorier, useFylker, useKommuner, useSentraler, useBrukerprofiler } from '@/hooks/useSupabaseData'
 import { invalidateCache } from '@/hooks/useSupabaseData'
 import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
-import { formatDateTime, formatTime, formatTimeAgo } from '@/lib/utils'
+import { formatDateTime, formatTime, formatTimeAgo, formatDuration } from '@/lib/utils'
 import { useSentralScope } from '@/hooks/useSentralScope'
 import Link from 'next/link'
 import { useState, useMemo, useCallback, useRef } from 'react'
@@ -526,10 +526,13 @@ export default function OperatorHendelserPage() {
                   className="p-4 cursor-pointer hover:bg-[#222] transition-colors"
                   onClick={() => setExpandedId(isExpanded ? null : h.id)}
                 >
-                  {/* Top row: status + severity + time */}
+                  {/* Top row: status + severity + duration + time */}
                   <div className="flex items-center gap-2 mb-2">
                     <StatusBadge status={h.status} size="sm" />
                     <SeverityDot severity={h.alvorlighetsgrad} showLabel />
+                    <span className={`text-[11px] px-1.5 py-0.5 rounded ${h.status === 'avsluttet' ? 'bg-gray-500/10 text-gray-500' : 'bg-amber-500/10 text-amber-400'}`}>
+                      {formatDuration(h.opprettet_tidspunkt, h.avsluttet_tidspunkt)}
+                    </span>
                     <span className="text-xs text-gray-500 ml-auto">{formatTimeAgo(h.opprettet_tidspunkt)}</span>
                     <ChevronIcon open={isExpanded} />
                   </div>
