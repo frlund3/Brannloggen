@@ -101,6 +101,41 @@ Deno.serve(async (req: Request) => {
     }
 
     // action === 'godkjent'
+    // Resolve medium_id: if søknad has no medium_id but has a mediehus name, create it
+    let mediumId = soknad.medium_id || null
+    if (!mediumId && soknad.mediehus) {
+      // Check if a medium with this name already exists
+      const { data: existingMedium } = await adminClient
+        .from('medier')
+        .select('id')
+        .ilike('navn', soknad.mediehus)
+        .maybeSingle()
+
+      if (existingMedium) {
+        mediumId = existingMedium.id
+      } else {
+        // Create new medium
+        const { data: newMedium, error: mediumError } = await adminClient
+          .from('medier')
+          .insert({ navn: soknad.mediehus, type: 'annet', aktiv: true })
+          .select('id')
+          .single()
+
+        if (!mediumError && newMedium) {
+          mediumId = newMedium.id
+        }
+        // If creation fails (e.g. duplicate), continue without medium_id
+      }
+
+      // Update the søknad with the resolved medium_id
+      if (mediumId) {
+        await adminClient
+          .from('presse_soknader')
+          .update({ medium_id: mediumId })
+          .eq('id', soknad_id)
+      }
+    }
+
     // Check if email already exists in auth
     const { data: existingUsers } = await adminClient.auth.admin.listUsers()
     const emailExists = existingUsers?.users?.some(u => u.email === soknad.epost)
@@ -126,7 +161,7 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // Create brukerprofil
+    // Create brukerprofil with medium_id
     const { error: profilError } = await adminClient
       .from('brukerprofiler')
       .insert({
@@ -136,6 +171,7 @@ Deno.serve(async (req: Request) => {
         rolle: 'presse',
         sentral_ids: [],
         aktiv: true,
+        medium_id: mediumId,
       })
 
     if (profilError) {
