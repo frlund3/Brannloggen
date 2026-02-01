@@ -352,6 +352,58 @@ export default function AdminMedierPage() {
             </p>
           </div>
         </div>
+
+        {/* Info about press access */}
+        <div className="mt-8 space-y-4">
+          <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-cyan-400 mb-2">Om pressetilgang</h3>
+            <div className="text-xs text-gray-400 space-y-2">
+              <p>
+                Journalister og redaksjoner kan soke om pressetilgang til Brannloggen. Ved registrering
+                velger de et mediehus fra listen, eller skriver inn navnet pa sitt mediehus om det ikke finnes.
+              </p>
+              <p>
+                Alle pressebrukere ma vaere tilknyttet et mediehus. Nar en soknad godkjennes, opprettes
+                mediehuset automatisk hvis det ikke allerede finnes i listen.
+              </p>
+              <p>
+                Soknader behandles under <a href="/admin/pressebrukere" className="text-cyan-400 hover:text-cyan-300 underline">Pressebrukere</a>.
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-amber-400 mb-2">Presseregistrering</h3>
+            <p className="text-xs text-gray-400 mb-3">
+              Del denne lenken med journalister som onsker tilgang. De ma oppgi navn, e-post,
+              mediehus og telefonnummer. Soknaden behandles manuelt av admin.
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="text-xs bg-[#0a0a0a] text-cyan-400 px-3 py-1.5 rounded border border-[#2a2a2a] flex-1 truncate">
+                {typeof window !== 'undefined' ? window.location.origin : ''}/presse-registrering
+              </code>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/presse-registrering`)
+                  toast.success('Lenke kopiert!')
+                }}
+                className="text-xs px-3 py-1.5 bg-amber-500/10 text-amber-400 rounded-lg hover:bg-amber-500/20 shrink-0 touch-manipulation"
+              >
+                Kopier
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-white mb-2">Krav til pressetilgang</h3>
+            <ul className="text-xs text-gray-400 space-y-1.5 list-disc list-inside">
+              <li>Sokeren ma vaere tilknyttet en redaksjon eller et mediehus</li>
+              <li>E-postadressen bor vaere en jobb-e-post knyttet til mediehuset</li>
+              <li>Pressebevis eller redaksjonell tilknytning kan kreves ved behov</li>
+              <li>Godkjente brukere far tilgang til pressemeldinger og utvidet informasjon om hendelser</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   )
