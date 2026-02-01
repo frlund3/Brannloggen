@@ -1,9 +1,9 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { useMedier, invalidateCache } from '@/hooks/useSupabaseData'
+import { useMedier, useBrukerprofiler, invalidateCache } from '@/hooks/useSupabaseData'
 import { useSentralScope } from '@/hooks/useSentralScope'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
@@ -20,9 +20,11 @@ const MEDIUM_TYPES = [
 
 export default function AdminMedierPage() {
   const { isAdmin, is110Admin } = useSentralScope()
-  const { data: medier, loading, refetch } = useMedier()
+  const { data: medier, loading: medierLoading, refetch } = useMedier()
+  const { data: brukerprofiler, loading: brukereLoading } = useBrukerprofiler()
 
   const [search, setSearch] = useState('')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [formNavn, setFormNavn] = useState('')
@@ -34,6 +36,9 @@ export default function AdminMedierPage() {
     m.navn.toLowerCase().includes(search.toLowerCase()) ||
     m.type.toLowerCase().includes(search.toLowerCase())
   )
+
+  const presseBrukere = brukerprofiler.filter(b => b.rolle === 'presse')
+  const getPresseForMedium = (mediumId: string) => presseBrukere.filter(b => b.medium_id === mediumId)
 
   const typeLabel = (type: string) => MEDIUM_TYPES.find(t => t.value === type)?.label || type
 
@@ -121,6 +126,8 @@ export default function AdminMedierPage() {
       toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
     }
   }
+
+  const loading = medierLoading || brukereLoading
 
   if (loading) {
     return (
@@ -239,52 +246,98 @@ export default function AdminMedierPage() {
                 <tr className="border-b border-[#2a2a2a]">
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Navn</th>
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Type</th>
+                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Presse</th>
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">Status</th>
                   <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(m => (
-                  <tr key={m.id} className={`border-b border-[#2a2a2a] hover:bg-[#222] ${!m.aktiv ? 'opacity-50' : ''}`}>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-white font-medium">{m.navn}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-xs bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded">
-                        {typeLabel(m.type)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 hidden sm:table-cell">
-                      <span className={`text-xs ${m.aktiv ? 'text-green-400' : 'text-red-400'}`}>
-                        {m.aktiv ? 'Aktiv' : 'Deaktivert'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => openEdit(m)}
-                          className="text-xs text-blue-400 hover:text-blue-300 touch-manipulation"
-                        >
-                          Rediger
-                        </button>
-                        <button
-                          onClick={() => handleToggleAktiv(m.id, m.aktiv)}
-                          className={`text-xs touch-manipulation ${m.aktiv ? 'text-orange-400 hover:text-orange-300' : 'text-green-400 hover:text-green-300'}`}
-                        >
-                          {m.aktiv ? 'Deaktiver' : 'Aktiver'}
-                        </button>
-                        {isAdmin && (
-                          <button
-                            onClick={() => handleDelete(m.id, m.navn)}
-                            className="text-xs text-red-400 hover:text-red-300 touch-manipulation"
-                          >
-                            Slett
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filtered.map(m => {
+                  const presseList = getPresseForMedium(m.id)
+                  const presseCount = presseList.length
+                  const isExpanded = expandedId === m.id
+                  return (
+                    <React.Fragment key={m.id}>
+                      <tr className={`border-b border-[#2a2a2a] hover:bg-[#222] ${!m.aktiv ? 'opacity-50' : ''}`}>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-white font-medium">{m.navn}</span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-xs bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded">
+                            {typeLabel(m.type)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {presseCount > 0 ? (
+                            <button
+                              onClick={() => setExpandedId(isExpanded ? null : m.id)}
+                              className="text-xs bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded hover:bg-cyan-500/20 transition-colors touch-manipulation"
+                            >
+                              {presseCount} {presseCount === 1 ? 'bruker' : 'brukere'}
+                              <svg className={`w-3 h-3 inline ml-1 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                          ) : (
+                            <span className="text-xs text-gray-600">0</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 hidden sm:table-cell">
+                          <span className={`text-xs ${m.aktiv ? 'text-green-400' : 'text-red-400'}`}>
+                            {m.aktiv ? 'Aktiv' : 'Deaktivert'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => openEdit(m)}
+                              className="text-xs text-blue-400 hover:text-blue-300 touch-manipulation"
+                            >
+                              Rediger
+                            </button>
+                            <button
+                              onClick={() => handleToggleAktiv(m.id, m.aktiv)}
+                              className={`text-xs touch-manipulation ${m.aktiv ? 'text-orange-400 hover:text-orange-300' : 'text-green-400 hover:text-green-300'}`}
+                            >
+                              {m.aktiv ? 'Deaktiver' : 'Aktiver'}
+                            </button>
+                            {isAdmin && (
+                              <button
+                                onClick={() => handleDelete(m.id, m.navn)}
+                                className="text-xs text-red-400 hover:text-red-300 touch-manipulation"
+                              >
+                                Slett
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                      {isExpanded && presseCount > 0 && (
+                        <tr className="bg-[#141414]">
+                          <td colSpan={5} className="px-4 py-3">
+                            <div className="pl-2 border-l-2 border-cyan-500/30">
+                              <p className="text-xs text-gray-500 mb-2">Tilknyttede pressebrukere:</p>
+                              <div className="space-y-1.5">
+                                {presseList.map(u => (
+                                  <div key={u.id} className="flex items-center gap-3">
+                                    <div className="w-6 h-6 bg-cyan-600 rounded-full flex items-center justify-center shrink-0">
+                                      <span className="text-[10px] text-white font-bold">{u.fullt_navn.split(' ').map(n => n[0]).join('')}</span>
+                                    </div>
+                                    <span className="text-sm text-white">{u.fullt_navn}</span>
+                                    <span className="text-xs text-gray-500">{u.epost}</span>
+                                    <span className={`text-[10px] ml-auto ${u.aktiv ? 'text-green-400' : 'text-red-400'}`}>
+                                      {u.aktiv ? 'Aktiv' : 'Deaktivert'}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  )
+                })}
               </tbody>
             </table>
           </div>
