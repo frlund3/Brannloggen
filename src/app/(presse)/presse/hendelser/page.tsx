@@ -4,7 +4,7 @@ import { PresseLayout } from '@/components/presse/PresseLayout'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { useHendelser, useBrannvesen, useKommuner, useKategorier, useFylker, useSentraler } from '@/hooks/useSupabaseData'
+import { useHendelser, useBrannvesen, useKommuner, useKategorier, useFylker, useSentraler, useBrukerprofiler } from '@/hooks/useSupabaseData'
 import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
 import { formatDateTime, formatTime, formatTimeAgo } from '@/lib/utils'
 import { useState } from 'react'
@@ -17,7 +17,13 @@ export default function PresseHendelserPage() {
   const { data: kategorier } = useKategorier()
   const { data: fylker } = useFylker()
   const { data: sentraler } = useSentraler()
+  const { data: brukerprofiler } = useBrukerprofiler()
   const [filter, setFilter] = useState<'alle' | 'pågår' | 'avsluttet'>('alle')
+
+  const getUserName = (userId: string) => {
+    const profil = brukerprofiler.find(b => b.user_id === userId)
+    return profil?.fullt_navn || null
+  }
   const [selectedFylke, setSelectedFylke] = useState('')
   const [selectedKategori, setSelectedKategori] = useState('')
   const [search, setSearch] = useState('')
@@ -171,6 +177,9 @@ export default function PresseHendelserPage() {
                   </div>
 
                   <p className="text-sm text-gray-300">{h.beskrivelse}</p>
+                  {getUserName(h.opprettet_av) && (
+                    <p className="text-xs text-gray-500 mt-1">Av: {getUserName(h.opprettet_av)}</p>
+                  )}
 
                   {/* Hendelsebilde */}
                   {h.bilde_url && (
@@ -203,10 +212,10 @@ export default function PresseHendelserPage() {
                 {/* Expanded view with ALL details */}
                 {isExpanded && (() => {
                   // Merge all updates into one unified timeline
-                  const timelineItems: { id: string; type: 'publikum' | 'presse' | 'status'; tekst: string; opprettet_tidspunkt: string; bilde_url?: string | null }[] = [
-                    { id: 'opprettet', type: 'status', tekst: 'Hendelsen ble opprettet', opprettet_tidspunkt: h.opprettet_tidspunkt },
-                    ...activeUpdates.map(u => ({ id: u.id, type: 'publikum' as const, tekst: u.tekst, opprettet_tidspunkt: u.opprettet_tidspunkt, bilde_url: u.bilde_url })),
-                    ...activePresse.map(p => ({ id: p.id, type: 'presse' as const, tekst: p.tekst, opprettet_tidspunkt: p.opprettet_tidspunkt, bilde_url: p.bilde_url })),
+                  const timelineItems: { id: string; type: 'publikum' | 'presse' | 'status'; tekst: string; opprettet_tidspunkt: string; opprettet_av?: string; bilde_url?: string | null }[] = [
+                    { id: 'opprettet', type: 'status', tekst: 'Hendelsen ble opprettet', opprettet_tidspunkt: h.opprettet_tidspunkt, opprettet_av: h.opprettet_av },
+                    ...activeUpdates.map(u => ({ id: u.id, type: 'publikum' as const, tekst: u.tekst, opprettet_tidspunkt: u.opprettet_tidspunkt, opprettet_av: u.opprettet_av, bilde_url: u.bilde_url })),
+                    ...activePresse.map(p => ({ id: p.id, type: 'presse' as const, tekst: p.tekst, opprettet_tidspunkt: p.opprettet_tidspunkt, opprettet_av: p.opprettet_av, bilde_url: p.bilde_url })),
                   ]
                   if (h.status === 'avsluttet' && h.avsluttet_tidspunkt) {
                     timelineItems.push({ id: 'status-avsluttet', type: 'status', tekst: 'Hendelsen ble avsluttet', opprettet_tidspunkt: h.avsluttet_tidspunkt })
@@ -256,6 +265,9 @@ export default function PresseHendelserPage() {
                                   <div className="flex items-center gap-2">
                                     <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
                                     <span className="text-xs text-gray-400 italic">{item.tekst}</span>
+                                    {item.opprettet_av && getUserName(item.opprettet_av) && (
+                                      <span className="text-xs text-gray-600">Av: {getUserName(item.opprettet_av)}</span>
+                                    )}
                                   </div>
                                 ) : (
                                   <>
@@ -263,6 +275,9 @@ export default function PresseHendelserPage() {
                                       <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
                                       <span className="text-xs text-gray-600">{formatDateTime(item.opprettet_tidspunkt)}</span>
                                       <span className={`text-[10px] ${cfg.badge} px-1.5 py-0.5 rounded font-bold`}>{cfg.label}</span>
+                                      {item.opprettet_av && getUserName(item.opprettet_av) && (
+                                        <span className="text-xs text-gray-600">Av: {getUserName(item.opprettet_av)}</span>
+                                      )}
                                     </div>
                                     <p className={`text-sm mt-0.5 ${cfg.textColor}`}>{item.tekst}</p>
                                     {item.bilde_url && (
