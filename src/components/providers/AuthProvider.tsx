@@ -1,8 +1,11 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
+
+/** Idle timeout: 30 minutes of inactivity triggers automatic logout */
+const IDLE_TIMEOUT_MS = 30 * 60 * 1000
 
 interface AuthContextType {
   user: User | null
@@ -83,6 +86,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe()
     }
   }, [])
+
+  // Idle timeout: log out after 30 minutes of no user activity
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const resetIdleTimer = useCallback(() => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+    if (!user) return
+
+    idleTimerRef.current = setTimeout(async () => {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      localStorage.removeItem(ROLLE_KEY)
+      localStorage.removeItem(SENTRAL_IDS_KEY)
+      window.location.href = '/login'
+    }, IDLE_TIMEOUT_MS)
+  }, [user])
+
+  useEffect(() => {
+    if (!user) return
+
+    const events = ['mousedown', 'keydown', 'touchstart', 'scroll']
+    const handler = () => resetIdleTimer()
+
+    events.forEach(e => window.addEventListener(e, handler, { passive: true }))
+    resetIdleTimer()
+
+    return () => {
+      events.forEach(e => window.removeEventListener(e, handler))
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current)
+    }
+  }, [user, resetIdleTimer])
 
   return (
     <AuthContext.Provider value={{ user, rolle, sentralIds, loading }}>

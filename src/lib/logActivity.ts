@@ -17,6 +17,9 @@ export type AktivitetsHandling =
   | 'ny_notat'
   | 'redigert_notat'
   | 'deaktivert_notat'
+  | 'innlogget'
+  | 'utlogget'
+  | 'innlogging_feilet'
 
 interface LogActivityParams {
   handling: AktivitetsHandling

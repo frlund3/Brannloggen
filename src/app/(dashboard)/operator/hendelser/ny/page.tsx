@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { logActivity } from '@/lib/logActivity'
+import { validateImageFileFull } from '@/lib/file-validation'
 
 export default function NyHendelsePage() {
   const router = useRouter()
@@ -155,8 +156,15 @@ export default function NyHendelsePage() {
 
   const uploadImage = async (file: File, hendelseId: string): Promise<string | null> => {
     try {
+      // Validate file before upload
+      const validation = await validateImageFileFull(file)
+      if (!validation.valid) {
+        toast.error(validation.error || 'Ugyldig fil')
+        return null
+      }
+
       const supabase = createClient()
-      const ext = file.name.split('.').pop()
+      const ext = file.name.split('.').pop()?.toLowerCase()
       const fileName = `${hendelseId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
       const { error } = await supabase.storage.from('hendelsesbilder').upload(fileName, file)
       if (error) throw error

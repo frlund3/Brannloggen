@@ -6,17 +6,27 @@
 //   - SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (auto-injected by Supabase)
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { z } from 'https://esm.sh/zod@3'
 
-const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || 'https://brannloggen.no'
+const allowedOrigins = [
+  'https://brannloggen.no',
+  'https://www.brannloggen.no',
+  ...(Deno.env.get('ALLOWED_ORIGIN') ? [Deno.env.get('ALLOWED_ORIGIN')!] : []),
+  'http://localhost:3000',
+  'http://localhost:3001',
+]
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': allowedOrigin,
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('Origin') || ''
+  return {
+    'Access-Control-Allow-Origin': allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  }
 }
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: getCorsHeaders(req) })
   }
 
   try {
@@ -25,7 +35,7 @@ Deno.serve(async (req: Request) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Ikke autorisert' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       })
     }
 
@@ -41,7 +51,7 @@ Deno.serve(async (req: Request) => {
     if (!caller) {
       return new Response(JSON.stringify({ error: 'Ikke autorisert' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       })
     }
 
@@ -56,26 +66,42 @@ Deno.serve(async (req: Request) => {
     if (!callerProfile || (callerProfile.rolle !== 'admin' && callerProfile.rolle !== '110-admin')) {
       return new Response(JSON.stringify({ error: 'Kun admin kan opprette brukere' }), {
         status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       })
     }
 
-    // Parse request body
-    const { fullt_navn, epost, rolle, sentral_ids } = await req.json()
+    // Parse and validate request body
+    const CreateUserSchema = z.object({
+      fullt_navn: z.string().min(2, 'Navn må være minst 2 tegn').max(200, 'Navn kan ikke være over 200 tegn'),
+      epost: z.string().email('Ugyldig e-postadresse').max(254),
+      rolle: z.enum(['admin', '110-admin', 'operator', 'presse'], { message: 'Ugyldig rolle' }),
+      sentral_ids: z.array(z.string().uuid()).optional().default([]),
+    })
 
-    if (!fullt_navn || !epost || !rolle) {
-      return new Response(JSON.stringify({ error: 'Mangler påkrevde felt: fullt_navn, epost, rolle' }), {
+    let body: unknown
+    try { body = await req.json() } catch {
+      return new Response(JSON.stringify({ error: 'Ugyldig JSON i forespørselen' }), {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       })
     }
+
+    const parsed = CreateUserSchema.safeParse(body)
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: parsed.error.issues[0]?.message || 'Ugyldig input' }), {
+        status: 400,
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
+      })
+    }
+
+    const { fullt_navn, epost, rolle, sentral_ids } = parsed.data
 
     // 110-admin can only create operators and 110-admins within their sentraler
     if (callerProfile.rolle === '110-admin') {
       if (rolle !== 'operator' && rolle !== '110-admin') {
         return new Response(JSON.stringify({ error: '110-admin kan kun opprette operatører og 110-admins' }), {
           status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
         })
       }
     }
@@ -91,7 +117,7 @@ Deno.serve(async (req: Request) => {
     if (authError) {
       return new Response(JSON.stringify({ error: authError.message }), {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       })
     }
 
@@ -114,7 +140,7 @@ Deno.serve(async (req: Request) => {
       await adminClient.auth.admin.deleteUser(newAuthUser.user.id)
       return new Response(JSON.stringify({ error: profilError.message }), {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       })
     }
 
@@ -137,13 +163,13 @@ Deno.serve(async (req: Request) => {
         created_at: profil.created_at,
       },
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     })
   } catch (error) {
     console.error('Create user error:', error)
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
+    return new Response(JSON.stringify({ error: 'En intern feil oppstod' }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     })
   }
 })

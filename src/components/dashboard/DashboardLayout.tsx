@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { createClient } from '@/lib/supabase/client'
+import { logActivity } from '@/lib/logActivity'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -255,6 +256,8 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                 </a>
                 <button
                   onClick={async () => {
+                    // Log logout before signing out
+                    await logActivity({ handling: 'utlogget', tabell: 'auth' })
                     const supabase = createClient()
                     await supabase.auth.signOut()
                     localStorage.removeItem('brannloggen_user_rolle')

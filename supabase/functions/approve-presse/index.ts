@@ -4,6 +4,7 @@
 // Only callable by admin or 110-admin users.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { z } from 'https://esm.sh/zod@3'
 
 const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || 'https://brannloggen.no'
 
@@ -56,14 +57,29 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    const { soknad_id, action, avvisningsgrunn } = await req.json()
+    const ApprovePresseSchema = z.object({
+      soknad_id: z.string().uuid('Ugyldig søknad-ID'),
+      action: z.enum(['godkjent', 'avvist'], { message: 'action må være "godkjent" eller "avvist"' }),
+      avvisningsgrunn: z.string().max(500).optional(),
+    })
 
-    if (!soknad_id || !action || !['godkjent', 'avvist'].includes(action)) {
-      return new Response(JSON.stringify({ error: 'Mangler soknad_id eller ugyldig action' }), {
+    let body: unknown
+    try { body = await req.json() } catch {
+      return new Response(JSON.stringify({ error: 'Ugyldig JSON i forespørselen' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+
+    const parsed = ApprovePresseSchema.safeParse(body)
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: parsed.error.issues[0]?.message || 'Ugyldig input' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    const { soknad_id, action, avvisningsgrunn } = parsed.data
 
     // Fetch the søknad
     const { data: soknad, error: soknadError } = await adminClient
@@ -214,7 +230,7 @@ Deno.serve(async (req: Request) => {
     })
   } catch (error) {
     console.error('Approve presse error:', error)
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
+    return new Response(JSON.stringify({ error: 'En intern feil oppstod' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

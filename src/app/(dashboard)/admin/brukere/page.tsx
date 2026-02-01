@@ -91,16 +91,9 @@ export default function AdminBrukerePage() {
     if (!newUser.fullt_navn || !newUser.epost || !newUser.rolle) return
     setAdding(true)
     try {
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { toast.error('Du må være innlogget'); return }
-
-      const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-user`, {
+      const res = await fetch('/api/create-user', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fullt_navn: newUser.fullt_navn,
           epost: newUser.epost,
