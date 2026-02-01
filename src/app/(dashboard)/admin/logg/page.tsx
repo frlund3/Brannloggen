@@ -14,7 +14,7 @@ interface LogEntry {
   hendelse_id: string
   hendelse_tittel: string
   tekst: string
-  bruker_id: string
+  bruker_id: string | null
   bruker_navn: string | null
 }
 
@@ -34,7 +34,8 @@ export default function AdminLoggPage() {
 
   const loading = hendelserLoading || brukereLoading
 
-  const getUserName = (userId: string) => {
+  const getUserName = (userId: string | null) => {
+    if (!userId) return null
     const profil = brukerprofiler.find(b => b.user_id === userId)
     return profil?.fullt_navn || null
   }
@@ -54,7 +55,7 @@ export default function AdminLoggPage() {
         hendelse_id: h.id,
         hendelse_tittel: h.tittel,
         tekst: `Ny hendelse opprettet: ${h.tittel}`,
-        bruker_id: h.opprettet_av,
+        bruker_id: h.opprettet_av || null,
         bruker_navn: getUserName(h.opprettet_av),
       })
 
@@ -67,7 +68,7 @@ export default function AdminLoggPage() {
           hendelse_id: h.id,
           hendelse_tittel: h.tittel,
           tekst: `Hendelse avsluttet: ${h.tittel}`,
-          bruker_id: h.opprettet_av,
+          bruker_id: h.opprettet_av || null,
           bruker_navn: getUserName(h.opprettet_av),
         })
       }
@@ -81,7 +82,7 @@ export default function AdminLoggPage() {
           hendelse_id: h.id,
           hendelse_tittel: h.tittel,
           tekst: o.tekst,
-          bruker_id: o.opprettet_av,
+          bruker_id: o.opprettet_av || null,
           bruker_navn: getUserName(o.opprettet_av),
         })
       }
@@ -95,7 +96,7 @@ export default function AdminLoggPage() {
           hendelse_id: h.id,
           hendelse_tittel: h.tittel,
           tekst: p.tekst,
-          bruker_id: p.opprettet_av,
+          bruker_id: p.opprettet_av || null,
           bruker_navn: getUserName(p.opprettet_av),
         })
       }
@@ -109,7 +110,7 @@ export default function AdminLoggPage() {
           hendelse_id: h.id,
           hendelse_tittel: h.tittel,
           tekst: n.notat,
-          bruker_id: n.opprettet_av,
+          bruker_id: n.opprettet_av || null,
           bruker_navn: getUserName(n.opprettet_av),
         })
       }
@@ -275,7 +276,7 @@ export default function AdminLoggPage() {
                       <p className="text-sm text-white truncate max-w-[400px]">{entry.tekst}</p>
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell">
-                      <span className="text-xs text-gray-400">{entry.bruker_navn || entry.bruker_id.slice(0, 8)}</span>
+                      <span className="text-xs text-gray-400">{entry.bruker_navn || entry.bruker_id?.slice(0, 8) || 'Ukjent'}</span>
                     </td>
                   </tr>
                 ))}
