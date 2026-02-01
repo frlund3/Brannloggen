@@ -16,23 +16,31 @@ export default function OppdaterPassordPage() {
   // The SDK picks these up automatically via onAuthStateChange
   useEffect(() => {
     const supabase = createClient()
+    let resolved = false
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        resolved = true
         setHasSession(true)
         setChecking(false)
       }
     })
 
-    // Also check if there's already a session (e.g. from callback route)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setHasSession(true)
-      }
-      setChecking(false)
-    })
+    // Fallback: if onAuthStateChange doesn't fire within 3s, check session directly
+    const timeout = setTimeout(() => {
+      if (resolved) return
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setHasSession(true)
+        }
+        setChecking(false)
+      })
+    }, 3000)
 
-    return () => subscription.unsubscribe()
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timeout)
+    }
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
