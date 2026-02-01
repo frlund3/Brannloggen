@@ -8,6 +8,7 @@ import { SettingsView } from '@/components/public/SettingsView'
 import { PushOnboarding, useShouldShowPushOnboarding } from '@/components/public/PushOnboarding'
 import { useHendelser, useSentraler } from '@/hooks/useSupabaseData'
 import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
+import { useAuth } from '@/components/providers/AuthProvider'
 
 const PREFS_KEY = 'brannloggen_push_prefs'
 
@@ -36,6 +37,13 @@ export default function HomePage() {
   const { data: hendelser, loading: hendelserLoading, refetch } = useHendelser({ excludeDeactivated: true })
   useRealtimeHendelser(refetch)
   const { data: sentraler, loading: sentralerLoading } = useSentraler()
+  const { rolle } = useAuth()
+
+  const dashboardHref = rolle === 'admin' || rolle === '110-admin' ? '/operator/hendelser'
+    : rolle === 'operator' ? '/operator/hendelser'
+    : rolle === 'presse' ? '/presse/hendelser'
+    : null
+  const dashboardLabel = rolle === 'admin' ? 'Admin' : rolle === '110-admin' ? '110-Admin' : rolle === 'operator' ? '110-Sentral' : rolle === 'presse' ? 'Presse' : null
 
   const [activeTab, setActiveTab] = useState<Tab>('alle')
   const [subTab, setSubTab] = useState<SubTab>('alle')
@@ -140,20 +148,74 @@ export default function HomePage() {
   const prefsFilterCount = pushPrefs.sentraler.length + pushPrefs.fylker.length + pushPrefs.kategorier.length + pushPrefs.brannvesen.length
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pb-20">
+    <div className="min-h-screen bg-[#0a0a0a] pb-20 lg:pb-0">
       {/* Push Onboarding Popup */}
       {showOnboarding && !onboardingDismissed && (
         <PushOnboarding onComplete={() => setOnboardingDismissed(true)} />
       )}
 
-      {/* FØLGER TAB */}
-      {activeTab === 'følger' && (
-        <>
-          <header className="sticky top-0 z-30 bg-[#0a0a0a]/95 backdrop-blur border-b border-[#2a2a2a]">
-            <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-              <h1 className="text-lg font-bold">Jeg følger</h1>
+      {/* Shared Header */}
+      <header className="sticky top-0 z-30 bg-[#0a0a0a]/95 backdrop-blur border-b border-[#2a2a2a]">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          {/* Logo + Name */}
+          <div className="flex items-center gap-2.5">
+            <img src="/icon-192.png" alt="Brannloggen" className="w-8 h-8 rounded-lg" />
+            <span className="text-lg font-bold hidden sm:inline">Brannloggen</span>
+          </div>
+
+          {/* Desktop Tab Navigation */}
+          <div className="hidden lg:flex items-center gap-3">
+            <nav className="flex items-center gap-1 bg-[#1a1a1a] rounded-lg p-1">
+              {([
+                { id: 'følger' as Tab, label: 'Jeg følger' },
+                { id: 'alle' as Tab, label: 'Alle' },
+                { id: 'innstillinger' as Tab, label: 'Innstillinger' },
+              ]).map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === tab.id ? 'bg-[#2a2a2a] text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+            {dashboardHref && (
+              <a
+                href={dashboardHref}
+                className="px-4 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                {dashboardLabel}
+              </a>
+            )}
+          </div>
+
+          {/* Mobile: Tab-specific actions */}
+          <div className="lg:hidden">
+            {activeTab === 'alle' && (
               <button
-                onClick={() => { setActiveTab('innstillinger') }}
+                onClick={() => setFilterOpen(true)}
+                className="text-blue-400 text-sm flex items-center gap-1"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                </svg>
+                Filter
+                {activeFilterCount > 0 && (
+                  <span className="bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+            )}
+            {activeTab === 'følger' && (
+              <button
+                onClick={() => setActiveTab('innstillinger')}
                 className="text-blue-400 text-sm flex items-center gap-1"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -166,10 +228,16 @@ export default function HomePage() {
                   </span>
                 )}
               </button>
-            </div>
+            )}
+          </div>
+        </div>
+
+        {/* Tab-specific sub-header content */}
+        {activeTab === 'følger' && (
+          <div className="max-w-7xl mx-auto">
             {/* Active prefs summary */}
             {hasPrefs && (
-              <div className="max-w-lg mx-auto px-4 pb-2">
+              <div className="px-4 pb-2">
                 <div className="flex flex-wrap gap-1">
                   {pushPrefs.sentraler.map(sId => {
                     const s = sentraler.find(x => x.id === sId)
@@ -179,7 +247,7 @@ export default function HomePage() {
                 </div>
               </div>
             )}
-            <div className="max-w-lg mx-auto px-4 pb-3">
+            <div className="px-4 pb-3 max-w-md">
               <div className="flex bg-[#1a1a1a] rounded-lg p-1">
                 <button
                   onClick={() => setSubTab('alle')}
@@ -199,91 +267,102 @@ export default function HomePage() {
                 </button>
               </div>
             </div>
-          </header>
+          </div>
+        )}
+      </header>
 
-          <main className="max-w-lg mx-auto px-4 py-4 space-y-3">
-            {loading ? (
-              <p className="text-center text-gray-400 py-12">Laster hendelser...</p>
-            ) : !hasPrefs ? (
-              <div className="text-center py-12">
-                <svg className="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <p className="text-gray-400 mb-2">Ingen preferanser satt ennå</p>
-                <p className="text-xs text-gray-500 mb-4">Gå til innstillinger og velg hvilke 110-sentraler, fylker eller kategorier du vil følge.</p>
-                <button
-                  onClick={() => setActiveTab('innstillinger')}
-                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  Gå til innstillinger
-                </button>
-              </div>
-            ) : følgerHendelser.length > 0 ? (
-              følgerHendelser.map((h) => (
-                <IncidentCard key={h.id} {...h} oppdateringer={h.oppdateringer} />
-              ))
-            ) : (
-              <p className="text-center text-gray-500 py-12">
-                {subTab === 'pågår'
-                  ? 'Ingen pågående hendelser matcher dine preferanser.'
-                  : 'Ingen hendelser matcher dine preferanser.'}
-              </p>
-            )}
-          </main>
-        </>
-      )}
+      {/* Main content area with optional desktop sidebar */}
+      <div className="max-w-7xl mx-auto lg:flex">
+        {/* Desktop Sidebar - filter panel for "Alle" tab */}
+        {activeTab === 'alle' && (
+          <aside className="hidden lg:block w-80 shrink-0 sticky top-[57px] h-[calc(100vh-57px)] border-r border-[#2a2a2a]">
+            <FilterSheet
+              isOpen={true}
+              onClose={() => {}}
+              filters={filters}
+              onFiltersChange={setFilters}
+              mode="sidebar"
+            />
+          </aside>
+        )}
 
-      {/* ALLE MELDINGER TAB */}
-      {activeTab === 'alle' && (
-        <>
-          <header className="sticky top-0 z-30 bg-[#0a0a0a]/95 backdrop-blur border-b border-[#2a2a2a]">
-            <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-              <h1 className="text-lg font-bold">Alle meldinger</h1>
-              <button
-                onClick={() => setFilterOpen(true)}
-                className="text-blue-400 text-sm flex items-center gap-1"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                </svg>
-                Filter
-                {activeFilterCount > 0 && (
-                  <span className="bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                    {activeFilterCount}
-                  </span>
-                )}
-              </button>
+        {/* Content area */}
+        <main className="flex-1 px-4 py-4">
+          {/* FØLGER TAB */}
+          {activeTab === 'følger' && (
+            <div className="max-w-5xl mx-auto">
+              {loading ? (
+                <p className="text-center text-gray-400 py-12">Laster hendelser...</p>
+              ) : !hasPrefs ? (
+                <div className="text-center py-12">
+                  <svg className="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <p className="text-gray-400 mb-2">Ingen preferanser satt ennå</p>
+                  <p className="text-xs text-gray-500 mb-4">Gå til innstillinger og velg hvilke 110-sentraler, fylker eller kategorier du vil følge.</p>
+                  <button
+                    onClick={() => setActiveTab('innstillinger')}
+                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Gå til innstillinger
+                  </button>
+                </div>
+              ) : følgerHendelser.length > 0 ? (
+                <div className="space-y-3">
+                  {følgerHendelser.map((h) => (
+                    <IncidentCard key={h.id} {...h} oppdateringer={h.oppdateringer} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-12">
+                  {subTab === 'pågår'
+                    ? 'Ingen pågående hendelser matcher dine preferanser.'
+                    : 'Ingen hendelser matcher dine preferanser.'}
+                </p>
+              )}
             </div>
-          </header>
+          )}
 
-          <main className="max-w-lg mx-auto px-4 py-4 space-y-3">
-            {loading ? (
-              <p className="text-center text-gray-400 py-12">Laster hendelser...</p>
-            ) : allHendelser.length > 0 ? (
-              allHendelser.map((h) => (
-                <IncidentCard key={h.id} {...h} oppdateringer={h.oppdateringer} />
-              ))
-            ) : (
-              <p className="text-center text-gray-500 py-12">
-                Ingen hendelser funnet med valgte filtre.
-              </p>
-            )}
-          </main>
+          {/* ALLE MELDINGER TAB */}
+          {activeTab === 'alle' && (
+            <div className="max-w-5xl mx-auto">
+              {loading ? (
+                <p className="text-center text-gray-400 py-12">Laster hendelser...</p>
+              ) : allHendelser.length > 0 ? (
+                <div className="space-y-3">
+                  {allHendelser.map((h) => (
+                    <IncidentCard key={h.id} {...h} oppdateringer={h.oppdateringer} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-gray-500 py-12">
+                  Ingen hendelser funnet med valgte filtre.
+                </p>
+              )}
+            </div>
+          )}
 
-          <FilterSheet
-            isOpen={filterOpen}
-            onClose={() => setFilterOpen(false)}
-            filters={filters}
-            onFiltersChange={setFilters}
-          />
-        </>
-      )}
+          {/* INNSTILLINGER TAB */}
+          {activeTab === 'innstillinger' && <SettingsView />}
+        </main>
+      </div>
 
-      {/* INNSTILLINGER TAB */}
-      {activeTab === 'innstillinger' && <SettingsView />}
+      {/* Mobile FilterSheet (bottom sheet) */}
+      <div className="lg:hidden">
+        <FilterSheet
+          isOpen={filterOpen}
+          onClose={() => setFilterOpen(false)}
+          filters={filters}
+          onFiltersChange={setFilters}
+          mode="sheet"
+        />
+      </div>
 
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      {/* Mobile BottomNav */}
+      <div className="lg:hidden">
+        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      </div>
     </div>
   )
 }

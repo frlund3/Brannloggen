@@ -3,7 +3,7 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { useSentraler, useBrukerprofiler, invalidateCache } from '@/hooks/useSupabaseData'
 import { useSentralScope } from '@/hooks/useSentralScope'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
@@ -30,20 +30,6 @@ export default function AdminBrukerePage() {
   const { data: dbBrukere, loading: brukereLoading, refetch: refetchBrukere } = useBrukerprofiler()
   const [brukere, setBrukere] = useState<UserItem[]>([])
   const [initialized, setInitialized] = useState(false)
-
-  // Sync DB data into local state once loaded
-  if (!brukereLoading && !initialized && dbBrukere.length > 0) {
-    setBrukere(dbBrukere.map(b => ({
-      id: b.id,
-      fullt_navn: b.fullt_navn,
-      epost: b.epost || '',
-      rolle: b.rolle,
-      sentral_ids: b.sentral_ids,
-      aktiv: b.aktiv,
-      created_at: b.created_at,
-    })))
-    setInitialized(true)
-  }
   const [showAddModal, setShowAddModal] = useState(false)
   const [editUser, setEditUser] = useState<UserItem | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
@@ -52,6 +38,24 @@ export default function AdminBrukerePage() {
   const [search, setSearch] = useState('')
   const [filterSentral, setFilterSentral] = useState('')
   const [filterRolle, setFilterRolle] = useState('')
+  const [adding, setAdding] = useState(false)
+  const [showRoleInfo, setShowRoleInfo] = useState(false)
+
+  // Sync DB data into local state once loaded
+  useEffect(() => {
+    if (!brukereLoading && !initialized && dbBrukere.length > 0) {
+      setBrukere(dbBrukere.map(b => ({
+        id: b.id,
+        fullt_navn: b.fullt_navn,
+        epost: b.epost || '',
+        rolle: b.rolle,
+        sentral_ids: b.sentral_ids,
+        aktiv: b.aktiv,
+        created_at: b.created_at,
+      })))
+      setInitialized(true)
+    }
+  }, [brukereLoading, initialized, dbBrukere])
 
   if (sentralerLoading || brukereLoading) {
     return (
@@ -81,8 +85,6 @@ export default function AdminBrukerePage() {
   const availableSentraler = isScoped
     ? sentraler.filter(s => scope.sentralIds.includes(s.id))
     : sentraler
-
-  const [adding, setAdding] = useState(false)
 
   const handleAdd = async () => {
     if (!newUser.fullt_navn || !newUser.epost || !newUser.rolle) return
@@ -296,11 +298,42 @@ export default function AdminBrukerePage() {
           <p className="text-sm text-gray-400 mb-3">
             {isScoped ? 'Brukere tilknyttet dine 110-sentraler' : 'Administrer operatører og administratorer'}
           </p>
-          <button onClick={() => { setNewUser({ fullt_navn: '', epost: '', rolle: 'operator', sentral_ids: [] }); setShowAddModal(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors touch-manipulation">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-            Ny bruker
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={() => { setNewUser({ fullt_navn: '', epost: '', rolle: 'operator', sentral_ids: [] }); setShowAddModal(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors touch-manipulation">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              Ny bruker
+            </button>
+            <button onClick={() => setShowRoleInfo(!showRoleInfo)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] hover:border-blue-500 text-gray-400 hover:text-white rounded-lg text-sm transition-colors touch-manipulation">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Rollebeskrivelser
+            </button>
+          </div>
         </div>
+
+        {/* Role access overview */}
+        {showRoleInfo && (
+          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4 mb-6">
+            <h3 className="text-sm font-semibold text-white mb-3">Tilganger per rolle</h3>
+            <div className="space-y-3">
+              <div className="flex gap-3">
+                <span className="text-xs px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 shrink-0 h-fit">Admin</span>
+                <p className="text-xs text-gray-400">Full tilgang til alt. Alle hendelser, alle sentraler, brukeradministrasjon, systeminnstillinger, rapporter, kategorier, fylker, kommuner og brannvesen.</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-xs px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 shrink-0 h-fit">110-Admin</span>
+                <p className="text-xs text-gray-400">Hendelser, ny hendelse, brukere, brannvesen, 110-sentraler, statistikk, rapporter, innstillinger og presse — begrenset til sine tildelte 110-sentraler.</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 shrink-0 h-fit">Operatør</span>
+                <p className="text-xs text-gray-400">Hendelser, ny hendelse, rapporter og presse — begrenset til sine tildelte 110-sentraler.</p>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 shrink-0 h-fit">Presse</span>
+                <p className="text-xs text-gray-400">Lesevisning av pressemeldinger og hendelser. Pressevarsler-innstillinger.</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Filters */}
         <div className="flex gap-3 mb-6 flex-wrap">

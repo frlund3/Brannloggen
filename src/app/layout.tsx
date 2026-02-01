@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { Toaster } from 'sonner'
 import './globals.css'
@@ -11,6 +11,9 @@ export const metadata: Metadata = {
     icon: '/favicon.ico',
     apple: '/apple-touch-icon.png',
   },
+}
+
+export const viewport: Viewport = {
   themeColor: '#d42020',
 }
 

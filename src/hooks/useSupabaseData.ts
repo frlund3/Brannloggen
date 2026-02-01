@@ -53,6 +53,7 @@ export interface Hendelse {
   sted: string
   status: string
   alvorlighetsgrad: string
+  opprettet_av: string
   opprettet_tidspunkt: string
   oppdatert_tidspunkt: string
   avsluttet_tidspunkt: string | null
