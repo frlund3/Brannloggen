@@ -31,13 +31,13 @@ export default function OperatorHendelserPage() {
   const [editStatus, setEditStatus] = useState('')
   const [newUpdate, setNewUpdate] = useState('')
 
-  const isLoading = hendelserLoading || brannvesenLoading || kategorierLoading || fylkerLoading || kommunerLoading || sentralerLoading
-  if (isLoading) return <div className="p-8 text-center text-gray-400">Laster...</div>
-
-  // Scope hendelser for 110-admin
+  // Scope hendelser for 110-admin (must be before any early returns to follow Rules of Hooks)
   const scopedHendelser = useMemo(() => {
     return isScoped ? filterByBrannvesen(allHendelser) : allHendelser
   }, [isScoped, filterByBrannvesen, allHendelser])
+
+  const isLoading = hendelserLoading || brannvesenLoading || kategorierLoading || fylkerLoading || kommunerLoading || sentralerLoading
+  if (isLoading) return <div className="p-8 text-center text-gray-400">Laster...</div>
 
   const filteredKommuner = filterFylke ? kommuner.filter(k => k.fylke_id === filterFylke) : kommuner
   const filteredBrannvesenList = filterSentral
