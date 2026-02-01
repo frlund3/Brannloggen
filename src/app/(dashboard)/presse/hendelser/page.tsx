@@ -148,10 +148,12 @@ export default function PresseHendelserPage() {
 
                   {/* Press-only info badge */}
                   <div className="mt-2 flex items-center gap-1">
-                    <svg className="w-3 h-3 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className={`w-3 h-3 ${h.presse_tekst ? 'text-cyan-400' : 'text-gray-500'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                     </svg>
-                    <span className="text-xs text-blue-400">Presseinformasjon tilgjengelig</span>
+                    <span className={`text-xs ${h.presse_tekst ? 'text-cyan-400' : 'text-gray-500'}`}>
+                      {h.presse_tekst ? 'Pressemelding tilgjengelig' : 'Ingen pressemelding'}
+                    </span>
                     <svg
                       className={`w-3 h-3 text-gray-400 transition-transform ml-auto ${isExpanded ? 'rotate-180' : ''}`}
                       fill="none" viewBox="0 0 24 24" stroke="currentColor"
@@ -165,17 +167,20 @@ export default function PresseHendelserPage() {
                 {isExpanded && (
                   <div className="border-t border-[#2a2a2a] p-4 space-y-4">
                     {/* Press info section */}
-                    <div className="bg-blue-500/5 border border-blue-500/20 rounded-lg p-3">
+                    <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
-                        <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                         </svg>
-                        <h4 className="text-sm font-semibold text-blue-400">Kun for presse</h4>
+                        <h4 className="text-sm font-semibold text-cyan-400">Pressemelding</h4>
                       </div>
-                      <p className="text-sm text-gray-300">
-                        Kontaktperson: Vaktleder {bv?.kort_navn}. Pressekonferanse planlagt ved behov.
-                        Hendelsen håndteres av {bv?.navn}. Ingen savnede eller skadde per nå.
-                      </p>
+                      {h.presse_tekst ? (
+                        <p className="text-sm text-gray-300 whitespace-pre-line">{h.presse_tekst}</p>
+                      ) : (
+                        <p className="text-sm text-gray-500 italic">
+                          Ingen pressemelding lagt til ennå. Kontakt vaktleder {bv?.kort_navn} for informasjon.
+                        </p>
+                      )}
                     </div>
 
                     {/* Full details */}

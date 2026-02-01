@@ -61,6 +61,12 @@ DO $$ BEGIN
 EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
 
+-- Add presse_tekst column for dedicated press messages on incidents
+DO $$ BEGIN
+  ALTER TABLE hendelser ADD COLUMN presse_tekst TEXT;
+EXCEPTION WHEN duplicate_column THEN NULL;
+END $$;
+
 -- Make opprettet_av nullable so we can seed demo hendelser without auth users
 DO $$ BEGIN
   ALTER TABLE hendelser ALTER COLUMN opprettet_av DROP NOT NULL;

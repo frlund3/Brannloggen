@@ -58,6 +58,7 @@ export interface Hendelse {
   avsluttet_tidspunkt: string | null
   latitude: number | null
   longitude: number | null
+  presse_tekst: string | null
   oppdateringer?: HendelseOppdatering[]
 }
 
