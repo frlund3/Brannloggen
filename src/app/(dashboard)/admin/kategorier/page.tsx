@@ -49,7 +49,6 @@ export default function AdminKategorierPage() {
     setForm({ navn: '', ikon: '', farge: '#DC2626', beskrivelse: '' })
     try {
       const supabase = createClient()
-      // @ts-expect-error supabase types not generated
       const { error } = await supabase.from('kategorier').update({ navn: form.navn, ikon: form.ikon || 'Flame', farge: form.farge, beskrivelse: form.beskrivelse || null } as any).eq('id', editItem.id)
       if (error) throw error
       invalidateCache()
