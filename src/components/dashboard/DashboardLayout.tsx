@@ -90,20 +90,20 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const links = effectiveRole === 'admin'
     ? [...operatorLinks, ...adminLinks, { href: '/admin/pressebrukere', label: 'Pressebrukere', icon: 'press' }]
     : effectiveRole === '110-admin'
-    ? [...operatorLinks, ...admin110Links, { href: '/admin/pressebrukere', label: 'Pressebrukere', icon: 'press' }]
-    : [...operatorLinks]
+      ? [...operatorLinks, ...admin110Links, { href: '/admin/pressebrukere', label: 'Pressebrukere', icon: 'press' }]
+      : [...operatorLinks]
 
   const roleLabel = effectiveRole === 'admin'
     ? 'Administrator'
     : effectiveRole === '110-admin'
-    ? '110-sentral Admin'
-    : '110-Sentral CMS'
+      ? '110-sentral Admin'
+      : '110-Sentral CMS'
 
   const headerLabel = effectiveRole === 'admin'
     ? 'Admin'
     : effectiveRole === '110-admin'
-    ? '110-Admin'
-    : '110-Sentral'
+      ? '110-Admin'
+      : '110-Sentral'
 
   const getIcon = (icon: string) => {
     switch (icon) {
@@ -216,65 +216,65 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             <div className="px-3 pt-3 pb-2">
               <a
                 href="/presse/hendelser"
-                className="group flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-cyan-600/20 to-teal-600/20 hover:from-cyan-600/30 hover:to-teal-600/30 border border-cyan-500/30 hover:border-cyan-400/50 rounded-xl transition-all"
+                className="group flex items-center gap-3 px-4 py-3 bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 dark:bg-gradient-to-r dark:from-cyan-600/20 dark:to-teal-600/20 dark:hover:from-cyan-600/30 dark:hover:to-teal-600/30 dark:border-cyan-500/30 dark:hover:border-cyan-400/50 rounded-xl transition-all"
               >
-                <div className="w-9 h-9 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/40 transition-shadow">
-                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-9 h-9 bg-cyan-100 text-cyan-600 dark:bg-gradient-to-br dark:from-cyan-500 dark:to-teal-500 dark:text-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm dark:shadow-lg dark:shadow-cyan-500/20 dark:group-hover:shadow-cyan-500/40 transition-shadow">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                   </svg>
                 </div>
                 <div>
-                  <span className="text-sm font-semibold text-cyan-300 group-hover:text-cyan-200 transition-colors">Presseportal</span>
-                  <span className="block text-[11px] text-cyan-500/70">Åpne pressesiden</span>
+                  <span className="text-sm font-semibold text-cyan-700 dark:text-cyan-300 group-hover:text-cyan-900 dark:group-hover:text-cyan-200 transition-colors">Presseportal</span>
+                  <span className="block text-[11px] text-cyan-600/70 dark:text-cyan-500/70">Åpne pressesiden</span>
                 </div>
               </a>
             </div>
 
             <div className="px-4 pb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                <span className="text-xs text-white font-bold">
-                  {(user?.email?.substring(0, 2) ?? 'U').toUpperCase()}
-                </span>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                  <span className="text-xs text-white font-bold">
+                    {(user?.email?.substring(0, 2) ?? 'U').toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm text-theme truncate max-w-[160px]">{user?.email ?? 'Bruker'}</p>
+                  <p className="text-xs text-theme-secondary">{roleLabel}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-theme truncate max-w-[160px]">{user?.email ?? 'Bruker'}</p>
-                <p className="text-xs text-theme-secondary">{roleLabel}</p>
+              <div className="flex items-center gap-4 mt-1">
+                <button onClick={toggleTheme} className="py-2 text-sm text-theme-secondary hover:text-theme touch-manipulation" title={theme === 'dark' ? 'Lyst tema' : 'Mørkt tema'}>
+                  {theme === 'dark' ? (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                  )}
+                </button>
+                <a href="/" className="py-2 text-sm text-theme-secondary hover:text-theme touch-manipulation">
+                  Forside
+                </a>
+                <button
+                  onClick={async () => {
+                    const supabase = createClient()
+                    await supabase.auth.signOut()
+                    localStorage.removeItem('brannloggen_user_rolle')
+                    localStorage.removeItem('brannloggen_user_sentral_ids')
+                    Object.keys(localStorage).forEach(key => {
+                      if (key.startsWith('sb-')) localStorage.removeItem(key)
+                    })
+                    document.cookie.split(';').forEach(c => {
+                      const name = c.split('=')[0].trim()
+                      if (name.startsWith('sb-')) {
+                        document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'
+                      }
+                    })
+                    window.location.href = '/'
+                  }}
+                  className="py-2 text-sm text-red-400 hover:text-red-300 touch-manipulation"
+                >
+                  Logg ut
+                </button>
               </div>
-            </div>
-            <div className="flex items-center gap-4 mt-1">
-              <button onClick={toggleTheme} className="py-2 text-sm text-theme-secondary hover:text-theme touch-manipulation" title={theme === 'dark' ? 'Lyst tema' : 'Mørkt tema'}>
-                {theme === 'dark' ? (
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                ) : (
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                )}
-              </button>
-              <a href="/" className="py-2 text-sm text-theme-secondary hover:text-theme touch-manipulation">
-                Forside
-              </a>
-              <button
-                onClick={async () => {
-                  const supabase = createClient()
-                  await supabase.auth.signOut()
-                  localStorage.removeItem('brannloggen_user_rolle')
-                  localStorage.removeItem('brannloggen_user_sentral_ids')
-                  Object.keys(localStorage).forEach(key => {
-                    if (key.startsWith('sb-')) localStorage.removeItem(key)
-                  })
-                  document.cookie.split(';').forEach(c => {
-                    const name = c.split('=')[0].trim()
-                    if (name.startsWith('sb-')) {
-                      document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'
-                    }
-                  })
-                  window.location.href = '/'
-                }}
-                className="py-2 text-sm text-red-400 hover:text-red-300 touch-manipulation"
-              >
-                Logg ut
-              </button>
-            </div>
             </div>
           </div>
         </aside>

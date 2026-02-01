@@ -41,7 +41,7 @@ export function SettingsView() {
   const { data: brannvesen, loading: loadingBrannvesen } = useBrannvesen()
   const { data: sentraler, loading: loadingSentraler } = useSentraler()
   const loading = loadingFylker || loadingKategorier || loadingBrannvesen || loadingSentraler
-  const { register: registerPush, unregister: unregisterPush, registering: pushRegistering } = usePushRegistration()
+  const { register: registerPush, unregister: unregisterPush, registering: pushRegistering, error: pushError } = usePushRegistration()
   const [prefs, setPrefs] = useState<PushPrefs>(defaultPrefs)
   const [saved, setSaved] = useState(false)
 
@@ -103,12 +103,13 @@ export function SettingsView() {
               onClick={async () => {
                 const newEnabled = !prefs.pushEnabled
                 if (newEnabled) {
-                  await registerPush({
+                  const ok = await registerPush({
                     sentral_ids: prefs.sentraler,
                     fylke_ids: prefs.fylker,
                     kategori_ids: prefs.kategorier,
                     kun_pågående: prefs.onlyOngoing,
                   })
+                  if (!ok) return // Don't toggle on if registration failed
                 } else {
                   await unregisterPush()
                 }
@@ -125,6 +126,10 @@ export function SettingsView() {
               />
             </button>
           </div>
+
+          {pushError && (
+            <p className="text-xs text-red-400 mb-3">Feil: {pushError}</p>
+          )}
 
           <div className="flex items-center justify-between">
             <div>

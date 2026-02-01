@@ -50,9 +50,9 @@ export function getSeverityColor(severity: string): string {
 
 export function getStatusColor(status: string): string {
   switch (status) {
-    case 'pågår': return 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-    case 'avsluttet': return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
-    default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+    case 'pågår': return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30'
+    case 'avsluttet': return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-500/20 dark:text-gray-400 dark:border-gray-500/30'
+    default: return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-500/20 dark:text-gray-400 dark:border-gray-500/30'
   }
 }
 

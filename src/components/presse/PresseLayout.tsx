@@ -106,7 +106,7 @@ export function PresseLayout({ children }: { children: React.ReactNode }) {
                 className={cn(
                   'py-2.5 text-sm border-b-2 -mb-px transition-colors',
                   pathname === tab.href
-                    ? 'border-cyan-400 text-cyan-400'
+                    ? 'border-cyan-600 text-cyan-700 dark:border-cyan-400 dark:text-cyan-400'
                     : 'border-transparent text-theme-secondary hover:text-theme'
                 )}
               >

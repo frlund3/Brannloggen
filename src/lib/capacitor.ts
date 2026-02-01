@@ -12,13 +12,13 @@ export function isNative(): boolean {
     .Capacitor?.isNativePlatform?.()
 }
 
-export function getPlatform(): 'ios' | 'android' | 'web' {
-  if (typeof window === 'undefined') return 'web'
+export function getPlatform(): 'iOS' | 'Android' | 'Web' {
+  if (typeof window === 'undefined') return 'Web'
   const cap = (window as unknown as { Capacitor?: { getPlatform?: () => string } }).Capacitor
   const p = cap?.getPlatform?.()
-  if (p === 'ios') return 'ios'
-  if (p === 'android') return 'android'
-  return 'web'
+  if (p === 'ios') return 'iOS'
+  if (p === 'android') return 'Android'
+  return 'Web'
 }
 
 // ── Push Notifications ───────────────────────────────────────────────
@@ -105,6 +105,7 @@ export async function setupPushListeners(
 export async function setBadgeCount(count: number): Promise<void> {
   if (isNative()) {
     try {
+      // @ts-ignore - optional dependency, resolved at runtime on native
       const { Badge } = await import('@capawesome/capacitor-badge')
       await Badge.set({ count })
     } catch {
