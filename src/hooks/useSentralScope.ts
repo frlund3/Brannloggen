@@ -15,7 +15,8 @@ export function useSentralScope() {
 
   const isAdmin = rolle === 'admin'
   const is110Admin = rolle === '110-admin'
-  const isScoped = is110Admin && sentralIds.length > 0
+  const isOperator = rolle === 'operator'
+  const isScoped = (is110Admin || isOperator) && sentralIds.length > 0
 
   const scope = useMemo(() => {
     if (!isScoped) {
@@ -46,6 +47,7 @@ export function useSentralScope() {
   return {
     isAdmin,
     is110Admin,
+    isOperator,
     isScoped,
     hasAdminAccess: isAdmin || is110Admin,
     scope,

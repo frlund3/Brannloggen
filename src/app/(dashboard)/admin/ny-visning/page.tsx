@@ -16,7 +16,7 @@ export default function NyVisningPage() {
   const { data: brannvesen, loading: bvLoading } = useBrannvesen()
   const { data: kategorier, loading: katLoading } = useKategorier()
   const { data: brukerprofiler, loading: brukereLoading } = useBrukerprofiler()
-  const { is110Admin } = useSentralScope()
+  const { is110Admin, isOperator } = useSentralScope()
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
@@ -67,14 +67,14 @@ export default function NyVisningPage() {
 
   if (loading) {
     return (
-      <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
+      <DashboardLayout role={is110Admin ? '110-admin' : isOperator ? 'operator' : 'admin'}>
         <div className="p-8 text-center text-theme-secondary">Laster...</div>
       </DashboardLayout>
     )
   }
 
   return (
-    <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
+    <DashboardLayout role={is110Admin ? '110-admin' : isOperator ? 'operator' : 'admin'}>
       <div className="flex h-[calc(100vh-57px)] lg:h-screen overflow-hidden">
         {/* Left panel: incident list */}
         <div className="w-full lg:w-[380px] xl:w-[420px] border-r border-theme flex flex-col shrink-0" style={selected ? { display: 'none' } : undefined}>
