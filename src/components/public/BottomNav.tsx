@@ -31,7 +31,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   const dashboardLabel = getDashboardLabel()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-theme border-t border-theme z-40">
+    <nav className="fixed bottom-0 left-0 right-0 bg-theme border-t border-theme z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="max-w-lg mx-auto flex items-center justify-around py-2">
         <button
           onClick={() => onTabChange('følger')}
