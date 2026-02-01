@@ -3,13 +3,14 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
+import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { useHendelser, useBrannvesen, useKategorier, useFylker, useKommuner, useSentraler } from '@/hooks/useSupabaseData'
 import { invalidateCache } from '@/hooks/useSupabaseData'
 import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
-import { formatDateTime, formatTimeAgo } from '@/lib/utils'
+import { formatDateTime, formatTime, formatTimeAgo } from '@/lib/utils'
 import { useSentralScope } from '@/hooks/useSentralScope'
 import Link from 'next/link'
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 
@@ -22,6 +23,8 @@ export default function OperatorHendelserPage() {
   const { data: kommuner, loading: kommunerLoading } = useKommuner()
   const { data: sentraler, loading: sentralerLoading } = useSentraler()
   const { isAdmin, is110Admin, isScoped, hasAdminAccess, filterByBrannvesen } = useSentralScope()
+
+  // Filters
   const [statusFilter, setStatusFilter] = useState<string>('alle')
   const [search, setSearch] = useState('')
   const [filterKategori, setFilterKategori] = useState('')
@@ -32,6 +35,11 @@ export default function OperatorHendelserPage() {
   const [filterAlvor, setFilterAlvor] = useState('')
   const [deactivatedIds, setDeactivatedIds] = useState<string[]>([])
   const [deactivateConfirm, setDeactivateConfirm] = useState<string | null>(null)
+
+  // Expand/collapse row
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  // Edit modal state
   const [selectedHendelse, setSelectedHendelse] = useState<string | null>(null)
   const [editStatus, setEditStatus] = useState('')
   const [editTittel, setEditTittel] = useState('')
@@ -42,15 +50,56 @@ export default function OperatorHendelserPage() {
   const [editBrannvesenId, setEditBrannvesenId] = useState('')
   const [editSentralId, setEditSentralId] = useState('')
   const [editPressetekst, setEditPressetekst] = useState('')
+
+  // Editing existing items
   const [editingUpdateId, setEditingUpdateId] = useState<string | null>(null)
   const [editUpdateText, setEditUpdateText] = useState('')
-  const [newUpdate, setNewUpdate] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [editingPresseId, setEditingPresseId] = useState<string | null>(null)
+  const [editPresseText, setEditPresseText] = useState('')
+  const [editingNotatId, setEditingNotatId] = useState<string | null>(null)
+  const [editNotatText, setEditNotatText] = useState('')
 
-  // Scope hendelser for 110-admin (must be before any early returns to follow Rules of Hooks)
+  // New items
+  const [newUpdate, setNewUpdate] = useState('')
+  const [newPresse, setNewPresse] = useState('')
+  const [newNotat, setNewNotat] = useState('')
+
+  // Image state
+  const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const hendelseBildeRef = useRef<HTMLInputElement>(null)
+  const updateImageRef = useRef<HTMLInputElement>(null)
+  const presseImageRef = useRef<HTMLInputElement>(null)
+  const notatImageRef = useRef<HTMLInputElement>(null)
+  const [newHendelseBilde, setNewHendelseBilde] = useState<File | null>(null)
+  const [newUpdateImage, setNewUpdateImage] = useState<File | null>(null)
+  const [newPresseImage, setNewPresseImage] = useState<File | null>(null)
+  const [newNotatImage, setNewNotatImage] = useState<File | null>(null)
+
+  // Scope hendelser for 110-admin
   const scopedHendelser = useMemo(() => {
     return isScoped ? filterByBrannvesen(allHendelser) : allHendelser
   }, [isScoped, filterByBrannvesen, allHendelser])
+
+  const uploadImage = useCallback(async (file: File, hendelseId: string): Promise<string | null> => {
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop()
+      const fileName = `${hendelseId}/${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('hendelsesbilder').upload(fileName, file)
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage.from('hendelsesbilder').getPublicUrl(fileName)
+      return publicUrl
+    } catch (err) {
+      toast.error('Kunne ikke laste opp bilde: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+      return null
+    }
+  }, [])
+
+  // Edit image state for inline editing (must be before early return)
+  const [editItemImage, setEditItemImage] = useState<File | null>(null)
+  const [removeEditItemImage, setRemoveEditItemImage] = useState(false)
+  const editItemImageRef = useRef<HTMLInputElement>(null)
 
   const isLoading = hendelserLoading || brannvesenLoading || kategorierLoading || fylkerLoading || kommunerLoading || sentralerLoading
   if (isLoading) return <div className="p-8 text-center text-gray-400">Laster...</div>
@@ -83,14 +132,10 @@ export default function OperatorHendelserPage() {
   const activeFilterCount = [filterKategori, filterFylke, filterKommune, filterBrannvesen, filterSentral, filterAlvor].filter(Boolean).length
 
   const clearFilters = () => {
-    setSearch('')
-    setFilterKategori('')
-    setFilterFylke('')
-    setFilterKommune('')
-    setFilterBrannvesen('')
-    setFilterSentral('')
-    setFilterAlvor('')
+    setSearch(''); setFilterKategori(''); setFilterFylke(''); setFilterKommune(''); setFilterBrannvesen(''); setFilterSentral(''); setFilterAlvor('')
   }
+
+  // ── Handlers ──
 
   const handleDeactivate = async (id: string) => {
     try {
@@ -103,7 +148,7 @@ export default function OperatorHendelserPage() {
       invalidateCache()
       toast.success('Hendelse deaktivert')
     } catch (err) {
-      toast.error('Kunne ikke deaktivere hendelse: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+      toast.error('Kunne ikke deaktivere: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
       setDeactivateConfirm(null)
     }
   }
@@ -119,13 +164,41 @@ export default function OperatorHendelserPage() {
     setEditKategoriId(h.kategori_id)
     setEditAlvor(h.alvorlighetsgrad)
     setEditBrannvesenId(h.brannvesen_id)
-    // Find the sentral that contains this brannvesen
     const matchedSentral = sentraler.find(s => s.brannvesen_ids.includes(h.brannvesen_id))
     setEditSentralId(matchedSentral?.id || '')
     setEditPressetekst(h.presse_tekst || '')
-    setNewUpdate('')
-    setEditingUpdateId(null)
+    setNewUpdate(''); setNewPresse(''); setNewNotat('')
+    setNewUpdateImage(null); setNewPresseImage(null); setNewNotatImage(null); setNewHendelseBilde(null)
+    setEditingUpdateId(null); setEditingPresseId(null); setEditingNotatId(null)
+    resetEditImageState()
   }
+
+  // Inline image edit controls (used in both collapse and modal editing)
+  const ImageEditControls = ({ currentUrl, accentColor }: { currentUrl: string | null; accentColor: string }) => (
+    <div className="mt-2">
+      {currentUrl && !removeEditItemImage && !editItemImage && (
+        <div className="relative inline-block mb-2">
+          <img src={currentUrl} alt="" className="rounded-lg max-h-32 object-cover" />
+          <button onClick={() => setRemoveEditItemImage(true)} className="absolute top-1 right-1 p-1 bg-black/70 hover:bg-red-600 rounded-full text-white transition-colors" title="Fjern bilde">
+            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+      )}
+      {removeEditItemImage && (
+        <p className="text-xs text-red-400 mb-2 flex items-center gap-1">
+          Bilde fjernes ved lagring
+          <button onClick={() => setRemoveEditItemImage(false)} className="text-gray-400 hover:text-white underline ml-1">Angre</button>
+        </p>
+      )}
+      <div className="flex items-center gap-2">
+        <input type="file" ref={editItemImageRef} accept="image/*" className="hidden" onChange={(e) => { setEditItemImage(e.target.files?.[0] || null); setRemoveEditItemImage(false) }} />
+        <button onClick={() => editItemImageRef.current?.click()} className={`flex items-center gap-1 text-xs text-${accentColor}-400 hover:text-${accentColor}-300`}>
+          <ImageIcon /> {editItemImage ? editItemImage.name : currentUrl ? 'Bytt bilde' : 'Legg til bilde'}
+        </button>
+        {editItemImage && <button onClick={() => setEditItemImage(null)} className="text-xs text-red-400">Fjern valgt</button>}
+      </div>
+    </div>
+  )
 
   const handleSaveChanges = async () => {
     if (!selectedH) return
@@ -135,7 +208,7 @@ export default function OperatorHendelserPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { toast.error('Du må være innlogget'); return }
 
-      // Build update object with all changed fields
+      // Update hendelse fields
       const updateData: Record<string, unknown> = {}
       if (editStatus !== selectedH.status) {
         updateData.status = editStatus
@@ -149,6 +222,13 @@ export default function OperatorHendelserPage() {
       if (editBrannvesenId !== selectedH.brannvesen_id) updateData.brannvesen_id = editBrannvesenId
       if (editPressetekst !== (selectedH.presse_tekst || '')) updateData.presse_tekst = editPressetekst || null
 
+      // Upload hendelse bilde if changed
+      if (newHendelseBilde) {
+        setUploadingImage(true)
+        const bildeUrl = await uploadImage(newHendelseBilde, selectedH.id)
+        if (bildeUrl) updateData.bilde_url = bildeUrl
+      }
+
       if (Object.keys(updateData).length > 0) {
         updateData.oppdatert_tidspunkt = new Date().toISOString()
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -156,13 +236,44 @@ export default function OperatorHendelserPage() {
         if (error) throw error
       }
 
-      // Add update if provided
+      // Add new oppdatering
       if (newUpdate.trim()) {
+        let bildeUrl: string | null = null
+        if (newUpdateImage) {
+          setUploadingImage(true)
+          bildeUrl = await uploadImage(newUpdateImage, selectedH.id)
+        }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase.from('hendelsesoppdateringer') as any).insert({
-          hendelse_id: selectedH.id,
-          tekst: newUpdate,
-          opprettet_av: user.id,
+          hendelse_id: selectedH.id, tekst: newUpdate, opprettet_av: user.id, bilde_url: bildeUrl,
+        })
+        if (error) throw error
+      }
+
+      // Add new presseoppdatering
+      if (newPresse.trim()) {
+        let bildeUrl: string | null = null
+        if (newPresseImage) {
+          setUploadingImage(true)
+          bildeUrl = await uploadImage(newPresseImage, selectedH.id)
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase.from('presseoppdateringer') as any).insert({
+          hendelse_id: selectedH.id, tekst: newPresse, opprettet_av: user.id, bilde_url: bildeUrl,
+        })
+        if (error) throw error
+      }
+
+      // Add new intern notat
+      if (newNotat.trim()) {
+        let bildeUrl: string | null = null
+        if (newNotatImage) {
+          setUploadingImage(true)
+          bildeUrl = await uploadImage(newNotatImage, selectedH.id)
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase.from('interne_notater') as any).insert({
+          hendelse_id: selectedH.id, notat: newNotat, opprettet_av: user.id, bilde_url: bildeUrl,
         })
         if (error) throw error
       }
@@ -175,42 +286,123 @@ export default function OperatorHendelserPage() {
       toast.error('Kunne ikke lagre: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
     } finally {
       setSaving(false)
+      setUploadingImage(false)
     }
   }
 
-  const handleUpdateEdit = async (updateId: string) => {
+  const resetEditImageState = () => {
+    setEditItemImage(null)
+    setRemoveEditItemImage(false)
+  }
+
+  // Edit handlers for each type
+  const handleUpdateEdit = async (updateId: string, hendelseId: string) => {
     if (!editUpdateText.trim()) return
     try {
       const supabase = createClient()
+      const updatePayload: Record<string, unknown> = { tekst: editUpdateText }
+      if (removeEditItemImage) {
+        updatePayload.bilde_url = null
+      } else if (editItemImage) {
+        setUploadingImage(true)
+        const url = await uploadImage(editItemImage, hendelseId)
+        if (url) updatePayload.bilde_url = url
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('hendelsesoppdateringer') as any).update({ tekst: editUpdateText }).eq('id', updateId)
+      const { error } = await (supabase.from('hendelsesoppdateringer') as any).update(updatePayload).eq('id', updateId)
       if (error) throw error
-      setEditingUpdateId(null)
-      invalidateCache()
-      refetch()
-      toast.success('Oppdatering redigert')
-    } catch (err) {
-      toast.error('Kunne ikke redigere: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
-    }
+      setEditingUpdateId(null); resetEditImageState(); invalidateCache(); refetch(); toast.success('Oppdatering redigert')
+    } catch (err) { toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil')) }
+    finally { setUploadingImage(false) }
   }
 
-  const handleDeleteUpdate = async (updateId: string) => {
+  const handlePresseEdit = async (presseId: string, hendelseId: string) => {
+    if (!editPresseText.trim()) return
+    try {
+      const supabase = createClient()
+      const updatePayload: Record<string, unknown> = { tekst: editPresseText }
+      if (removeEditItemImage) {
+        updatePayload.bilde_url = null
+      } else if (editItemImage) {
+        setUploadingImage(true)
+        const url = await uploadImage(editItemImage, hendelseId)
+        if (url) updatePayload.bilde_url = url
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('presseoppdateringer') as any).update(updatePayload).eq('id', presseId)
+      if (error) throw error
+      setEditingPresseId(null); resetEditImageState(); invalidateCache(); refetch(); toast.success('Pressemelding redigert')
+    } catch (err) { toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil')) }
+    finally { setUploadingImage(false) }
+  }
+
+  const handleNotatEdit = async (notatId: string, hendelseId: string) => {
+    if (!editNotatText.trim()) return
+    try {
+      const supabase = createClient()
+      const updatePayload: Record<string, unknown> = { notat: editNotatText }
+      if (removeEditItemImage) {
+        updatePayload.bilde_url = null
+      } else if (editItemImage) {
+        setUploadingImage(true)
+        const url = await uploadImage(editItemImage, hendelseId)
+        if (url) updatePayload.bilde_url = url
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('interne_notater') as any).update(updatePayload).eq('id', notatId)
+      if (error) throw error
+      setEditingNotatId(null); resetEditImageState(); invalidateCache(); refetch(); toast.success('Notat redigert')
+    } catch (err) { toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil')) }
+    finally { setUploadingImage(false) }
+  }
+
+  // Deactivate handlers
+  const handleDeactivateUpdate = async (id: string) => {
     try {
       const supabase = createClient()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('hendelsesoppdateringer') as any).delete().eq('id', updateId)
+      const { error } = await (supabase.from('hendelsesoppdateringer') as any).update({ deaktivert: true }).eq('id', id)
       if (error) throw error
-      invalidateCache()
-      refetch()
-      toast.success('Oppdatering slettet')
-    } catch (err) {
-      toast.error('Kunne ikke slette: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
-    }
+      invalidateCache(); refetch(); toast.success('Oppdatering deaktivert')
+    } catch (err) { toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil')) }
+  }
+
+  const handleDeactivatePresse = async (id: string) => {
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('presseoppdateringer') as any).update({ deaktivert: true }).eq('id', id)
+      if (error) throw error
+      invalidateCache(); refetch(); toast.success('Pressemelding deaktivert')
+    } catch (err) { toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil')) }
+  }
+
+  const handleDeactivateNotat = async (id: string) => {
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('interne_notater') as any).update({ deaktivert: true }).eq('id', id)
+      if (error) throw error
+      invalidateCache(); refetch(); toast.success('Notat deaktivert')
+    } catch (err) { toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil')) }
   }
 
   const selectedH = selectedHendelse ? allHendelser.find(h => h.id === selectedHendelse) : null
-
   const layoutRole = isAdmin ? 'admin' as const : is110Admin ? '110-admin' as const : 'operator' as const
+
+  // Icon components for reuse
+  const EditIcon = () => (
+    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+  )
+  const DeactivateIcon = () => (
+    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+  )
+  const ImageIcon = () => (
+    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+  )
+  const ChevronIcon = ({ open }: { open: boolean }) => (
+    <svg className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+  )
 
   return (
     <DashboardLayout role={layoutRole}>
@@ -238,11 +430,6 @@ export default function OperatorHendelserPage() {
               <span className="ml-1.5 text-xs">({tab.value === 'alle' ? scopedHendelser.filter(h => !deactivatedIds.includes(h.id)).length : scopedHendelser.filter((h) => h.status === tab.value && !deactivatedIds.includes(h.id)).length})</span>
             </button>
           ))}
-          {deactivatedIds.length > 0 && (
-            <span className="px-3 py-2 text-xs text-gray-500 flex items-center">
-              {deactivatedIds.length} deaktivert
-            </span>
-          )}
         </div>
 
         {/* Search + Filters */}
@@ -251,7 +438,7 @@ export default function OperatorHendelserPage() {
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
             <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle kategorier</option>
-              {kategorier.map(k => <option key={k.id} value={k.id}>{k.navn}</option>)}
+              {kategorier.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map(k => <option key={k.id} value={k.id}>{k.navn}</option>)}
             </select>
             <select value={filterAlvor} onChange={(e) => setFilterAlvor(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle alvorlighetsgrader</option>
@@ -262,16 +449,16 @@ export default function OperatorHendelserPage() {
             </select>
             <select value={filterSentral} onChange={(e) => setFilterSentral(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle 110-sentraler</option>
-              {sentraler.map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
+              {sentraler.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
             </select>
             <select value={filterFylke} onChange={(e) => { setFilterFylke(e.target.value); setFilterKommune(''); setFilterBrannvesen('') }} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle fylker</option>
-              {fylker.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
+              {fylker.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
             </select>
             {filterFylke && (
               <select value={filterKommune} onChange={(e) => setFilterKommune(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
                 <option value="">Alle kommuner</option>
-                {filteredKommuner.map(k => <option key={k.id} value={k.id}>{k.navn}</option>)}
+                {filteredKommuner.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map(k => <option key={k.id} value={k.id}>{k.navn}</option>)}
               </select>
             )}
             <select value={filterBrannvesen} onChange={(e) => setFilterBrannvesen(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
@@ -290,61 +477,248 @@ export default function OperatorHendelserPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#2a2a2a]">
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Status</th>
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Tittel</th>
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">Kategori</th>
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">110-sentral</th>
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Alvor</th>
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Oppdateringer</th>
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">Opprettet</th>
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">Sist oppdatert</th>
-                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
+                  <th className="w-8 px-2 py-3"></th>
+                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium">Status</th>
+                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium">Tittel</th>
+                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">Kategori</th>
+                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">110-sentral</th>
+                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Alvor</th>
+                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Oppd.</th>
+                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Presse</th>
+                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Notater</th>
+                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">Opprettet</th>
+                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
                 </tr>
               </thead>
               <tbody>
                 {hendelser.map((h) => {
-                  const bv = brannvesen.find((b) => b.id === h.brannvesen_id)
                   const sentral = sentraler.find((s) => s.brannvesen_ids.includes(h.brannvesen_id))
+                  const bv = brannvesen.find((b) => b.id === h.brannvesen_id)
                   const kat = kategorier.find((k) => k.id === h.kategori_id)
-                  const updCount = h.oppdateringer?.length || 0
-                  const lastActivity = h.oppdateringer && h.oppdateringer.length > 0
-                    ? h.oppdateringer[h.oppdateringer.length - 1].opprettet_tidspunkt
-                    : h.oppdatert_tidspunkt
+                  const updCount = h.oppdateringer?.filter(u => !u.deaktivert).length || 0
+                  const presseCount = h.presseoppdateringer?.filter(p => !p.deaktivert).length || 0
+                  const notatCount = h.interne_notater?.filter(n => !n.deaktivert).length || 0
+                  const isExpanded = expandedId === h.id
+                  const hasPresse = !!h.presse_tekst || presseCount > 0
+
                   return (
-                    <tr key={h.id} onClick={() => openHendelse(h.id)} className="border-b border-[#2a2a2a] hover:bg-[#222] transition-colors cursor-pointer">
-                      <td className="px-3 sm:px-4 py-3"><StatusBadge status={h.status} size="sm" /></td>
-                      <td className="px-3 sm:px-4 py-3">
-                        <span className="text-sm text-white font-medium">{h.tittel}</span>
-                        <p className="text-xs text-gray-500 mt-0.5">{h.sted}</p>
-                      </td>
-                      <td className="px-3 sm:px-4 py-3 hidden md:table-cell">
-                        {kat && <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: kat.farge + '22', color: kat.farge }}>{kat.navn}</span>}
-                      </td>
-                      <td className="px-3 sm:px-4 py-3 hidden md:table-cell"><span className="text-xs text-gray-400">{sentral?.kort_navn || bv?.kort_navn}</span></td>
-                      <td className="px-3 sm:px-4 py-3 hidden lg:table-cell"><SeverityDot severity={h.alvorlighetsgrad} showLabel /></td>
-                      <td className="px-3 sm:px-4 py-3 hidden lg:table-cell">
-                        {updCount > 0 ? (
-                          <span className="text-xs text-blue-400">{updCount}</span>
-                        ) : (
-                          <span className="text-xs text-gray-600">0</span>
-                        )}
-                      </td>
-                      <td className="px-3 sm:px-4 py-3 hidden sm:table-cell"><span className="text-xs text-gray-400">{formatDateTime(h.opprettet_tidspunkt)}</span></td>
-                      <td className="px-3 sm:px-4 py-3 hidden sm:table-cell">
-                        {lastActivity && new Date(lastActivity).getTime() - new Date(h.opprettet_tidspunkt).getTime() > 60000
-                          ? <span className="text-xs text-gray-400">{formatTimeAgo(lastActivity)}</span>
-                          : <span className="text-xs text-gray-600">-</span>
-                        }
-                      </td>
-                      <td className="px-3 sm:px-4 py-3">
-                        <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                          <button onClick={() => openHendelse(h.id)} className="text-xs text-blue-400 hover:text-blue-300 py-1 touch-manipulation">Rediger</button>
-                          {hasAdminAccess && (
-                            <button onClick={() => setDeactivateConfirm(h.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation">Deaktiver</button>
+                    <React.Fragment key={h.id}>
+                      <tr
+                        className={`border-b border-[#2a2a2a] hover:bg-[#222] transition-colors cursor-pointer border-l-4 ${
+                          h.status === 'pågår' ? 'border-l-red-500' : h.status === 'avsluttet' ? 'border-l-green-500' : 'border-l-gray-600'
+                        }`}
+                        onClick={() => setExpandedId(isExpanded ? null : h.id)}
+                      >
+                        <td className="px-2 py-3 text-gray-400">
+                          <ChevronIcon open={isExpanded} />
+                        </td>
+                        <td className="px-3 py-3"><StatusBadge status={h.status} size="sm" /></td>
+                        <td className="px-3 py-3">
+                          <span className="text-sm text-white font-medium">{h.tittel}</span>
+                          <p className="text-xs text-gray-500 mt-0.5">{h.sted}</p>
+                        </td>
+                        <td className="px-3 py-3 hidden md:table-cell">
+                          {kat && <span className="text-xs px-2 py-0.5 rounded inline-flex items-center gap-1" style={{ backgroundColor: kat.farge + '22', color: kat.farge }}><CategoryIcon iconName={kat.ikon} className="w-3 h-3" />{kat.navn}</span>}
+                        </td>
+                        <td className="px-3 py-3 hidden md:table-cell"><span className="text-xs text-gray-400">{sentral?.kort_navn || bv?.kort_navn}</span></td>
+                        <td className="px-3 py-3 hidden lg:table-cell"><SeverityDot severity={h.alvorlighetsgrad} showLabel /></td>
+                        <td className="px-3 py-3 hidden lg:table-cell">
+                          <span className={`text-xs ${updCount > 0 ? 'text-blue-400' : 'text-gray-600'}`}>{updCount}</span>
+                        </td>
+                        <td className="px-3 py-3 hidden lg:table-cell">
+                          {hasPresse ? (
+                            <span className="text-xs text-cyan-400">{presseCount > 0 ? presseCount : '1'}{h.presse_tekst && presseCount > 0 ? '+1' : ''}</span>
+                          ) : (
+                            <span className="text-xs text-gray-600">-</span>
                           )}
-                        </div>
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="px-3 py-3 hidden lg:table-cell">
+                          <span className={`text-xs ${notatCount > 0 ? 'text-yellow-400' : 'text-gray-600'}`}>{notatCount}</span>
+                        </td>
+                        <td className="px-3 py-3 hidden sm:table-cell"><span className="text-xs text-gray-400">{formatDateTime(h.opprettet_tidspunkt)}</span></td>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+                            <button onClick={() => openHendelse(h.id)} className="text-xs text-blue-400 hover:text-blue-300 py-1 touch-manipulation">Rediger</button>
+                            {hasAdminAccess && (
+                              <button onClick={() => setDeactivateConfirm(h.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation">Deaktiver</button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* Expanded details row */}
+                      {isExpanded && (() => {
+                        // Build unified timeline from all sources
+                        const activeUpd = h.oppdateringer?.filter(u => !u.deaktivert) || []
+                        const activePrs = h.presseoppdateringer?.filter(p => !p.deaktivert) || []
+                        const activeNot = h.interne_notater?.filter(n => !n.deaktivert) || []
+
+                        type TimelineItem = {
+                          id: string
+                          type: 'publikum' | 'presse' | 'intern' | 'status'
+                          tekst: string
+                          opprettet_tidspunkt: string
+                          bilde_url?: string | null
+                        }
+
+                        const timeline: TimelineItem[] = [
+                          ...activeUpd.map(u => ({ id: u.id, type: 'publikum' as const, tekst: u.tekst, opprettet_tidspunkt: u.opprettet_tidspunkt, bilde_url: u.bilde_url })),
+                          ...activePrs.map(p => ({ id: p.id, type: 'presse' as const, tekst: p.tekst, opprettet_tidspunkt: p.opprettet_tidspunkt, bilde_url: p.bilde_url })),
+                          ...activeNot.map(n => ({ id: n.id, type: 'intern' as const, tekst: n.notat, opprettet_tidspunkt: n.opprettet_tidspunkt, bilde_url: n.bilde_url })),
+                        ]
+
+                        // Add status change if avsluttet
+                        if (h.status === 'avsluttet' && h.avsluttet_tidspunkt) {
+                          timeline.push({ id: 'status-avsluttet', type: 'status', tekst: 'Hendelsen ble avsluttet', opprettet_tidspunkt: h.avsluttet_tidspunkt })
+                        }
+
+                        // Add creation event
+                        timeline.unshift({ id: 'opprettet', type: 'status', tekst: 'Hendelsen ble opprettet', opprettet_tidspunkt: h.opprettet_tidspunkt })
+
+                        timeline.sort((a, b) => new Date(a.opprettet_tidspunkt).getTime() - new Date(b.opprettet_tidspunkt).getTime())
+
+                        const typeConfig = {
+                          publikum: { color: 'blue', label: 'Publikum', border: 'border-blue-500', line: 'bg-blue-500/30', badge: 'bg-blue-500/15 text-blue-400' },
+                          presse: { color: 'cyan', label: 'Kun presse', border: 'border-cyan-500', line: 'bg-cyan-500/30', badge: 'bg-cyan-500/20 text-cyan-400' },
+                          intern: { color: 'yellow', label: 'Internt', border: 'border-yellow-500', line: 'bg-yellow-500/30', badge: 'bg-yellow-500/20 text-yellow-400' },
+                          status: { color: 'gray', label: 'Status', border: 'border-gray-500', line: 'bg-gray-500/30', badge: 'bg-gray-500/20 text-gray-400' },
+                        }
+
+                        return (
+                        <tr className={`border-b border-[#2a2a2a] border-l-4 ${
+                          h.status === 'pågår' ? 'border-l-red-500' : h.status === 'avsluttet' ? 'border-l-green-500' : 'border-l-gray-600'
+                        }`}>
+                          <td colSpan={11} className="p-0">
+                            <div className="bg-[#111] p-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+                              {/* Hendelse bilde */}
+                              {h.bilde_url && (
+                                <div>
+                                  <h4 className="text-xs font-semibold text-gray-400 mb-2 flex items-center gap-1.5">
+                                    <ImageIcon /> Hendelsebilde
+                                  </h4>
+                                  <img src={h.bilde_url} alt="" className="rounded-lg max-h-48 object-cover" />
+                                </div>
+                              )}
+                              {/* Beskrivelse */}
+                              <div>
+                                <p className="text-sm text-gray-300">{h.beskrivelse}</p>
+                                <p className="text-xs text-gray-500 mt-1">Sted: {h.sted} &middot; Opprettet: {formatDateTime(h.opprettet_tidspunkt)} &middot; Sist oppdatert: {formatTimeAgo(h.oppdatert_tidspunkt)}</p>
+                              </div>
+
+                              {/* Hovedpressemelding */}
+                              {h.presse_tekst && (
+                                <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg p-3">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <p className="text-[10px] text-cyan-500/60 uppercase font-semibold">Hovedpressemelding</p>
+                                        <span className="text-[10px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded font-bold">KUN PRESSE</span>
+                                      </div>
+                                      <p className="text-sm text-gray-300 whitespace-pre-line">{h.presse_tekst}</p>
+                                    </div>
+                                    <button onClick={() => openHendelse(h.id)} className="p-1 text-gray-500 hover:text-cyan-400 shrink-0" title="Rediger pressemelding"><EditIcon /></button>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* ── Unified Timeline ── */}
+                              {timeline.length > 0 && (
+                                <div>
+                                  <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    Tidslinje
+                                  </h4>
+                                  <div className="relative ml-1">
+                                    {timeline.map((item, i) => {
+                                      const cfg = typeConfig[item.type]
+                                      const isStatusItem = item.type === 'status'
+
+                                      // Find original item for editing
+                                      const isEditingThis = (item.type === 'publikum' && editingUpdateId === item.id) ||
+                                        (item.type === 'presse' && editingPresseId === item.id) ||
+                                        (item.type === 'intern' && editingNotatId === item.id)
+
+                                      return (
+                                        <div key={item.id} className="relative pl-5 pb-4 last:pb-0">
+                                          {i < timeline.length - 1 && (
+                                            <div className={`absolute left-[5px] top-[10px] bottom-0 w-px ${typeConfig[timeline[i + 1].type].line}`} />
+                                          )}
+                                          <div className={`absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 ${cfg.border} bg-[#111]`} />
+
+                                          {isStatusItem ? (
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
+                                              <span className="text-xs text-gray-400 italic">{item.tekst}</span>
+                                            </div>
+                                          ) : isEditingThis ? (
+                                            <div>
+                                              <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
+                                                <span className={`text-[10px] ${cfg.badge} px-1.5 py-0.5 rounded font-bold`}>{cfg.label}</span>
+                                              </div>
+                                              <textarea
+                                                value={item.type === 'publikum' ? editUpdateText : item.type === 'presse' ? editPresseText : editNotatText}
+                                                onChange={(e) => item.type === 'publikum' ? setEditUpdateText(e.target.value) : item.type === 'presse' ? setEditPresseText(e.target.value) : setEditNotatText(e.target.value)}
+                                                className={`w-full px-2 py-1.5 bg-[#0a0a0a] border border-${cfg.color}-500/50 rounded text-white text-sm focus:outline-none h-16 resize-none`}
+                                              />
+                                              <ImageEditControls currentUrl={item.bilde_url || null} accentColor={cfg.color} />
+                                              <div className="flex gap-2 mt-2">
+                                                <button
+                                                  onClick={() => item.type === 'publikum' ? handleUpdateEdit(item.id, h.id) : item.type === 'presse' ? handlePresseEdit(item.id, h.id) : handleNotatEdit(item.id, h.id)}
+                                                  className={`px-3 py-1 bg-${cfg.color}-500 text-white rounded text-xs`}
+                                                >Lagre</button>
+                                                <button onClick={() => { item.type === 'publikum' ? setEditingUpdateId(null) : item.type === 'presse' ? setEditingPresseId(null) : setEditingNotatId(null); resetEditImageState() }} className="px-3 py-1 text-gray-400 text-xs">Avbryt</button>
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            <div>
+                                              <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
+                                                <span className={`text-[10px] ${cfg.badge} px-1.5 py-0.5 rounded font-bold`}>{cfg.label}</span>
+                                                <div className="flex items-center gap-1 ml-auto shrink-0">
+                                                  <button
+                                                    onClick={() => {
+                                                      resetEditImageState()
+                                                      if (item.type === 'publikum') { setEditingUpdateId(item.id); setEditUpdateText(item.tekst) }
+                                                      else if (item.type === 'presse') { setEditingPresseId(item.id); setEditPresseText(item.tekst) }
+                                                      else { setEditingNotatId(item.id); setEditNotatText(item.tekst) }
+                                                    }}
+                                                    className={`p-1 text-gray-500 hover:text-${cfg.color}-400`}
+                                                    title="Rediger"
+                                                  ><EditIcon /></button>
+                                                  <button
+                                                    onClick={() => item.type === 'publikum' ? handleDeactivateUpdate(item.id) : item.type === 'presse' ? handleDeactivatePresse(item.id) : handleDeactivateNotat(item.id)}
+                                                    className="p-1 text-gray-500 hover:text-red-400"
+                                                    title="Deaktiver"
+                                                  ><DeactivateIcon /></button>
+                                                </div>
+                                              </div>
+                                              <p className={`text-sm mt-0.5 ${item.type === 'presse' ? 'text-cyan-100' : item.type === 'intern' ? 'text-yellow-100' : 'text-gray-300'}`}>{item.tekst}</p>
+                                              {item.bilde_url && (
+                                                <img src={item.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />
+                                              )}
+                                            </div>
+                                          )}
+                                        </div>
+                                      )
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Quick action */}
+                              <button
+                                onClick={() => openHendelse(h.id)}
+                                className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                              >
+                                <EditIcon /> Åpne full redigeringsvisning
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        )
+                      })()}
+                    </React.Fragment>
                   )
                 })}
               </tbody>
@@ -362,12 +736,8 @@ export default function OperatorHendelserPage() {
           <div className="absolute inset-0 bg-black/60" onClick={() => setDeactivateConfirm(null)} />
           <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-sm mx-4">
             <h2 className="text-lg font-bold text-white mb-2">Deaktiver hendelse?</h2>
-            <p className="text-sm text-gray-400 mb-2">
-              {allHendelser.find(h => h.id === deactivateConfirm)?.tittel}
-            </p>
-            <p className="text-xs text-gray-500 mb-6">
-              Hendelsen vil bli skjult fra oversikten. Den kan ikke vises igjen uten en administrator.
-            </p>
+            <p className="text-sm text-gray-400 mb-2">{allHendelser.find(h => h.id === deactivateConfirm)?.tittel}</p>
+            <p className="text-xs text-gray-500 mb-6">Hendelsen vil bli skjult fra oversikten.</p>
             <div className="flex gap-3">
               <button onClick={() => handleDeactivate(deactivateConfirm)} className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors">Deaktiver</button>
               <button onClick={() => setDeactivateConfirm(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors">Avbryt</button>
@@ -376,7 +746,7 @@ export default function OperatorHendelserPage() {
         </div>
       )}
 
-      {/* Hendelse edit modal */}
+      {/* ── Edit Modal ── */}
       {selectedH && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/60" onClick={() => setSelectedHendelse(null)} />
@@ -388,7 +758,7 @@ export default function OperatorHendelserPage() {
               </button>
             </div>
 
-            {/* Editable fields */}
+            {/* ── Basic fields ── */}
             <div className="space-y-4 mb-6">
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Tittel</label>
@@ -416,72 +786,102 @@ export default function OperatorHendelserPage() {
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Kategori</label>
                   <select value={editKategoriId} onChange={(e) => setEditKategoriId(e.target.value)} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
-                    {kategorier.map(k => <option key={k.id} value={k.id}>{k.navn}</option>)}
+                    {kategorier.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map(k => <option key={k.id} value={k.id}>{k.navn}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Alvorlighetsgrad</label>
                   <select value={editAlvor} onChange={(e) => setEditAlvor(e.target.value)} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
-                    <option value="lav">Lav</option>
-                    <option value="middels">Middels</option>
-                    <option value="høy">Høy</option>
-                    <option value="kritisk">Kritisk</option>
+                    <option value="lav">Lav</option><option value="middels">Middels</option><option value="høy">Høy</option><option value="kritisk">Kritisk</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">110-sentral</label>
                   <select value={editSentralId} onChange={(e) => { setEditSentralId(e.target.value); setEditBrannvesenId('') }} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
                     <option value="">Velg 110-sentral</option>
-                    {sentraler.map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
+                    {sentraler.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Brannvesen</label>
                   <select value={editBrannvesenId} onChange={(e) => setEditBrannvesenId(e.target.value)} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
                     <option value="">Velg brannvesen</option>
-                    {(editSentralId
-                      ? brannvesen.filter(b => sentraler.find(s => s.id === editSentralId)?.brannvesen_ids.includes(b.id))
-                      : brannvesen
-                    ).sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(b => <option key={b.id} value={b.id}>{b.kort_navn}</option>)}
+                    {(editSentralId ? brannvesen.filter(b => sentraler.find(s => s.id === editSentralId)?.brannvesen_ids.includes(b.id)) : brannvesen).sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(b => <option key={b.id} value={b.id}>{b.kort_navn}</option>)}
                   </select>
                 </div>
               </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Pressemelding</label>
-                <textarea value={editPressetekst} onChange={(e) => setEditPressetekst(e.target.value)} placeholder="Skriv pressemelding..." className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 h-16 resize-none" />
+            </div>
+
+            {/* ══════════ Hendelsebilde ══════════ */}
+            <div className="border-t border-[#2a2a2a] pt-4 mb-4">
+              <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                <ImageIcon />
+                Hendelsebilde
+                <span className="text-xs text-gray-500 font-normal">Synlig for alle</span>
+              </h3>
+              {selectedH.bilde_url && !newHendelseBilde && (
+                <div className="mb-3 relative inline-block">
+                  <img src={selectedH.bilde_url} alt="" className="rounded-lg max-h-48 object-cover" />
+                  <button
+                    onClick={async () => {
+                      try {
+                        const supabase = createClient()
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const { error } = await (supabase.from('hendelser') as any).update({ bilde_url: null, oppdatert_tidspunkt: new Date().toISOString() }).eq('id', selectedH.id)
+                        if (error) throw error
+                        invalidateCache(); refetch(); toast.success('Bilde fjernet')
+                      } catch (err) { toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil')) }
+                    }}
+                    className="absolute top-2 right-2 p-1.5 bg-black/70 hover:bg-red-600 rounded-full text-white transition-colors"
+                    title="Fjern bilde"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+              )}
+              <div className="flex items-center gap-3">
+                <input type="file" ref={hendelseBildeRef} accept="image/*" className="hidden" onChange={(e) => setNewHendelseBilde(e.target.files?.[0] || null)} />
+                <button onClick={() => hendelseBildeRef.current?.click()} className="flex items-center gap-1.5 px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-xs text-gray-400 hover:text-white transition-colors">
+                  <ImageIcon />
+                  {newHendelseBilde ? newHendelseBilde.name : selectedH.bilde_url ? 'Bytt bilde' : 'Legg til bilde'}
+                </button>
+                {newHendelseBilde && <button onClick={() => setNewHendelseBilde(null)} className="text-xs text-red-400">Fjern valgt</button>}
               </div>
             </div>
 
-            {/* Oppdateringer section */}
+            {/* ══════════ SECTION 1: Oppdateringer (public) ══════════ */}
             <div className="border-t border-[#2a2a2a] pt-4 mb-4">
-              <h3 className="text-sm font-semibold text-white mb-3">Oppdateringer ({selectedH.oppdateringer?.length || 0})</h3>
+              <h3 className="text-sm font-semibold text-blue-400 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Oppdateringer ({selectedH.oppdateringer?.filter(u => !u.deaktivert).length || 0})
+                <span className="text-xs text-gray-500 font-normal">Synlig for alle</span>
+              </h3>
 
-              {/* Existing updates - editable */}
               {(selectedH.oppdateringer?.length ?? 0) > 0 && (
                 <div className="space-y-2 mb-4">
                   {selectedH.oppdateringer?.map(u => (
-                    <div key={u.id} className="bg-[#0a0a0a] rounded-lg p-3">
-                      {editingUpdateId === u.id ? (
+                    <div key={u.id} className={`rounded-lg p-3 ${u.deaktivert ? 'bg-[#0a0a0a] opacity-40' : 'bg-[#0a0a0a]'}`}>
+                      {u.deaktivert ? (
+                        <p className="text-xs text-gray-600 italic">Deaktivert oppdatering</p>
+                      ) : editingUpdateId === u.id ? (
                         <div>
                           <textarea value={editUpdateText} onChange={(e) => setEditUpdateText(e.target.value)} className="w-full px-2 py-1.5 bg-[#111] border border-blue-500/50 rounded text-white text-sm focus:outline-none h-16 resize-none" />
+                          <ImageEditControls currentUrl={u.bilde_url} accentColor="blue" />
                           <div className="flex gap-2 mt-2">
-                            <button onClick={() => handleUpdateEdit(u.id)} className="px-3 py-1 bg-blue-500 text-white rounded text-xs">Lagre</button>
-                            <button onClick={() => setEditingUpdateId(null)} className="px-3 py-1 text-gray-400 text-xs">Avbryt</button>
+                            <button onClick={() => handleUpdateEdit(u.id, selectedH.id)} className="px-3 py-1 bg-blue-500 text-white rounded text-xs">Lagre</button>
+                            <button onClick={() => { setEditingUpdateId(null); resetEditImageState() }} className="px-3 py-1 text-gray-400 text-xs">Avbryt</button>
                           </div>
                         </div>
                       ) : (
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-gray-300">{u.tekst}</p>
+                            {u.bilde_url && <img src={u.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />}
                             <p className="text-xs text-gray-500 mt-1">{formatDateTime(u.opprettet_tidspunkt)}</p>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            <button onClick={() => { setEditingUpdateId(u.id); setEditUpdateText(u.tekst) }} className="p-1 text-gray-500 hover:text-blue-400" title="Rediger">
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                            </button>
-                            <button onClick={() => handleDeleteUpdate(u.id)} className="p-1 text-gray-500 hover:text-red-400" title="Slett">
-                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                            </button>
+                            <button onClick={() => { setEditingUpdateId(u.id); setEditUpdateText(u.tekst); resetEditImageState() }} className="p-1 text-gray-500 hover:text-blue-400" title="Rediger"><EditIcon /></button>
+                            <button onClick={() => handleDeactivateUpdate(u.id)} className="p-1 text-gray-500 hover:text-red-400" title="Deaktiver"><DeactivateIcon /></button>
                           </div>
                         </div>
                       )}
@@ -490,16 +890,142 @@ export default function OperatorHendelserPage() {
                 </div>
               )}
 
-              {/* Add new update */}
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">Ny oppdatering</label>
-                <textarea value={newUpdate} onChange={(e) => setNewUpdate(e.target.value)} placeholder="Skriv en oppdatering..." className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 h-16 resize-none" />
+              <div className="space-y-2">
+                <label className="block text-xs text-gray-500">Ny oppdatering</label>
+                <textarea value={newUpdate} onChange={(e) => setNewUpdate(e.target.value)} placeholder="Skriv en oppdatering (synlig for alle)..." className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 h-16 resize-none" />
+                <div className="flex items-center gap-3">
+                  <input type="file" ref={updateImageRef} accept="image/*" className="hidden" onChange={(e) => setNewUpdateImage(e.target.files?.[0] || null)} />
+                  <button onClick={() => updateImageRef.current?.click()} className="flex items-center gap-1 text-xs text-gray-400 hover:text-white">
+                    <ImageIcon />
+                    {newUpdateImage ? newUpdateImage.name : 'Legg til bilde'}
+                  </button>
+                  {newUpdateImage && <button onClick={() => setNewUpdateImage(null)} className="text-xs text-red-400">Fjern</button>}
+                </div>
               </div>
             </div>
 
+            {/* ══════════ SECTION 2: Pressemeldinger ══════════ */}
+            <div className="border-t border-cyan-500/20 pt-4 mb-4">
+              <h3 className="text-sm font-semibold text-cyan-400 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
+                Pressemeldinger
+                <span className="text-xs text-gray-500 font-normal">Synlig for presse</span>
+              </h3>
+
+              {/* Main pressemelding */}
+              <div className="mb-3">
+                <label className="block text-xs text-cyan-500/60 mb-1 uppercase font-semibold">Hovedpressemelding</label>
+                <textarea value={editPressetekst} onChange={(e) => setEditPressetekst(e.target.value)} placeholder="Skriv hovedpressemelding..." className="w-full px-3 py-2 bg-[#0a0a0a] border border-cyan-500/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500 h-16 resize-none" />
+              </div>
+
+              {/* Existing presseoppdateringer */}
+              {(selectedH.presseoppdateringer?.length ?? 0) > 0 && (
+                <div className="space-y-2 mb-4">
+                  {selectedH.presseoppdateringer?.map(p => (
+                    <div key={p.id} className={`rounded-lg p-3 ${p.deaktivert ? 'bg-cyan-500/5 border border-cyan-500/10 opacity-40' : 'bg-cyan-500/5 border border-cyan-500/20'}`}>
+                      {p.deaktivert ? (
+                        <p className="text-xs text-gray-600 italic">Deaktivert pressemelding</p>
+                      ) : editingPresseId === p.id ? (
+                        <div>
+                          <textarea value={editPresseText} onChange={(e) => setEditPresseText(e.target.value)} className="w-full px-2 py-1.5 bg-[#111] border border-cyan-500/50 rounded text-white text-sm focus:outline-none h-16 resize-none" />
+                          <ImageEditControls currentUrl={p.bilde_url} accentColor="cyan" />
+                          <div className="flex gap-2 mt-2">
+                            <button onClick={() => handlePresseEdit(p.id, selectedH.id)} className="px-3 py-1 bg-cyan-600 text-white rounded text-xs">Lagre</button>
+                            <button onClick={() => { setEditingPresseId(null); resetEditImageState() }} className="px-3 py-1 text-gray-400 text-xs">Avbryt</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-300">{p.tekst}</p>
+                            {p.bilde_url && <img src={p.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />}
+                            <p className="text-xs text-gray-500 mt-1">{formatDateTime(p.opprettet_tidspunkt)}</p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button onClick={() => { setEditingPresseId(p.id); setEditPresseText(p.tekst); resetEditImageState() }} className="p-1 text-gray-500 hover:text-cyan-400" title="Rediger"><EditIcon /></button>
+                            <button onClick={() => handleDeactivatePresse(p.id)} className="p-1 text-gray-500 hover:text-red-400" title="Deaktiver"><DeactivateIcon /></button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* New presseoppdatering */}
+              <div className="space-y-2">
+                <label className="block text-xs text-gray-500">Ny pressemelding</label>
+                <textarea value={newPresse} onChange={(e) => setNewPresse(e.target.value)} placeholder="Skriv en pressemelding..." className="w-full px-3 py-2 bg-[#0a0a0a] border border-cyan-500/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500 h-16 resize-none" />
+                <div className="flex items-center gap-3">
+                  <input type="file" ref={presseImageRef} accept="image/*" className="hidden" onChange={(e) => setNewPresseImage(e.target.files?.[0] || null)} />
+                  <button onClick={() => presseImageRef.current?.click()} className="flex items-center gap-1 text-xs text-gray-400 hover:text-white">
+                    <ImageIcon />
+                    {newPresseImage ? newPresseImage.name : 'Legg til bilde'}
+                  </button>
+                  {newPresseImage && <button onClick={() => setNewPresseImage(null)} className="text-xs text-red-400">Fjern</button>}
+                </div>
+              </div>
+            </div>
+
+            {/* ══════════ SECTION 3: Interne notater ══════════ */}
+            <div className="border-t border-yellow-500/20 pt-4 mb-4">
+              <h3 className="text-sm font-semibold text-yellow-400 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                Interne notater ({selectedH.interne_notater?.filter(n => !n.deaktivert).length || 0})
+                <span className="text-xs text-yellow-500/60 font-normal">Kun synlig for operatører</span>
+              </h3>
+
+              {(selectedH.interne_notater?.length ?? 0) > 0 && (
+                <div className="space-y-2 mb-4">
+                  {selectedH.interne_notater?.map(n => (
+                    <div key={n.id} className={`rounded-lg p-3 ${n.deaktivert ? 'bg-yellow-500/5 border border-yellow-500/10 opacity-40' : 'bg-yellow-500/5 border border-yellow-500/20'}`}>
+                      {n.deaktivert ? (
+                        <p className="text-xs text-gray-600 italic">Deaktivert notat</p>
+                      ) : editingNotatId === n.id ? (
+                        <div>
+                          <textarea value={editNotatText} onChange={(e) => setEditNotatText(e.target.value)} className="w-full px-2 py-1.5 bg-[#111] border border-yellow-500/50 rounded text-white text-sm focus:outline-none h-16 resize-none" />
+                          <ImageEditControls currentUrl={n.bilde_url} accentColor="yellow" />
+                          <div className="flex gap-2 mt-2">
+                            <button onClick={() => handleNotatEdit(n.id, selectedH.id)} className="px-3 py-1 bg-yellow-600 text-white rounded text-xs">Lagre</button>
+                            <button onClick={() => { setEditingNotatId(null); resetEditImageState() }} className="px-3 py-1 text-gray-400 text-xs">Avbryt</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-300">{n.notat}</p>
+                            {n.bilde_url && <img src={n.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />}
+                            <p className="text-xs text-gray-500 mt-1">{formatDateTime(n.opprettet_tidspunkt)}</p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button onClick={() => { setEditingNotatId(n.id); setEditNotatText(n.notat); resetEditImageState() }} className="p-1 text-gray-500 hover:text-yellow-400" title="Rediger"><EditIcon /></button>
+                            <button onClick={() => handleDeactivateNotat(n.id)} className="p-1 text-gray-500 hover:text-red-400" title="Deaktiver"><DeactivateIcon /></button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="block text-xs text-gray-500">Nytt internt notat</label>
+                <textarea value={newNotat} onChange={(e) => setNewNotat(e.target.value)} placeholder="Skriv et internt notat (kun synlig for operatører)..." className="w-full px-3 py-2 bg-[#0a0a0a] border border-yellow-500/30 rounded-lg text-white text-sm focus:outline-none focus:border-yellow-500 h-16 resize-none" />
+                <div className="flex items-center gap-3">
+                  <input type="file" ref={notatImageRef} accept="image/*" className="hidden" onChange={(e) => setNewNotatImage(e.target.files?.[0] || null)} />
+                  <button onClick={() => notatImageRef.current?.click()} className="flex items-center gap-1 text-xs text-gray-400 hover:text-white">
+                    <ImageIcon />
+                    {newNotatImage ? newNotatImage.name : 'Legg til bilde'}
+                  </button>
+                  {newNotatImage && <button onClick={() => setNewNotatImage(null)} className="text-xs text-red-400">Fjern</button>}
+                </div>
+              </div>
+            </div>
+
+            {/* Save/Close buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
-              <button onClick={handleSaveChanges} disabled={saving} className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">
-                {saving ? 'Lagrer...' : 'Lagre endringer'}
+              <button onClick={handleSaveChanges} disabled={saving || uploadingImage} className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">
+                {uploadingImage ? 'Laster opp bilde...' : saving ? 'Lagrer...' : 'Lagre endringer'}
               </button>
               <button onClick={() => setSelectedHendelse(null)} className="py-3 sm:px-4 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors touch-manipulation">Lukk</button>
             </div>

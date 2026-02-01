@@ -80,11 +80,14 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     )
   }
 
+  // Presse link - available for all roles
+  const presseLink = { href: '/presse/hendelser', label: 'Presse', icon: 'press' }
+
   const links = effectiveRole === 'admin'
-    ? [...operatorLinks, ...adminLinks, { href: '/admin/pressebrukere', label: 'Pressebrukere', icon: 'press' }]
+    ? [...operatorLinks, presseLink, ...adminLinks, { href: '/admin/pressebrukere', label: 'Pressebrukere', icon: 'press' }]
     : effectiveRole === '110-admin'
-    ? [...operatorLinks, ...admin110Links, { href: '/admin/pressebrukere', label: 'Pressebrukere', icon: 'press' }]
-    : [...operatorLinks]
+    ? [...operatorLinks, presseLink, ...admin110Links, { href: '/admin/pressebrukere', label: 'Pressebrukere', icon: 'press' }]
+    : [...operatorLinks, presseLink]
 
   const roleLabel = effectiveRole === 'admin'
     ? 'Administrator'
@@ -146,7 +149,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         {/* Sidebar */}
         <aside
           className={cn(
-            'fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[#111] border-r border-[#2a2a2a] transform transition-transform lg:transform-none',
+            'fixed lg:relative inset-y-0 left-0 z-50 w-64 min-h-screen bg-[#111] border-r border-[#2a2a2a] transform transition-transform lg:transform-none',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           )}
         >

@@ -1,9 +1,10 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { useFylker, useBrannvesen, useKategorier, useSentraler, useKommuner } from '@/hooks/useSupabaseData'
 import { invalidateCache } from '@/hooks/useSupabaseData'
-import { useState } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -29,13 +30,137 @@ export default function NyHendelsePage() {
     alvorlighetsgrad: 'middels',
     latitude: '',
     longitude: '',
+    postnummer: '',
+    poststed: '',
   })
   const [presseInfo, setPresseInfo] = useState('')
   const [internNotat, setInternNotat] = useState('')
-  const [bilder, setBilder] = useState<File[]>([])
-  const [bilderSynligPresse, setBilderSynligPresse] = useState(true)
-  const [bilderSynligPublikum, setBilderSynligPublikum] = useState(false)
+
+  // Image state - separate for each section
+  const [publikumBilde, setPublikumBilde] = useState<File | null>(null)
+  const [presseBilde, setPresseBilde] = useState<File | null>(null)
+  const [internBilde, setInternBilde] = useState<File | null>(null)
+  const publikumBildeRef = useRef<HTMLInputElement>(null)
+  const presseBildeRef = useRef<HTMLInputElement>(null)
+  const internBildeRef = useRef<HTMLInputElement>(null)
+
   const [saving, setSaving] = useState(false)
+  const [geocoding, setGeocoding] = useState(false)
+  const [kategoriSearch, setKategoriSearch] = useState('')
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const addressDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const addressWrapperRef = useRef<HTMLDivElement>(null)
+
+  const filteredKategorier = useMemo(() => {
+    if (!kategoriSearch) return kategorier
+    const q = kategoriSearch.toLowerCase()
+    return kategorier.filter(k => k.navn.toLowerCase().includes(q))
+  }, [kategorier, kategoriSearch])
+
+  const searchAddress = useCallback(async (query: string) => {
+    if (query.length < 3) {
+      setAddressSuggestions([])
+      return
+    }
+    try {
+      const kommune = formData.kommune_id ? kommuner.find(k => k.id === formData.kommune_id) : null
+      const kommuneParam = kommune ? `&kommunenavn=${encodeURIComponent(kommune.navn)}` : ''
+      const res = await fetch(`https://ws.geonorge.no/adresser/v1/sok?sok=${encodeURIComponent(query)}${kommuneParam}&fuzzy=true&treffPerSide=5`)
+      const data = await res.json()
+      if (data.adresser) {
+        setAddressSuggestions(data.adresser)
+        setShowSuggestions(true)
+      }
+    } catch {
+      // ignore
+    }
+  }, [formData.kommune_id, kommuner])
+
+  const handleAddressChange = (value: string) => {
+    setFormData({ ...formData, sted: value })
+    if (addressDebounceRef.current) clearTimeout(addressDebounceRef.current)
+    addressDebounceRef.current = setTimeout(() => searchAddress(value), 300)
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const selectAddress = (addr: any) => {
+    const matchedKommune = kommuner.find(k => {
+      const kNum = k.id.replace('k-', '')
+      const addrNum = addr.kommunenummer?.replace(/^0+/, '') || ''
+      return kNum === addrNum || kNum === addr.kommunenummer
+    })
+    const matchedFylke = matchedKommune ? fylker.find(f => f.id === matchedKommune.fylke_id) : null
+
+    setFormData(prev => ({
+      ...prev,
+      sted: addr.adressetekst,
+      latitude: String(addr.representasjonspunkt.lat),
+      longitude: String(addr.representasjonspunkt.lon),
+      kommune_id: matchedKommune?.id || prev.kommune_id,
+      fylke_id: matchedFylke?.id || prev.fylke_id,
+      postnummer: addr.postnummer || '',
+      poststed: addr.poststed || '',
+    }))
+    if (matchedFylke) setSelectedFylke(matchedFylke.id)
+    setShowSuggestions(false)
+    setAddressSuggestions([])
+  }
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (addressWrapperRef.current && !addressWrapperRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const handleGeocode = async () => {
+    if (!formData.sted) {
+      toast.error('Fyll inn stedsangivelse først')
+      return
+    }
+    setGeocoding(true)
+    try {
+      const kommune = formData.kommune_id ? kommuner.find(k => k.id === formData.kommune_id) : null
+      const query = kommune ? `${formData.sted}, ${kommune.navn}` : formData.sted
+      const res = await fetch(`https://ws.geonorge.no/adresser/v1/sok?sok=${encodeURIComponent(query)}&fuzzy=true&treffPerSide=1`)
+      const data = await res.json()
+      if (data.adresser && data.adresser.length > 0) {
+        const addr = data.adresser[0]
+        setFormData(prev => ({
+          ...prev,
+          latitude: String(addr.representasjonspunkt.lat),
+          longitude: String(addr.representasjonspunkt.lon),
+        }))
+        toast.success(`Koordinater hentet fra: ${addr.adressetekst}`)
+      } else {
+        toast.error('Fant ingen treff på adressen')
+      }
+    } catch {
+      toast.error('Kunne ikke hente koordinater')
+    } finally {
+      setGeocoding(false)
+    }
+  }
+
+  const uploadImage = async (file: File, hendelseId: string): Promise<string | null> => {
+    try {
+      const supabase = createClient()
+      const ext = file.name.split('.').pop()
+      const fileName = `${hendelseId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const { error } = await supabase.storage.from('hendelsesbilder').upload(fileName, file)
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage.from('hendelsesbilder').getPublicUrl(fileName)
+      return publicUrl
+    } catch (err) {
+      console.error('Image upload error:', err)
+      return null
+    }
+  }
 
   const isLoading = fylkerLoading || brannvesenLoading || kategorierLoading || sentralerLoading || kommunerLoading
   if (isLoading) return <div className="p-8 text-center text-gray-400">Laster...</div>
@@ -84,41 +209,50 @@ export default function NyHendelsePage() {
         opprettet_av: user.id,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+        postnummer: formData.postnummer || null,
+        poststed: formData.poststed || null,
+        presse_tekst: presseInfo || null,
       }).select().single()
 
       if (error) throw error
 
-      // Save press info if provided
-      if (presseInfo && hendelse) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('hendelser') as any).update({ presse_tekst: presseInfo }).eq('id', hendelse.id)
+      // Upload hendelse-bilde directly on hendelsen
+      if (publikumBilde && hendelse) {
+        const bildeUrl = await uploadImage(publikumBilde, hendelse.id)
+        if (bildeUrl) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.from('hendelser') as any).update({ bilde_url: bildeUrl }).eq('id', hendelse.id)
+        }
       }
 
-      // Save internal note if provided
-      if (internNotat && hendelse) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (supabase.from('interne_notater') as any).insert({
-          hendelse_id: hendelse.id,
-          notat: internNotat,
-          opprettet_av: user.id,
-        })
+      // Upload presse-bilde as presseoppdatering
+      if (presseBilde && hendelse) {
+        const bildeUrl = await uploadImage(presseBilde, hendelse.id)
+        if (bildeUrl) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.from('presseoppdateringer') as any).insert({
+            hendelse_id: hendelse.id,
+            tekst: 'Bilde fra hendelsen',
+            opprettet_av: user.id,
+            bilde_url: bildeUrl,
+          })
+        }
       }
 
-      // Upload images if any
-      if (bilder.length > 0 && hendelse) {
-        for (const file of bilder) {
-          const ext = file.name.split('.').pop()
-          const path = `${hendelse.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-          const { error: uploadErr } = await supabase.storage.from('hendelsesbilder').upload(path, file)
-          if (!uploadErr) {
-            const { data: urlData } = supabase.storage.from('hendelsesbilder').getPublicUrl(path)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (supabase.from('hendelsesbilder') as any).insert({
-              hendelse_id: hendelse.id,
-              bilde_url: urlData.publicUrl,
-              lastet_opp_av: user.id,
-            })
-          }
+      // Save internal note with optional image
+      if ((internNotat || internBilde) && hendelse) {
+        let bildeUrl: string | null = null
+        if (internBilde) {
+          bildeUrl = await uploadImage(internBilde, hendelse.id)
+        }
+        if (internNotat || bildeUrl) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.from('interne_notater') as any).insert({
+            hendelse_id: hendelse.id,
+            notat: internNotat || 'Bilde vedlagt',
+            opprettet_av: user.id,
+            bilde_url: bildeUrl,
+          })
         }
       }
 
@@ -132,11 +266,26 @@ export default function NyHendelsePage() {
     }
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setBilder([...bilder, ...Array.from(e.target.files)])
-    }
-  }
+  const ImageUploadButton = ({ file, onSelect, onClear, inputRef, label }: {
+    file: File | null
+    onSelect: (f: File) => void
+    onClear: () => void
+    inputRef: React.RefObject<HTMLInputElement | null>
+    label: string
+  }) => (
+    <div className="flex items-center gap-2 mt-2">
+      <input type="file" ref={inputRef} accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) onSelect(e.target.files[0]) }} />
+      <button type="button" onClick={() => inputRef.current?.click()} className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors">
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+        {file ? file.name : label}
+      </button>
+      {file && (
+        <button type="button" onClick={onClear} className="text-xs text-red-400 hover:text-red-300">
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      )}
+    </div>
+  )
 
   return (
     <DashboardLayout role="operator">
@@ -150,19 +299,28 @@ export default function NyHendelsePage() {
           {/* Category */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Kategori *</label>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {kategorier.map((kat) => (
+            <input
+              type="text"
+              value={kategoriSearch}
+              onChange={(e) => setKategoriSearch(e.target.value)}
+              placeholder="Søk kategori..."
+              className="w-full px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 mb-2"
+            />
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-72 overflow-y-auto overflow-x-hidden relative">
+              {filteredKategorier.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map((kat) => (
                 <button
                   key={kat.id}
                   type="button"
-                  onClick={() => setFormData({ ...formData, kategori_id: kat.id })}
-                  className={`px-3 py-2 rounded-lg text-xs text-left border transition-colors ${
+                  onClick={() => { setFormData({ ...formData, kategori_id: kat.id }); setKategoriSearch('') }}
+                  className={`px-3 py-2 rounded-lg text-xs text-left border transition-colors inline-flex items-center gap-1.5 ${
                     formData.kategori_id === kat.id
                       ? 'border-blue-500 bg-blue-500/10'
                       : 'border-[#2a2a2a] bg-[#1a1a1a] hover:border-[#3a3a3a]'
                   }`}
                 >
-                  <span className="inline-block w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: kat.farge }} />
+                  <span className="shrink-0" style={{ color: kat.farge }}>
+                    <CategoryIcon iconName={kat.ikon} className="w-3.5 h-3.5" />
+                  </span>
                   {kat.navn}
                 </button>
               ))}
@@ -223,7 +381,7 @@ export default function NyHendelsePage() {
               required
             >
               <option value="">Velg 110-sentral</option>
-              {sentraler.map((s) => (
+              {sentraler.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map((s) => (
                 <option key={s.id} value={s.id}>{s.kort_navn}</option>
               ))}
             </select>
@@ -243,7 +401,7 @@ export default function NyHendelsePage() {
                 required
               >
                 <option value="">Velg fylke</option>
-                {filteredFylker.map((f) => (
+                {filteredFylker.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map((f) => (
                   <option key={f.id} value={f.id}>{f.navn}</option>
                 ))}
               </select>
@@ -264,16 +422,33 @@ export default function NyHendelsePage() {
             </div>
           </div>
 
-          <div>
+          <div ref={addressWrapperRef} className="relative">
             <label className="block text-sm font-medium text-gray-300 mb-2">Stedsangivelse *</label>
             <input
               type="text"
               value={formData.sted}
-              onChange={(e) => setFormData({ ...formData, sted: e.target.value })}
+              onChange={(e) => handleAddressChange(e.target.value)}
+              onFocus={() => { if (addressSuggestions.length > 0) setShowSuggestions(true) }}
               placeholder="F.eks: Sandviksveien 42, Sandviken"
               className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+              autoComplete="off"
               required
             />
+            {showSuggestions && addressSuggestions.length > 0 && (
+              <div className="absolute z-20 left-0 right-0 mt-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg overflow-hidden shadow-xl">
+                {addressSuggestions.map((addr, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => selectAddress(addr)}
+                    className="w-full text-left px-4 py-2.5 hover:bg-[#222] transition-colors border-b border-[#2a2a2a] last:border-b-0"
+                  >
+                    <p className="text-sm text-white">{addr.adressetekst}</p>
+                    <p className="text-xs text-gray-500">{addr.kommunenavn}, {addr.fylkesnavn}</p>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div>
@@ -292,26 +467,43 @@ export default function NyHendelsePage() {
           </div>
 
           {/* Coordinates */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Breddegrad (valgfritt)</label>
-              <input
-                type="text"
-                value={formData.latitude}
-                onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
-                placeholder="60.4055"
-                className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
-              />
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-300">Koordinater (valgfritt)</label>
+              <button
+                type="button"
+                onClick={handleGeocode}
+                disabled={geocoding || !formData.sted}
+                className="text-xs px-3 py-1.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                {geocoding ? 'Henter...' : 'Hent fra adresse'}
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Lengdegrad (valgfritt)</label>
-              <input
-                type="text"
-                value={formData.longitude}
-                onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                placeholder="5.3275"
-                className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Breddegrad</label>
+                <input
+                  type="text"
+                  value={formData.latitude}
+                  onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                  placeholder="60.4055"
+                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Lengdegrad</label>
+                <input
+                  type="text"
+                  value={formData.longitude}
+                  onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                  placeholder="5.3275"
+                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
             </div>
           </div>
 
@@ -328,92 +520,50 @@ export default function NyHendelsePage() {
             />
           </div>
 
-          {/* Images */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">Bilder (valgfritt)</label>
-            <div className="bg-[#1a1a1a] border border-[#2a2a2a] border-dashed rounded-lg p-6 text-center">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={handleImageUpload}
-                className="hidden"
-                id="image-upload"
-              />
-              <label htmlFor="image-upload" className="cursor-pointer">
-                <svg className="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <p className="text-sm text-gray-400">Klikk for å laste opp bilder</p>
-                <p className="text-xs text-gray-500 mt-1">PNG, JPG opp til 10MB</p>
-              </label>
+          {/* Hendelsebilde */}
+          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+              <h3 className="text-sm font-semibold text-gray-300">Hendelsebilde</h3>
             </div>
-            {bilder.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {bilder.map((f, i) => (
-                  <div key={i} className="flex items-center gap-1 bg-[#1a1a1a] rounded px-2 py-1">
-                    <span className="text-xs text-gray-400">{f.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => setBilder(bilder.filter((_, idx) => idx !== i))}
-                      className="text-red-400 hover:text-red-300"
-                    >
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Image visibility options */}
-            {bilder.length > 0 && (
-              <div className="mt-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 space-y-2">
-                <p className="text-xs text-gray-400 font-medium mb-2">Bildesynlighet</p>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={bilderSynligPresse}
-                    onChange={(e) => setBilderSynligPresse(e.target.checked)}
-                    className="rounded border-gray-600"
-                  />
-                  <span className="text-sm text-gray-300">Synlig for presse</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={bilderSynligPublikum}
-                    onChange={(e) => setBilderSynligPublikum(e.target.checked)}
-                    className="rounded border-gray-600"
-                  />
-                  <span className="text-sm text-gray-300">Synlig for publikum</span>
-                </label>
-              </div>
-            )}
+            <p className="text-xs text-gray-500 mb-2">Hovedbilde for hendelsen. Synlig for alle.</p>
+            <ImageUploadButton
+              file={publikumBilde}
+              onSelect={setPublikumBilde}
+              onClear={() => setPublikumBilde(null)}
+              inputRef={publikumBildeRef}
+              label="Legg til hendelsebilde"
+            />
           </div>
 
           {/* Press info */}
-          <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4">
+          <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
-              <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
               </svg>
-              <h3 className="text-sm font-semibold text-blue-400">Presseinformasjon</h3>
+              <h3 className="text-sm font-semibold text-cyan-400">Pressemelding</h3>
             </div>
-            <p className="text-xs text-blue-400/70 mb-2">
-              Ekstra detaljer kun synlig for akkreditert presse. Ikke synlig for publikum.
+            <p className="text-xs text-cyan-400/70 mb-2">
+              Kun synlig for akkreditert presse. Ikke synlig for publikum.
             </p>
             <textarea
               value={presseInfo}
               onChange={(e) => setPresseInfo(e.target.value)}
               placeholder="F.eks. kontaktperson, pressekonferanse tidspunkt, ekstra bakgrunn..."
               rows={3}
-              className="w-full px-3 py-2 bg-[#1a1a1a] border border-blue-500/20 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500/50 resize-none"
+              className="w-full px-3 py-2 bg-[#0a0a0a] border border-cyan-500/20 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500/50 resize-none"
+            />
+            <ImageUploadButton
+              file={presseBilde}
+              onSelect={setPresseBilde}
+              onClear={() => setPresseBilde(null)}
+              inputRef={presseBildeRef}
+              label="Legg til bilde (kun for presse)"
             />
           </div>
 
-          {/* Internal note - SEPARATE */}
+          {/* Internal note */}
           <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <svg className="w-4 h-4 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -422,14 +572,21 @@ export default function NyHendelsePage() {
               <h3 className="text-sm font-semibold text-yellow-400">Internt notat</h3>
             </div>
             <p className="text-xs text-yellow-400/70 mb-2">
-              Notater her er kun synlig for operatører i ditt brannvesen. Lagres separat fra offentlig informasjon.
+              Kun synlig for operatører. Lagres separat fra offentlig informasjon.
             </p>
             <textarea
               value={internNotat}
               onChange={(e) => setInternNotat(e.target.value)}
               placeholder="Skriv et internt notat..."
               rows={3}
-              className="w-full px-3 py-2 bg-[#1a1a1a] border border-yellow-500/20 rounded-lg text-white text-sm focus:outline-none focus:border-yellow-500/50 resize-none"
+              className="w-full px-3 py-2 bg-[#0a0a0a] border border-yellow-500/20 rounded-lg text-white text-sm focus:outline-none focus:border-yellow-500/50 resize-none"
+            />
+            <ImageUploadButton
+              file={internBilde}
+              onSelect={setInternBilde}
+              onClear={() => setInternBilde(null)}
+              inputRef={internBildeRef}
+              label="Legg til bilde (kun internt)"
             />
           </div>
 

@@ -43,6 +43,16 @@ export interface Sentral {
   kontakt_epost: string | null
 }
 
+export interface InternNotat {
+  id: string
+  hendelse_id: string
+  notat: string
+  opprettet_av: string
+  opprettet_tidspunkt: string
+  bilde_url: string | null
+  deaktivert: boolean
+}
+
 export interface Hendelse {
   id: string
   brannvesen_id: string
@@ -61,7 +71,10 @@ export interface Hendelse {
   latitude: number | null
   longitude: number | null
   presse_tekst: string | null
+  bilde_url: string | null
   oppdateringer?: HendelseOppdatering[]
+  presseoppdateringer?: PresseOppdatering[]
+  interne_notater?: InternNotat[]
 }
 
 export interface HendelseOppdatering {
@@ -69,6 +82,18 @@ export interface HendelseOppdatering {
   hendelse_id: string
   tekst: string
   opprettet_tidspunkt: string
+  bilde_url: string | null
+  deaktivert: boolean
+}
+
+export interface PresseOppdatering {
+  id: string
+  hendelse_id: string
+  tekst: string
+  bilde_url: string | null
+  opprettet_av: string
+  opprettet_tidspunkt: string
+  deaktivert: boolean
 }
 
 export interface Brukerprofil {
@@ -210,7 +235,7 @@ export function useHendelser(options?: { excludeDeactivated?: boolean }) {
       const supabase = createClient()
       let query = supabase
         .from('hendelser')
-        .select('*, hendelsesoppdateringer(*)')
+        .select('*, hendelsesoppdateringer(*), presseoppdateringer(*), interne_notater(*)')
         .order('opprettet_tidspunkt', { ascending: false })
 
       if (options?.excludeDeactivated) {
@@ -226,6 +251,14 @@ export function useHendelser(options?: { excludeDeactivated?: boolean }) {
           ...h,
           oppdateringer: ((h.hendelsesoppdateringer || []) as HendelseOppdatering[]).sort(
             (a: HendelseOppdatering, b: HendelseOppdatering) =>
+              new Date(a.opprettet_tidspunkt).getTime() - new Date(b.opprettet_tidspunkt).getTime()
+          ),
+          presseoppdateringer: ((h.presseoppdateringer || []) as PresseOppdatering[]).sort(
+            (a: PresseOppdatering, b: PresseOppdatering) =>
+              new Date(a.opprettet_tidspunkt).getTime() - new Date(b.opprettet_tidspunkt).getTime()
+          ),
+          interne_notater: ((h.interne_notater || []) as InternNotat[]).sort(
+            (a: InternNotat, b: InternNotat) =>
               new Date(a.opprettet_tidspunkt).getTime() - new Date(b.opprettet_tidspunkt).getTime()
           ),
         })) as Hendelse[]
