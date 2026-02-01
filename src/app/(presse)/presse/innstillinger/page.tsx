@@ -6,6 +6,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { registerPush } from '@/lib/capacitor'
 
 export default function PresseInnstillingerPage() {
   const { data: fylker, loading: fylkerLoading } = useFylker()
@@ -52,12 +53,20 @@ export default function PresseInnstillingerPage() {
     if (!user) return
     setSaving(true)
     try {
+      // Request real push token from browser
+      const pushToken = await registerPush()
+      if (!pushToken) {
+        toast.error('Push-tillatelse ble ikke gitt. Sjekk nettleserinnstillingene dine.')
+        setSaving(false)
+        return
+      }
+
       const supabase = createClient()
       const record = {
         id: `presse-${user.id}`,
         device_id: `presse-${user.id}`,
         platform: 'Web',
-        push_token: `presse-token-${user.id}`,
+        push_token: pushToken,
         push_aktiv: true,
         sentral_ids: [],
         fylke_ids: selectedFylker,
@@ -68,7 +77,7 @@ export default function PresseInnstillingerPage() {
       const { error } = await (supabase.from('push_abonnenter') as any).upsert(record, { onConflict: 'device_id' })
       if (error) throw error
       localStorage.setItem(`brannloggen_presse_prefs_${user.id}`, JSON.stringify({ minAlvorlighet }))
-      toast.success('Innstillinger lagret')
+      toast.success('Innstillinger lagret og push-varsler aktivert')
     } catch (err) {
       toast.error('Kunne ikke lagre: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
     } finally {
