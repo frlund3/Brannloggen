@@ -228,19 +228,23 @@ CREATE POLICY "Operators can insert hendelser" ON hendelser FOR INSERT WITH CHEC
   EXISTS (
     SELECT 1 FROM brukerprofiler
     WHERE brukerprofiler.user_id = auth.uid()
-    AND brukerprofiler.rolle IN ('operator', 'admin')
+    AND brukerprofiler.rolle IN ('operator', 'admin', '110-admin')
     AND brukerprofiler.aktiv = true
   )
 );
 
 CREATE POLICY "Operators can update own brannvesen hendelser" ON hendelser FOR UPDATE USING (
   EXISTS (
-    SELECT 1 FROM brukerprofiler
-    WHERE brukerprofiler.user_id = auth.uid()
-    AND brukerprofiler.aktiv = true
+    SELECT 1 FROM brukerprofiler bp
+    WHERE bp.user_id = auth.uid()
+    AND bp.aktiv = true
     AND (
-      brukerprofiler.rolle = 'admin'
-      OR (brukerprofiler.rolle = 'operator' AND brukerprofiler.brannvesen_id = hendelser.brannvesen_id)
+      bp.rolle = 'admin'
+      OR bp.rolle IN ('operator', '110-admin') AND EXISTS (
+        SELECT 1 FROM sentraler s
+        WHERE s.id = ANY(bp.sentral_ids)
+        AND hendelser.brannvesen_id = ANY(s.brannvesen_ids)
+      )
     )
   )
 );
@@ -251,7 +255,7 @@ CREATE POLICY "Operators can insert oppdateringer" ON hendelsesoppdateringer FOR
   EXISTS (
     SELECT 1 FROM brukerprofiler
     WHERE brukerprofiler.user_id = auth.uid()
-    AND brukerprofiler.rolle IN ('operator', 'admin')
+    AND brukerprofiler.rolle IN ('operator', 'admin', '110-admin')
     AND brukerprofiler.aktiv = true
   )
 );
@@ -262,7 +266,7 @@ CREATE POLICY "Operators can insert bilder" ON hendelsesbilder FOR INSERT WITH C
   EXISTS (
     SELECT 1 FROM brukerprofiler
     WHERE brukerprofiler.user_id = auth.uid()
-    AND brukerprofiler.rolle IN ('operator', 'admin')
+    AND brukerprofiler.rolle IN ('operator', 'admin', '110-admin')
     AND brukerprofiler.aktiv = true
   )
 );
@@ -332,7 +336,8 @@ CREATE POLICY "Admins can read audit log" ON audit_log FOR SELECT USING (
     SELECT 1 FROM brukerprofiler WHERE user_id = auth.uid() AND rolle = 'admin'
   )
 );
-CREATE POLICY "System can insert audit log" ON audit_log FOR INSERT WITH CHECK (true);
+-- Audit log inserts are handled ONLY by the SECURITY DEFINER trigger function log_audit().
+-- No direct INSERT policy needed - the trigger bypasses RLS via SECURITY DEFINER.
 
 -- Admin write access for reference tables
 CREATE POLICY "Admins can manage fylker" ON fylker FOR ALL USING (

@@ -2,15 +2,30 @@
 
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useAuth } from '@/components/providers/AuthProvider'
 
 export default function DebugPage() {
+  const { user, rolle, loading: authLoading } = useAuth()
   const [log, setLog] = useState<string[]>([])
+  const [authorized, setAuthorized] = useState(false)
 
   const addLog = (msg: string) => {
     setLog(prev => [...prev, msg])
   }
 
+  // Only allow admin access
   useEffect(() => {
+    if (authLoading) return
+    if (!user || rolle !== 'admin') {
+      setAuthorized(false)
+      return
+    }
+    setAuthorized(true)
+  }, [user, rolle, authLoading])
+
+  useEffect(() => {
+    if (!authorized) return
+
     const run = async () => {
       addLog('=== LOCALSTORAGE ===')
       const keys = Object.keys(localStorage)
@@ -57,12 +72,6 @@ export default function DebugPage() {
           addLog(`HINT: ${profileError.hint}`)
         } else if (!profile) {
           addLog('RESULT: null (ingen profil / RLS blokkerer)')
-
-          // Count all visible rows
-          const { count } = await supabase
-            .from('brukerprofiler')
-            .select('*', { count: 'exact', head: true })
-          addLog(`Synlige rader: ${count}`)
         } else {
           const p = profile as Record<string, unknown>
           addLog(`ROLLE: ${p.rolle}`)
@@ -71,53 +80,42 @@ export default function DebugPage() {
           addLog(`USER_ID: ${p.user_id}`)
         }
       }
-
-      addLog('')
-      addLog('=== FIX: CACHE ROLLE ===')
-      if (session && !cachedRolle) {
-        // Try to get rolle and cache it
-        const { data: profile } = await supabase
-          .from('brukerprofiler')
-          .select('rolle')
-          .eq('user_id', session.user.id)
-          .maybeSingle()
-        const rolle = (profile as { rolle?: string } | null)?.rolle
-        if (rolle) {
-          localStorage.setItem('brannloggen_user_rolle', rolle)
-          addLog(`CACHED rolle: ${rolle} -> Reload page!`)
-        } else {
-          addLog('Kunne ikke hente rolle fra DB')
-          addLog('Kjør denne SQL i Supabase SQL Editor:')
-          addLog('')
-          addLog('DROP POLICY IF EXISTS "brukerprofiler_select" ON brukerprofiler;')
-          addLog('CREATE POLICY "brukerprofiler_select" ON brukerprofiler')
-          addLog('  FOR SELECT USING (true);')
-          addLog('')
-          addLog('Eller manuelt sett rolle:')
-        }
-      } else if (cachedRolle) {
-        addLog(`Rolle allerede cachet: ${cachedRolle}`)
-      }
     }
 
     run()
-  }, [])
+  }, [authorized])
 
-  const setRolleManually = (rolle: string) => {
-    localStorage.setItem('brannloggen_user_rolle', rolle)
-    window.location.href = '/'
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <p className="text-gray-400 text-sm">Sjekker tilgang...</p>
+      </div>
+    )
+  }
+
+  if (!authorized) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-400 text-sm mb-4">Kun tilgjengelig for administratorer.</p>
+          <a href="/login" className="px-4 py-2 bg-blue-600 text-white text-sm rounded">
+            Logg inn
+          </a>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-black p-4">
-      <h1 className="text-lg font-bold text-white mb-4">Debug</h1>
+      <h1 className="text-lg font-bold text-white mb-4">Debug (Admin)</h1>
 
       <div className="space-y-0.5 mb-6">
         {log.map((line, i) => (
           <p key={i} className={`text-xs font-mono ${
             line.includes('ERROR') || line.includes('null')
               ? 'text-red-400'
-              : line.includes('CACHED') || line.includes('ROLLE:') || line.includes('SESSION:')
+              : line.includes('ROLLE:') || line.includes('SESSION:')
               ? 'text-green-400'
               : line.startsWith('===')
               ? 'text-yellow-300 font-bold mt-2'
@@ -128,43 +126,10 @@ export default function DebugPage() {
         ))}
       </div>
 
-      <div className="space-y-2 border-t border-gray-700 pt-4">
-        <p className="text-xs text-gray-400">Sett rolle manuelt:</p>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setRolleManually('admin')}
-            className="px-4 py-2 bg-purple-600 text-white text-sm rounded"
-          >
-            Admin
-          </button>
-          <button
-            onClick={() => setRolleManually('operator')}
-            className="px-4 py-2 bg-red-600 text-white text-sm rounded"
-          >
-            Operatør
-          </button>
-          <button
-            onClick={() => setRolleManually('presse')}
-            className="px-4 py-2 bg-cyan-600 text-white text-sm rounded"
-          >
-            Presse
-          </button>
-        </div>
-
-        <div className="flex gap-2 mt-4">
-          <button
-            onClick={() => {
-              localStorage.clear()
-              window.location.href = '/'
-            }}
-            className="px-4 py-2 bg-gray-700 text-white text-sm rounded"
-          >
-            Logg ut (tøm alt)
-          </button>
-          <a href="/" className="px-4 py-2 bg-blue-600 text-white text-sm rounded text-center">
-            Forsiden
-          </a>
-        </div>
+      <div className="flex gap-2 mt-4 border-t border-gray-700 pt-4">
+        <a href="/" className="px-4 py-2 bg-blue-600 text-white text-sm rounded text-center">
+          Forsiden
+        </a>
       </div>
     </div>
   )

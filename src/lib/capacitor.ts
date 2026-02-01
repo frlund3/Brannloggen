@@ -115,7 +115,7 @@ async function registerWebPush(): Promise<string | null> {
     }
 
     const subscription = await registration.pushManager.subscribe({
-      userVisuallyOnly: true,
+      userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(vapidKey),
     } as PushSubscriptionOptionsInit)
 

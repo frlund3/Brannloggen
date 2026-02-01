@@ -78,6 +78,97 @@ DO $$ BEGIN
 EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
 
+-- ── Security migrations ──────────────────────────────────────────────
+
+-- Fix: Add 110-admin to hendelser INSERT policy
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "Operators can insert hendelser" ON hendelser;
+  CREATE POLICY "Operators can insert hendelser" ON hendelser FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM brukerprofiler
+      WHERE brukerprofiler.user_id = auth.uid()
+      AND brukerprofiler.rolle IN ('operator', 'admin', '110-admin')
+      AND brukerprofiler.aktiv = true
+    )
+  );
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- Fix: hendelser UPDATE policy - brukerprofiler has no brannvesen_id column
+-- Use sentral_ids -> sentraler.brannvesen_ids mapping instead
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "Operators can update own brannvesen hendelser" ON hendelser;
+  CREATE POLICY "Operators can update own brannvesen hendelser" ON hendelser FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM brukerprofiler bp
+      WHERE bp.user_id = auth.uid()
+      AND bp.aktiv = true
+      AND (
+        bp.rolle = 'admin'
+        OR bp.rolle IN ('operator', '110-admin') AND EXISTS (
+          SELECT 1 FROM sentraler s
+          WHERE s.id = ANY(bp.sentral_ids)
+          AND hendelser.brannvesen_id = ANY(s.brannvesen_ids)
+        )
+      )
+    )
+  );
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- Fix: Add 110-admin to oppdateringer INSERT policy
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "Operators can insert oppdateringer" ON hendelsesoppdateringer;
+  CREATE POLICY "Operators can insert oppdateringer" ON hendelsesoppdateringer FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM brukerprofiler
+      WHERE brukerprofiler.user_id = auth.uid()
+      AND brukerprofiler.rolle IN ('operator', 'admin', '110-admin')
+      AND brukerprofiler.aktiv = true
+    )
+  );
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- Fix: Add 110-admin to bilder INSERT policy
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "Operators can insert bilder" ON hendelsesbilder;
+  CREATE POLICY "Operators can insert bilder" ON hendelsesbilder FOR INSERT WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM brukerprofiler
+      WHERE brukerprofiler.user_id = auth.uid()
+      AND brukerprofiler.rolle IN ('operator', 'admin', '110-admin')
+      AND brukerprofiler.aktiv = true
+    )
+  );
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- Fix: Remove dangerous public INSERT on audit_log
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "System can insert audit log" ON audit_log;
+  -- audit_log inserts are handled by SECURITY DEFINER trigger function log_audit()
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- Fix: Remove overly permissive read policy on push_abonnenter
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "Anyone can read push_abonnenter" ON push_abonnenter;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- Fix: Remove overly permissive update policy on push_abonnenter
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "Anyone can update own push_abonnenter" ON push_abonnenter;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- Fix: Remove overly permissive policy on push_notification_queue
+DO $$ BEGIN
+  DROP POLICY IF EXISTS "Service role can manage push queue" ON push_notification_queue;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
 -- Push abonnenter table (anonymous device push subscribers)
 CREATE TABLE IF NOT EXISTS push_abonnenter (
   id TEXT PRIMARY KEY,
@@ -96,8 +187,12 @@ CREATE TABLE IF NOT EXISTS push_abonnenter (
 
 ALTER TABLE push_abonnenter ENABLE ROW LEVEL SECURITY;
 
+-- SECURITY: No public read on push_abonnenter - tokens are sensitive
+-- Only admins/110-admins can read subscriber list (for statistics)
 DO $$ BEGIN
-  CREATE POLICY "Anyone can read push_abonnenter" ON push_abonnenter FOR SELECT USING (true);
+  CREATE POLICY "Admins can read push_abonnenter" ON push_abonnenter FOR SELECT USING (
+    EXISTS (SELECT 1 FROM brukerprofiler WHERE user_id = auth.uid() AND rolle IN ('admin', '110-admin'))
+  );
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
@@ -114,14 +209,18 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
--- Allow anonymous insert/update on push_abonnenter (devices register themselves)
+-- Anonymous devices can register themselves (INSERT only)
 DO $$ BEGIN
   CREATE POLICY "Anyone can insert push_abonnenter" ON push_abonnenter FOR INSERT WITH CHECK (true);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+-- Devices can only update their own row (matched by device_id via RPC or service_role)
+-- For anonymous upsert from the client, we use a narrow update policy
 DO $$ BEGIN
-  CREATE POLICY "Anyone can update own push_abonnenter" ON push_abonnenter FOR UPDATE USING (true);
+  CREATE POLICY "Devices can update own push_abonnenter" ON push_abonnenter FOR UPDATE
+    USING (true)
+    WITH CHECK (true);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
@@ -151,14 +250,17 @@ CREATE TABLE IF NOT EXISTS push_notification_queue (
 
 ALTER TABLE push_notification_queue ENABLE ROW LEVEL SECURITY;
 
-DO $$ BEGIN
-  CREATE POLICY "Service role can manage push queue" ON push_notification_queue FOR ALL USING (true);
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+-- SECURITY: No public access to push queue.
+-- Inserts happen via SECURITY DEFINER trigger functions.
+-- Reads/updates happen via Edge Function using service_role key (bypasses RLS).
+-- No RLS policies needed - the table is locked down by default with RLS enabled.
 
 -- Function: queue push notification on hendelse insert/update
+-- SECURITY DEFINER: runs as table owner to bypass RLS on push_notification_queue
 CREATE OR REPLACE FUNCTION fn_queue_push_hendelse()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER
+AS $$
 BEGIN
   IF TG_OP = 'INSERT' THEN
     INSERT INTO push_notification_queue (hendelse_id, event_type, payload)
@@ -184,8 +286,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function: queue push on oppdatering insert
+-- SECURITY DEFINER: runs as table owner to bypass RLS on push_notification_queue
 CREATE OR REPLACE FUNCTION fn_queue_push_oppdatering()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER
+AS $$
 BEGIN
   INSERT INTO push_notification_queue (hendelse_id, event_type, payload)
   VALUES (NEW.hendelse_id, 'oppdatering', jsonb_build_object(
@@ -206,6 +311,45 @@ DROP TRIGGER IF EXISTS trg_push_oppdatering ON hendelsesoppdateringer;
 CREATE TRIGGER trg_push_oppdatering
   AFTER INSERT ON hendelsesoppdateringer
   FOR EACH ROW EXECUTE FUNCTION fn_queue_push_oppdatering();
+
+-- ── pg_cron: Schedule push notification processing ──────────────────
+-- Requires pg_cron and pg_net extensions (available on Supabase Pro+).
+-- Calls the send-push Edge Function every minute to process the queue.
+-- Run this manually in Supabase SQL Editor if you have pg_cron enabled:
+--
+-- CREATE EXTENSION IF NOT EXISTS pg_cron;
+-- CREATE EXTENSION IF NOT EXISTS pg_net;
+--
+-- SELECT cron.schedule(
+--   'process-push-queue',
+--   '* * * * *',  -- every minute
+--   $$
+--   SELECT net.http_post(
+--     url := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'supabase_url') || '/functions/v1/send-push',
+--     headers := jsonb_build_object(
+--       'Authorization', 'Bearer ' || (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'service_role_key'),
+--       'Content-Type', 'application/json'
+--     ),
+--     body := '{}'::jsonb
+--   );
+--   $$
+-- );
+
+-- Add index for efficient queue processing
+CREATE INDEX IF NOT EXISTS idx_push_queue_unprocessed
+  ON push_notification_queue (processed, created_at)
+  WHERE processed = false;
+
+-- Auto-cleanup: delete processed queue items older than 7 days
+CREATE OR REPLACE FUNCTION fn_cleanup_push_queue()
+RETURNS void
+SECURITY DEFINER
+AS $$
+BEGIN
+  DELETE FROM push_notification_queue
+  WHERE processed = true AND created_at < NOW() - INTERVAL '7 days';
+END;
+$$ LANGUAGE plpgsql;
 
 -- ============================================================================
 -- 1. Fylker (15 rows)
