@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
-import { useHendelser, useBrannvesen, useKategorier, useFylker, useKommuner, useSentraler } from '@/hooks/useSupabaseData'
+import { useHendelser, useBrannvesen, useKategorier, useFylker, useKommuner, useSentraler, useBrukerprofiler } from '@/hooks/useSupabaseData'
 import { invalidateCache } from '@/hooks/useSupabaseData'
 import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
 import { formatDateTime, formatTime, formatTimeAgo } from '@/lib/utils'
@@ -22,7 +22,13 @@ export default function OperatorHendelserPage() {
   const { data: fylker, loading: fylkerLoading } = useFylker()
   const { data: kommuner, loading: kommunerLoading } = useKommuner()
   const { data: sentraler, loading: sentralerLoading } = useSentraler()
+  const { data: brukerprofiler } = useBrukerprofiler()
   const { isAdmin, is110Admin, isScoped, hasAdminAccess, filterByBrannvesen } = useSentralScope()
+
+  const getUserName = (userId: string) => {
+    const profil = brukerprofiler.find(b => b.user_id === userId)
+    return profil?.fullt_navn || null
+  }
 
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('alle')
@@ -558,13 +564,14 @@ export default function OperatorHendelserPage() {
                           type: 'publikum' | 'presse' | 'intern' | 'status'
                           tekst: string
                           opprettet_tidspunkt: string
+                          opprettet_av?: string
                           bilde_url?: string | null
                         }
 
                         const timeline: TimelineItem[] = [
-                          ...activeUpd.map(u => ({ id: u.id, type: 'publikum' as const, tekst: u.tekst, opprettet_tidspunkt: u.opprettet_tidspunkt, bilde_url: u.bilde_url })),
-                          ...activePrs.map(p => ({ id: p.id, type: 'presse' as const, tekst: p.tekst, opprettet_tidspunkt: p.opprettet_tidspunkt, bilde_url: p.bilde_url })),
-                          ...activeNot.map(n => ({ id: n.id, type: 'intern' as const, tekst: n.notat, opprettet_tidspunkt: n.opprettet_tidspunkt, bilde_url: n.bilde_url })),
+                          ...activeUpd.map(u => ({ id: u.id, type: 'publikum' as const, tekst: u.tekst, opprettet_tidspunkt: u.opprettet_tidspunkt, opprettet_av: u.opprettet_av, bilde_url: u.bilde_url })),
+                          ...activePrs.map(p => ({ id: p.id, type: 'presse' as const, tekst: p.tekst, opprettet_tidspunkt: p.opprettet_tidspunkt, opprettet_av: p.opprettet_av, bilde_url: p.bilde_url })),
+                          ...activeNot.map(n => ({ id: n.id, type: 'intern' as const, tekst: n.notat, opprettet_tidspunkt: n.opprettet_tidspunkt, opprettet_av: n.opprettet_av, bilde_url: n.bilde_url })),
                         ]
 
                         // Add status change if avsluttet
@@ -573,7 +580,7 @@ export default function OperatorHendelserPage() {
                         }
 
                         // Add creation event
-                        timeline.unshift({ id: 'opprettet', type: 'status', tekst: 'Hendelsen ble opprettet', opprettet_tidspunkt: h.opprettet_tidspunkt })
+                        timeline.unshift({ id: 'opprettet', type: 'status', tekst: 'Hendelsen ble opprettet', opprettet_tidspunkt: h.opprettet_tidspunkt, opprettet_av: h.opprettet_av })
 
                         timeline.sort((a, b) => new Date(a.opprettet_tidspunkt).getTime() - new Date(b.opprettet_tidspunkt).getTime())
 
@@ -602,7 +609,11 @@ export default function OperatorHendelserPage() {
                               {/* Beskrivelse */}
                               <div>
                                 <p className="text-sm text-gray-300">{h.beskrivelse}</p>
-                                <p className="text-xs text-gray-500 mt-1">Sted: {h.sted} &middot; Opprettet: {formatDateTime(h.opprettet_tidspunkt)} &middot; Sist oppdatert: {formatTimeAgo(h.oppdatert_tidspunkt)}</p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Sted: {h.sted} &middot; Opprettet: {formatDateTime(h.opprettet_tidspunkt)}
+                                  {getUserName(h.opprettet_av) && <> &middot; Av: {getUserName(h.opprettet_av)}</>}
+                                  &middot; Sist oppdatert: {formatTimeAgo(h.oppdatert_tidspunkt)}
+                                </p>
                               </div>
 
                               {/* Hovedpressemelding */}
@@ -649,6 +660,9 @@ export default function OperatorHendelserPage() {
                                             <div className="flex items-center gap-2">
                                               <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
                                               <span className="text-xs text-gray-400 italic">{item.tekst}</span>
+                                              {item.opprettet_av && getUserName(item.opprettet_av) && (
+                                                <span className="text-xs text-gray-600">Av: {getUserName(item.opprettet_av)}</span>
+                                              )}
                                             </div>
                                           ) : isEditingThis ? (
                                             <div>
@@ -675,6 +689,9 @@ export default function OperatorHendelserPage() {
                                               <div className="flex items-center gap-2 flex-wrap">
                                                 <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
                                                 <span className={`text-[10px] ${cfg.badge} px-1.5 py-0.5 rounded font-bold`}>{cfg.label}</span>
+                                                {item.opprettet_av && getUserName(item.opprettet_av) && (
+                                                  <span className="text-xs text-gray-600">Av: {getUserName(item.opprettet_av)}</span>
+                                                )}
                                                 <div className="flex items-center gap-1 ml-auto shrink-0">
                                                   <button
                                                     onClick={() => {
@@ -877,7 +894,10 @@ export default function OperatorHendelserPage() {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-gray-300">{u.tekst}</p>
                             {u.bilde_url && <img src={u.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />}
-                            <p className="text-xs text-gray-500 mt-1">{formatDateTime(u.opprettet_tidspunkt)}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {formatDateTime(u.opprettet_tidspunkt)}
+                              {getUserName(u.opprettet_av) && <> &middot; Av: {getUserName(u.opprettet_av)}</>}
+                            </p>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
                             <button onClick={() => { setEditingUpdateId(u.id); setEditUpdateText(u.tekst); resetEditImageState() }} className="p-1 text-gray-500 hover:text-blue-400" title="Rediger"><EditIcon /></button>
@@ -939,7 +959,10 @@ export default function OperatorHendelserPage() {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-gray-300">{p.tekst}</p>
                             {p.bilde_url && <img src={p.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />}
-                            <p className="text-xs text-gray-500 mt-1">{formatDateTime(p.opprettet_tidspunkt)}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {formatDateTime(p.opprettet_tidspunkt)}
+                              {getUserName(p.opprettet_av) && <> &middot; Av: {getUserName(p.opprettet_av)}</>}
+                            </p>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
                             <button onClick={() => { setEditingPresseId(p.id); setEditPresseText(p.tekst); resetEditImageState() }} className="p-1 text-gray-500 hover:text-cyan-400" title="Rediger"><EditIcon /></button>
@@ -995,7 +1018,10 @@ export default function OperatorHendelserPage() {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-gray-300">{n.notat}</p>
                             {n.bilde_url && <img src={n.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />}
-                            <p className="text-xs text-gray-500 mt-1">{formatDateTime(n.opprettet_tidspunkt)}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {formatDateTime(n.opprettet_tidspunkt)}
+                              {getUserName(n.opprettet_av) && <> &middot; Av: {getUserName(n.opprettet_av)}</>}
+                            </p>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
                             <button onClick={() => { setEditingNotatId(n.id); setEditNotatText(n.notat); resetEditImageState() }} className="p-1 text-gray-500 hover:text-yellow-400" title="Rediger"><EditIcon /></button>

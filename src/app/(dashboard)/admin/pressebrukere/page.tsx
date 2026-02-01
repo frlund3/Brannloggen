@@ -1,7 +1,7 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { useBrukerprofiler, invalidateCache } from '@/hooks/useSupabaseData'
+import { useBrukerprofiler, useMedier, invalidateCache } from '@/hooks/useSupabaseData'
 import { useSentralScope } from '@/hooks/useSentralScope'
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
@@ -12,6 +12,7 @@ interface PresseSoknad {
   fullt_navn: string
   epost: string
   mediehus: string
+  medium_id: string | null
   telefon: string | null
   status: string
   opprettet: string
@@ -20,6 +21,7 @@ interface PresseSoknad {
 export default function AdminPressebrukerePage() {
   const { isAdmin, is110Admin } = useSentralScope()
   const { data: brukere, loading: brukereLoading } = useBrukerprofiler()
+  const { data: medier, loading: medierLoading } = useMedier()
   const [soknader, setSoknader] = useState<PresseSoknad[]>([])
   const [soknaderLoading, setSoknaderLoading] = useState(true)
   const [processing, setProcessing] = useState<string | null>(null)
@@ -48,6 +50,11 @@ export default function AdminPressebrukerePage() {
   }, [fetchSoknader])
 
   const presseBrukere = brukere.filter(b => b.rolle === 'presse')
+
+  const getMediumNavn = (mediumId: string | null) => {
+    if (!mediumId) return null
+    return medier.find(m => m.id === mediumId)?.navn || null
+  }
 
   const handleAction = async (soknadId: string, action: 'godkjent' | 'avvist', grunn?: string) => {
     setProcessing(soknadId)
@@ -78,7 +85,6 @@ export default function AdminPressebrukerePage() {
         toast.success('Søknad avvist')
       }
 
-      // Refresh
       setSoknader(prev => prev.filter(s => s.id !== soknadId))
       invalidateCache()
       setAvvisModal(null)
@@ -93,11 +99,11 @@ export default function AdminPressebrukerePage() {
   const handleToggleActive = async (id: string, currentActive: boolean) => {
     try {
       const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await supabase.from('brukerprofiler').update({ aktiv: !currentActive } as any).eq('id', id)
       if (error) throw error
       invalidateCache()
       toast.success(currentActive ? 'Pressebruker deaktivert' : 'Pressebruker aktivert')
-      // Force re-render by reloading
       window.location.reload()
     } catch (err) {
       toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
@@ -119,7 +125,7 @@ export default function AdminPressebrukerePage() {
     }
   }
 
-  const loading = brukereLoading || soknaderLoading
+  const loading = brukereLoading || soknaderLoading || medierLoading
 
   if (loading) {
     return (
@@ -174,7 +180,7 @@ export default function AdminPressebrukerePage() {
                           </div>
                         </td>
                         <td className="px-4 py-3 hidden sm:table-cell"><span className="text-sm text-gray-400">{s.epost}</span></td>
-                        <td className="px-4 py-3"><span className="text-sm text-cyan-400">{s.mediehus}</span></td>
+                        <td className="px-4 py-3"><span className="text-sm text-cyan-400">{getMediumNavn(s.medium_id) || s.mediehus}</span></td>
                         <td className="px-4 py-3 hidden md:table-cell"><span className="text-sm text-gray-400">{s.telefon || '-'}</span></td>
                         <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs text-gray-500">{new Date(s.opprettet).toLocaleDateString('nb-NO')}</span></td>
                         <td className="px-4 py-3">
@@ -222,6 +228,7 @@ export default function AdminPressebrukerePage() {
                     <tr className="border-b border-[#2a2a2a]">
                       <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Navn</th>
                       <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">E-post</th>
+                      <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Mediehus</th>
                       <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">Status</th>
                       <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
                     </tr>
@@ -241,6 +248,9 @@ export default function AdminPressebrukerePage() {
                           </div>
                         </td>
                         <td className="px-4 py-3 hidden sm:table-cell"><span className="text-sm text-gray-400">{u.epost}</span></td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-cyan-400">{getMediumNavn(u.medium_id) || '-'}</span>
+                        </td>
                         <td className="px-4 py-3 hidden sm:table-cell">
                           <span className={`text-xs ${u.aktiv ? 'text-green-400' : 'text-red-400'}`}>{u.aktiv ? 'Aktiv' : 'Deaktivert'}</span>
                         </td>

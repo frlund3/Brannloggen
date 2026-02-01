@@ -111,17 +111,22 @@ export default function AdminInnstillingerPage() {
           </div>
         </section>
 
-        {/* Audit log info */}
+        {/* Link to activity log */}
         <section className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-4">Sikkerhetslogg</h2>
+          <h2 className="text-lg font-semibold text-white mb-4">Aktivitetslogg</h2>
           <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-            <p className="text-sm text-gray-400">
-              Alle handlinger logges automatisk med bruker-ID, tidspunkt og detaljer via Supabase.
-              Inkluderer opprettelse, endring og sletting av hendelser, oppdateringer, interne notater og brukerprofiler.
+            <p className="text-sm text-gray-400 mb-3">
+              All aktivitet i systemet logges og kan filtreres etter bruker, type og tidspunkt.
             </p>
-            <p className="text-xs text-gray-500 mt-2">
-              Loggene er tilgjengelig i Supabase Dashboard under Authentication &gt; Logs og Database &gt; Logs.
-            </p>
+            <a
+              href="/admin/logg"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500/10 text-blue-400 rounded-lg text-sm hover:bg-blue-500/20 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Se aktivitetslogg
+            </a>
           </div>
         </section>
       </div>

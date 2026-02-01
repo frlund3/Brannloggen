@@ -81,6 +81,7 @@ export interface HendelseOppdatering {
   id: string
   hendelse_id: string
   tekst: string
+  opprettet_av: string
   opprettet_tidspunkt: string
   bilde_url: string | null
   deaktivert: boolean
@@ -96,6 +97,13 @@ export interface PresseOppdatering {
   deaktivert: boolean
 }
 
+export interface Medium {
+  id: string
+  navn: string
+  type: string
+  aktiv: boolean
+}
+
 export interface Brukerprofil {
   id: string
   user_id: string
@@ -105,6 +113,7 @@ export interface Brukerprofil {
   sentral_ids: string[]
   aktiv: boolean
   created_at: string
+  medium_id: string | null
 }
 
 // Simple in-memory cache
@@ -285,9 +294,13 @@ export function useHendelser(options?: { excludeDeactivated?: boolean }) {
   return { data: hendelser, loading, error, refetch }
 }
 
+export function useMedier() {
+  return useSupabaseFetch<Medium>('medier', { order: 'navn' })
+}
+
 export function useBrukerprofiler() {
   return useSupabaseFetch<Brukerprofil>('brukerprofiler', {
-    select: 'id, user_id, rolle, fullt_navn, epost, sentral_ids, aktiv, created_at',
+    select: 'id, user_id, rolle, fullt_navn, epost, sentral_ids, aktiv, created_at, medium_id',
     order: 'fullt_navn',
   })
 }

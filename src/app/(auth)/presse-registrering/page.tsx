@@ -1,28 +1,58 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+
+interface Medium {
+  id: string
+  navn: string
+  type: string
+}
 
 export default function PresseRegistreringPage() {
   const [fulltNavn, setFulltNavn] = useState('')
   const [epost, setEpost] = useState('')
+  const [mediumId, setMediumId] = useState('')
   const [mediehus, setMediehus] = useState('')
   const [telefon, setTelefon] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [medier, setMedier] = useState<Medium[]>([])
+  const [medierLoading, setMedierLoading] = useState(true)
+  const [medierSok, setMedierSok] = useState('')
+
+  useEffect(() => {
+    const fetchMedier = async () => {
+      const supabase = createClient()
+      const { data } = await supabase.from('medier').select('id, navn, type').eq('aktiv', true).order('navn')
+      setMedier(data || [])
+      setMedierLoading(false)
+    }
+    fetchMedier()
+  }, [])
+
+  const filteredMedier = medierSok
+    ? medier.filter(m => m.navn.toLowerCase().includes(medierSok.toLowerCase()))
+    : medier
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!mediumId && !mediehus.trim()) {
+      setError('Velg et mediehus fra listen eller skriv inn navnet.')
+      return
+    }
     setLoading(true)
     setError('')
 
     try {
       const supabase = createClient()
+      const selectedMedium = medier.find(m => m.id === mediumId)
       const { error: insertError } = await supabase.from('presse_soknader').insert({
         fullt_navn: fulltNavn,
         epost,
-        mediehus,
+        mediehus: selectedMedium?.navn || mediehus,
+        medium_id: mediumId || null,
         telefon: telefon || null,
       })
 
@@ -111,14 +141,48 @@ export default function PresseRegistreringPage() {
 
           <div>
             <label className="block text-sm text-gray-400 mb-1">Mediehus / redaksjon *</label>
-            <input
-              type="text"
-              value={mediehus}
-              onChange={(e) => setMediehus(e.target.value)}
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-cyan-500"
-              placeholder="VG, NRK, Bergens Tidende..."
-              required
-            />
+            {medierLoading ? (
+              <div className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-gray-500 text-sm">Laster medier...</div>
+            ) : (
+              <>
+                <input
+                  type="text"
+                  value={medierSok}
+                  onChange={(e) => {
+                    setMedierSok(e.target.value)
+                    setMediumId('')
+                    setMediehus(e.target.value)
+                  }}
+                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-cyan-500 mb-2"
+                  placeholder="Søk eller skriv inn mediehus..."
+                />
+                {medierSok && filteredMedier.length > 0 && !mediumId && (
+                  <div className="max-h-40 overflow-y-auto bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg">
+                    {filteredMedier.slice(0, 8).map(m => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => {
+                          setMediumId(m.id)
+                          setMedierSok(m.navn)
+                          setMediehus(m.navn)
+                        }}
+                        className="w-full text-left px-4 py-2.5 text-sm text-white hover:bg-[#2a2a2a] transition-colors"
+                      >
+                        {m.navn}
+                        <span className="text-xs text-gray-500 ml-2">{m.type}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {mediumId && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-cyan-500/10 border border-cyan-500/20 rounded-lg">
+                    <span className="text-sm text-cyan-400">{medier.find(m => m.id === mediumId)?.navn}</span>
+                    <button type="button" onClick={() => { setMediumId(''); setMedierSok(''); setMediehus('') }} className="text-xs text-gray-400 hover:text-white ml-auto">Endre</button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           <div>
