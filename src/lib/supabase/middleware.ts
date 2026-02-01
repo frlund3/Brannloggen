@@ -46,9 +46,9 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/presse')
 
   if (!user && isProtectedRoute) {
-    // Don't redirect - let client-side DashboardLayout handle auth
-    // This avoids redirect loops when cookies are out of sync with localStorage
-    // DashboardLayout will redirect to /login if user is not authenticated
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
   }
 
   return supabaseResponse

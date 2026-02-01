@@ -44,16 +44,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (cachedSentrals) setSentralIds(JSON.parse(cachedSentrals))
     } catch {}
 
-    // Try getSession with a 3 second timeout
+    // Use getUser() for server-verified auth (not just local JWT)
     const timeout = setTimeout(() => {
-      // If getSession hangs, just mark as done with whatever we have
+      // If getUser hangs, just mark as done with whatever we have
       setLoading(false)
     }, 3000)
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getUser().then(({ data: { user: authUser } }) => {
       clearTimeout(timeout)
-      setUser(session?.user ?? null)
-      if (!session) {
+      setUser(authUser ?? null)
+      if (!authUser) {
         // Not logged in - clear cached rolle
         localStorage.removeItem(ROLLE_KEY)
         localStorage.removeItem(SENTRAL_IDS_KEY)

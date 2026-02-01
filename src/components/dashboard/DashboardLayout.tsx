@@ -236,7 +236,9 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                 Forside
               </a>
               <button
-                onClick={() => {
+                onClick={async () => {
+                  const supabase = createClient()
+                  await supabase.auth.signOut()
                   localStorage.removeItem('brannloggen_user_rolle')
                   localStorage.removeItem('brannloggen_user_sentral_ids')
                   Object.keys(localStorage).forEach(key => {
