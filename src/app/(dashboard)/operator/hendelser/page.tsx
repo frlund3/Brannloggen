@@ -13,6 +13,7 @@ import Link from 'next/link'
 import React, { useState, useMemo, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { logActivity } from '@/lib/logActivity'
 
 export default function OperatorHendelserPage() {
   const { data: allHendelser, loading: hendelserLoading, refetch } = useHendelser({ excludeDeactivated: true })
@@ -149,6 +150,8 @@ export default function OperatorHendelserPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from('hendelser') as any).update({ status: 'deaktivert' }).eq('id', id)
       if (error) throw error
+      const h = allHendelser.find(x => x.id === id)
+      logActivity({ handling: 'deaktivert', tabell: 'hendelser', radId: id, hendelseId: id, hendelseTittel: h?.tittel })
       setDeactivatedIds([...deactivatedIds, id])
       setDeactivateConfirm(null)
       invalidateCache()
@@ -240,6 +243,19 @@ export default function OperatorHendelserPage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await (supabase.from('hendelser') as any).update(updateData).eq('id', selectedH.id)
         if (error) throw error
+        const changedFields = Object.keys(updateData).filter(k => k !== 'oppdatert_tidspunkt')
+        if (changedFields.includes('bilde_url') && newHendelseBilde) {
+          logActivity({ handling: 'bilde_lastet_opp', tabell: 'hendelser', radId: selectedH.id, hendelseId: selectedH.id, hendelseTittel: selectedH.tittel })
+        }
+        if (updateData.status === 'avsluttet') {
+          logActivity({ handling: 'avsluttet', tabell: 'hendelser', radId: selectedH.id, hendelseId: selectedH.id, hendelseTittel: selectedH.tittel })
+        } else if (updateData.status === 'pågår' && selectedH.status === 'avsluttet') {
+          logActivity({ handling: 'gjenåpnet', tabell: 'hendelser', radId: selectedH.id, hendelseId: selectedH.id, hendelseTittel: selectedH.tittel })
+        }
+        const editFields = changedFields.filter(k => k !== 'status' && k !== 'bilde_url')
+        if (editFields.length > 0) {
+          logActivity({ handling: 'redigert', tabell: 'hendelser', radId: selectedH.id, hendelseId: selectedH.id, hendelseTittel: selectedH.tittel, detaljer: { endrede_felt: editFields } })
+        }
       }
 
       // Add new oppdatering
@@ -254,6 +270,7 @@ export default function OperatorHendelserPage() {
           hendelse_id: selectedH.id, tekst: newUpdate, opprettet_av: user.id, bilde_url: bildeUrl,
         })
         if (error) throw error
+        logActivity({ handling: 'ny_oppdatering', tabell: 'hendelsesoppdateringer', hendelseId: selectedH.id, hendelseTittel: selectedH.tittel, detaljer: { tekst: newUpdate.slice(0, 100) } })
       }
 
       // Add new presseoppdatering
@@ -268,6 +285,7 @@ export default function OperatorHendelserPage() {
           hendelse_id: selectedH.id, tekst: newPresse, opprettet_av: user.id, bilde_url: bildeUrl,
         })
         if (error) throw error
+        logActivity({ handling: 'ny_pressemelding', tabell: 'presseoppdateringer', hendelseId: selectedH.id, hendelseTittel: selectedH.tittel, detaljer: { tekst: newPresse.slice(0, 100) } })
       }
 
       // Add new intern notat
@@ -282,6 +300,7 @@ export default function OperatorHendelserPage() {
           hendelse_id: selectedH.id, notat: newNotat, opprettet_av: user.id, bilde_url: bildeUrl,
         })
         if (error) throw error
+        logActivity({ handling: 'ny_notat', tabell: 'interne_notater', hendelseId: selectedH.id, hendelseTittel: selectedH.tittel, detaljer: { tekst: newNotat.slice(0, 100) } })
       }
 
       invalidateCache()
@@ -317,6 +336,8 @@ export default function OperatorHendelserPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from('hendelsesoppdateringer') as any).update(updatePayload).eq('id', updateId)
       if (error) throw error
+      const parentH = allHendelser.find(x => x.id === hendelseId)
+      logActivity({ handling: 'redigert_oppdatering', tabell: 'hendelsesoppdateringer', radId: updateId, hendelseId, hendelseTittel: parentH?.tittel })
       setEditingUpdateId(null); resetEditImageState(); invalidateCache(); refetch(); toast.success('Oppdatering redigert')
     } catch (err) { toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil')) }
     finally { setUploadingImage(false) }
@@ -337,6 +358,8 @@ export default function OperatorHendelserPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from('presseoppdateringer') as any).update(updatePayload).eq('id', presseId)
       if (error) throw error
+      const parentH = allHendelser.find(x => x.id === hendelseId)
+      logActivity({ handling: 'redigert_pressemelding', tabell: 'presseoppdateringer', radId: presseId, hendelseId, hendelseTittel: parentH?.tittel })
       setEditingPresseId(null); resetEditImageState(); invalidateCache(); refetch(); toast.success('Pressemelding redigert')
     } catch (err) { toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil')) }
     finally { setUploadingImage(false) }
@@ -357,6 +380,8 @@ export default function OperatorHendelserPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from('interne_notater') as any).update(updatePayload).eq('id', notatId)
       if (error) throw error
+      const parentH = allHendelser.find(x => x.id === hendelseId)
+      logActivity({ handling: 'redigert_notat', tabell: 'interne_notater', radId: notatId, hendelseId, hendelseTittel: parentH?.tittel })
       setEditingNotatId(null); resetEditImageState(); invalidateCache(); refetch(); toast.success('Notat redigert')
     } catch (err) { toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil')) }
     finally { setUploadingImage(false) }
@@ -369,6 +394,7 @@ export default function OperatorHendelserPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from('hendelsesoppdateringer') as any).update({ deaktivert: true }).eq('id', id)
       if (error) throw error
+      logActivity({ handling: 'deaktivert_oppdatering', tabell: 'hendelsesoppdateringer', radId: id })
       invalidateCache(); refetch(); toast.success('Oppdatering deaktivert')
     } catch (err) { toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil')) }
   }
@@ -379,6 +405,7 @@ export default function OperatorHendelserPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from('presseoppdateringer') as any).update({ deaktivert: true }).eq('id', id)
       if (error) throw error
+      logActivity({ handling: 'deaktivert_pressemelding', tabell: 'presseoppdateringer', radId: id })
       invalidateCache(); refetch(); toast.success('Pressemelding deaktivert')
     } catch (err) { toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil')) }
   }
@@ -389,6 +416,7 @@ export default function OperatorHendelserPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from('interne_notater') as any).update({ deaktivert: true }).eq('id', id)
       if (error) throw error
+      logActivity({ handling: 'deaktivert_notat', tabell: 'interne_notater', radId: id })
       invalidateCache(); refetch(); toast.success('Notat deaktivert')
     } catch (err) { toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil')) }
   }
@@ -846,6 +874,7 @@ export default function OperatorHendelserPage() {
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const { error } = await (supabase.from('hendelser') as any).update({ bilde_url: null, oppdatert_tidspunkt: new Date().toISOString() }).eq('id', selectedH.id)
                         if (error) throw error
+                        logActivity({ handling: 'bilde_fjernet', tabell: 'hendelser', radId: selectedH.id, hendelseId: selectedH.id, hendelseTittel: selectedH.tittel })
                         invalidateCache(); refetch(); toast.success('Bilde fjernet')
                       } catch (err) { toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil')) }
                     }}

@@ -8,6 +8,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { logActivity } from '@/lib/logActivity'
 
 export default function NyHendelsePage() {
   const router = useRouter()
@@ -257,6 +258,12 @@ export default function NyHendelsePage() {
       }
 
       invalidateCache()
+      if (hendelse) {
+        logActivity({ handling: 'opprettet', tabell: 'hendelser', radId: hendelse.id, hendelseId: hendelse.id, hendelseTittel: formData.tittel })
+        if (publikumBilde) logActivity({ handling: 'bilde_lastet_opp', tabell: 'hendelser', radId: hendelse.id, hendelseId: hendelse.id, hendelseTittel: formData.tittel })
+        if (presseInfo) logActivity({ handling: 'ny_pressemelding', tabell: 'hendelser', hendelseId: hendelse.id, hendelseTittel: formData.tittel })
+        if (internNotat || internBilde) logActivity({ handling: 'ny_notat', tabell: 'interne_notater', hendelseId: hendelse.id, hendelseTittel: formData.tittel })
+      }
       toast.success('Hendelse opprettet!')
       router.push('/operator/hendelser')
     } catch (err) {
