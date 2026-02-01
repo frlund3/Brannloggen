@@ -106,13 +106,8 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Create auth user with a random password (user will reset via email)
-    const tempPassword = crypto.randomUUID()
-    const { data: newAuthUser, error: authError } = await adminClient.auth.admin.createUser({
-      email: epost,
-      password: tempPassword,
-      email_confirm: true,
-    })
+    // Create auth user and send invitation email
+    const { data: newAuthUser, error: authError } = await adminClient.auth.admin.inviteUserByEmail(epost)
 
     if (authError) {
       return new Response(JSON.stringify({ error: authError.message }), {
@@ -143,12 +138,6 @@ Deno.serve(async (req: Request) => {
         headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       })
     }
-
-    // Send password reset email so user can set their own password
-    await adminClient.auth.admin.generateLink({
-      type: 'recovery',
-      email: epost,
-    })
 
     return new Response(JSON.stringify({
       success: true,

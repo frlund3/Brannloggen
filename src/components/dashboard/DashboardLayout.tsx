@@ -7,6 +7,7 @@ import { useAuth } from '@/components/providers/AuthProvider'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { createClient } from '@/lib/supabase/client'
 import { logActivity } from '@/lib/logActivity'
+import { NotificationBell } from '@/components/ui/NotificationBell'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -149,6 +150,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
           </button>
           <span className="text-sm font-semibold text-theme">{headerLabel}</span>
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <button onClick={toggleTheme} className="p-2 text-theme-secondary hover:text-theme touch-manipulation" title={theme === 'dark' ? 'Bytt til lyst tema' : 'Bytt til mørkt tema'}>
               {theme === 'dark' ? (
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>

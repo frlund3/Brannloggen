@@ -10,6 +10,7 @@ import { useHendelser, useSentraler } from '@/hooks/useSupabaseData'
 import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useTheme } from '@/components/providers/ThemeProvider'
+import { NotificationBell } from '@/components/ui/NotificationBell'
 
 const PREFS_KEY = 'brannloggen_push_prefs'
 
@@ -184,6 +185,7 @@ export default function HomePage() {
                 </button>
               ))}
             </nav>
+            <NotificationBell />
             <button
               onClick={toggleTheme}
               className="p-2 rounded-lg bg-theme-card hover:bg-theme-card-hover text-theme-secondary hover:text-theme transition-colors"
@@ -222,8 +224,9 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Mobile: Tab-specific actions */}
-          <div className="lg:hidden">
+          {/* Mobile: Bell + Tab-specific actions */}
+          <div className="lg:hidden flex items-center gap-2">
+            <NotificationBell />
             {activeTab === 'alle' && (
               <button
                 onClick={() => setFilterOpen(true)}

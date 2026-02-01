@@ -48,13 +48,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 6. Create auth user
-    const tempPassword = crypto.randomUUID()
-    const { data: newAuthUser, error: authError } = await adminClient.auth.admin.createUser({
-      email: epost,
-      password: tempPassword,
-      email_confirm: true,
-    })
+    // 6. Create auth user and send invitation email
+    const { data: newAuthUser, error: authError } = await adminClient.auth.admin.inviteUserByEmail(epost)
 
     if (authError) {
       return NextResponse.json({ error: authError.message }, { status: 400 })
@@ -79,12 +74,6 @@ export async function POST(req: NextRequest) {
       await adminClient.auth.admin.deleteUser(newAuthUser.user.id)
       return NextResponse.json({ error: profilError.message }, { status: 500 })
     }
-
-    // 8. Send password reset email
-    await adminClient.auth.admin.generateLink({
-      type: 'recovery',
-      email: epost,
-    })
 
     return NextResponse.json({
       success: true,
