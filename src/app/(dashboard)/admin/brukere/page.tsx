@@ -175,10 +175,13 @@ export default function AdminBrukerePage() {
     setBrukere(brukere.filter(u => u.id !== id))
     setDeleteConfirm(null)
     try {
-      const supabase = createClient()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('brukerprofiler') as any).delete().eq('id', id)
-      if (error) throw error
+      const res = await fetch('/api/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error || 'Ukjent feil')
       invalidateCache()
       toast.success('Bruker slettet')
     } catch (err) {

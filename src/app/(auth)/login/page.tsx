@@ -155,6 +155,12 @@ export default function LoginPage() {
             />
           </div>
 
+          <div className="flex justify-end">
+            <a href="/glemt-passord" className="text-sm text-blue-400 hover:text-blue-300">
+              Glemt passord?
+            </a>
+          </div>
+
           <button
             type="submit"
             disabled={loading}

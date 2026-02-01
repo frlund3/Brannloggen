@@ -106,10 +106,13 @@ export default function AdminPressebrukerePage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Er du sikker på at du vil slette denne pressebrukeren?')) return
     try {
-      const supabase = createClient()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('brukerprofiler') as any).delete().eq('id', id)
-      if (error) throw error
+      const res = await fetch('/api/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error || 'Ukjent feil')
       invalidateCache()
       toast.success('Pressebruker slettet')
       window.location.reload()
