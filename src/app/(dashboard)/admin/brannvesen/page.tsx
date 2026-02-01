@@ -122,15 +122,13 @@ export default function AdminBrannvesenPage() {
   return (
     <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
       <div className="p-4 lg:p-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Brannvesen</h1>
-            <p className="text-sm text-gray-400">
-              {isScoped ? `${scopedItems.length} brannvesen i dine sentraler` : `${items.length} brannvesen registrert`}
-            </p>
-          </div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white">Brannvesen</h1>
+          <p className="text-sm text-gray-400 mb-3">
+            {isScoped ? `${scopedItems.length} brannvesen i dine sentraler` : `${items.length} brannvesen registrert`}
+          </p>
           {isAdmin && (
-            <button onClick={() => { resetForm(); setShowAdd(true) }} className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
+            <button onClick={() => { resetForm(); setShowAdd(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors touch-manipulation">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
               Nytt brannvesen
             </button>
@@ -138,7 +136,7 @@ export default function AdminBrannvesenPage() {
         </div>
 
         <div className="flex gap-3 mb-6 flex-wrap">
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk etter brannvesen..." className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 w-64" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk etter brannvesen..." className="px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 w-full sm:w-64" />
           <select value={selectedFylke} onChange={(e) => setSelectedFylke(e.target.value)} className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
             <option value="">Alle fylker</option>
             {fylkerData.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}

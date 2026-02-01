@@ -90,27 +90,25 @@ export default function OperatorHendelserPage() {
   return (
     <DashboardLayout role={layoutRole}>
       <div className="p-4 lg:p-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Hendelser</h1>
-            <p className="text-sm text-gray-400">
-              {isScoped ? 'Hendelser for dine 110-sentraler' : 'Administrer hendelser'}
-            </p>
-          </div>
-          <Link href="/operator/hendelser/ny" className="px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white">Hendelser</h1>
+          <p className="text-sm text-gray-400 mb-3">
+            {isScoped ? 'Hendelser for dine 110-sentraler' : 'Administrer hendelser'}
+          </p>
+          <Link href="/operator/hendelser/ny" className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm transition-colors touch-manipulation">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             Ny hendelse
           </Link>
         </div>
 
         {/* Status tabs */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-2 mb-4 flex-wrap">
           {[
             { value: 'alle', label: 'Alle' },
             { value: 'pågår', label: 'Pågår' },
             { value: 'avsluttet', label: 'Avsluttet' },
           ].map((tab) => (
-            <button key={tab.value} onClick={() => setStatusFilter(tab.value)} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === tab.value ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-[#1a1a1a] text-gray-400 border border-[#2a2a2a] hover:text-white'}`}>
+            <button key={tab.value} onClick={() => setStatusFilter(tab.value)} className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors touch-manipulation ${statusFilter === tab.value ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-[#1a1a1a] text-gray-400 border border-[#2a2a2a] hover:text-white'}`}>
               {tab.label}
               <span className="ml-1.5 text-xs">({tab.value === 'alle' ? scopedHendelser.filter(h => !deactivatedIds.includes(h.id)).length : scopedHendelser.filter((h) => h.status === tab.value && !deactivatedIds.includes(h.id)).length})</span>
             </button>
@@ -125,38 +123,38 @@ export default function OperatorHendelserPage() {
         {/* Search + Filters */}
         <div className="space-y-3 mb-6">
           <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk på tittel eller sted..." className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
-          <div className="flex gap-2 flex-wrap">
-            <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+            <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle kategorier</option>
               {kategorier.map(k => <option key={k.id} value={k.id}>{k.navn}</option>)}
             </select>
-            <select value={filterAlvor} onChange={(e) => setFilterAlvor(e.target.value)} className="px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
+            <select value={filterAlvor} onChange={(e) => setFilterAlvor(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle alvorlighetsgrader</option>
               <option value="lav">Lav</option>
               <option value="middels">Middels</option>
               <option value="høy">Høy</option>
               <option value="kritisk">Kritisk</option>
             </select>
-            <select value={filterSentral} onChange={(e) => setFilterSentral(e.target.value)} className="px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
+            <select value={filterSentral} onChange={(e) => setFilterSentral(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle 110-sentraler</option>
               {sentraler.map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
             </select>
-            <select value={filterFylke} onChange={(e) => { setFilterFylke(e.target.value); setFilterKommune(''); setFilterBrannvesen('') }} className="px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
+            <select value={filterFylke} onChange={(e) => { setFilterFylke(e.target.value); setFilterKommune(''); setFilterBrannvesen('') }} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle fylker</option>
               {fylker.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
             </select>
             {filterFylke && (
-              <select value={filterKommune} onChange={(e) => setFilterKommune(e.target.value)} className="px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
+              <select value={filterKommune} onChange={(e) => setFilterKommune(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
                 <option value="">Alle kommuner</option>
                 {filteredKommuner.map(k => <option key={k.id} value={k.id}>{k.navn}</option>)}
               </select>
             )}
-            <select value={filterBrannvesen} onChange={(e) => setFilterBrannvesen(e.target.value)} className="px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
+            <select value={filterBrannvesen} onChange={(e) => setFilterBrannvesen(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle brannvesen</option>
               {filteredBrannvesenList.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(b => <option key={b.id} value={b.id}>{b.kort_navn}</option>)}
             </select>
             {activeFilterCount > 0 && (
-              <button onClick={clearFilters} className="px-3 py-2 text-xs text-red-400 hover:text-red-300">Nullstill filtre ({activeFilterCount})</button>
+              <button onClick={clearFilters} className="px-3 py-2.5 text-xs text-red-400 hover:text-red-300 touch-manipulation">Nullstill filtre ({activeFilterCount})</button>
             )}
           </div>
         </div>
@@ -167,13 +165,13 @@ export default function OperatorHendelserPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#2a2a2a]">
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Status</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Tittel</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">Kategori</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">110-sentral</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Alvor</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Opprettet</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
+                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Status</th>
+                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Tittel</th>
+                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">Kategori</th>
+                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">110-sentral</th>
+                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Alvor</th>
+                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">Opprettet</th>
+                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
                 </tr>
               </thead>
               <tbody>
@@ -183,22 +181,22 @@ export default function OperatorHendelserPage() {
                   const kat = kategorier.find((k) => k.id === h.kategori_id)
                   return (
                     <tr key={h.id} className="border-b border-[#2a2a2a] hover:bg-[#222] transition-colors">
-                      <td className="px-4 py-3"><StatusBadge status={h.status} size="sm" /></td>
-                      <td className="px-4 py-3">
-                        <button onClick={() => { setSelectedHendelse(h.id); setEditStatus(h.status); setNewUpdate('') }} className="text-sm text-white hover:text-blue-400 font-medium text-left">{h.tittel}</button>
+                      <td className="px-3 sm:px-4 py-3"><StatusBadge status={h.status} size="sm" /></td>
+                      <td className="px-3 sm:px-4 py-3">
+                        <button onClick={() => { setSelectedHendelse(h.id); setEditStatus(h.status); setNewUpdate('') }} className="text-sm text-white hover:text-blue-400 font-medium text-left touch-manipulation">{h.tittel}</button>
                         <p className="text-xs text-gray-500 mt-0.5">{h.sted}</p>
                       </td>
-                      <td className="px-4 py-3 hidden md:table-cell">
+                      <td className="px-3 sm:px-4 py-3 hidden md:table-cell">
                         {kat && <span className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: kat.farge + '22', color: kat.farge }}>{kat.navn}</span>}
                       </td>
-                      <td className="px-4 py-3 hidden md:table-cell"><span className="text-xs text-gray-400">{sentral?.kort_navn || bv?.kort_navn}</span></td>
-                      <td className="px-4 py-3 hidden lg:table-cell"><SeverityDot severity={h.alvorlighetsgrad} showLabel /></td>
-                      <td className="px-4 py-3"><span className="text-xs text-gray-400">{formatDateTime(h.opprettet_tidspunkt)}</span></td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => { setSelectedHendelse(h.id); setEditStatus(h.status); setNewUpdate('') }} className="text-xs text-blue-400 hover:text-blue-300">Detaljer</button>
+                      <td className="px-3 sm:px-4 py-3 hidden md:table-cell"><span className="text-xs text-gray-400">{sentral?.kort_navn || bv?.kort_navn}</span></td>
+                      <td className="px-3 sm:px-4 py-3 hidden lg:table-cell"><SeverityDot severity={h.alvorlighetsgrad} showLabel /></td>
+                      <td className="px-3 sm:px-4 py-3 hidden sm:table-cell"><span className="text-xs text-gray-400">{formatDateTime(h.opprettet_tidspunkt)}</span></td>
+                      <td className="px-3 sm:px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <button onClick={() => { setSelectedHendelse(h.id); setEditStatus(h.status); setNewUpdate('') }} className="text-xs text-blue-400 hover:text-blue-300 py-1 touch-manipulation">Detaljer</button>
                           {hasAdminAccess && (
-                            <button onClick={() => setDeactivateConfirm(h.id)} className="text-xs text-red-400 hover:text-red-300">Deaktiver</button>
+                            <button onClick={() => setDeactivateConfirm(h.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation">Deaktiver</button>
                           )}
                         </div>
                       </td>
@@ -307,9 +305,9 @@ export default function OperatorHendelserPage() {
               </div>
             )}
 
-            <div className="flex gap-3">
-              <button onClick={() => setSelectedHendelse(null)} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">Lagre endringer</button>
-              <button onClick={() => setSelectedHendelse(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors">Lukk</button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button onClick={() => setSelectedHendelse(null)} className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">Lagre endringer</button>
+              <button onClick={() => setSelectedHendelse(null)} className="py-3 sm:px-4 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors touch-manipulation">Lukk</button>
             </div>
           </div>
         </div>

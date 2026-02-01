@@ -217,14 +217,12 @@ export default function AdminBrukerePage() {
   return (
     <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
       <div className="p-4 lg:p-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white">Brukere</h1>
-            <p className="text-sm text-gray-400">
-              {isScoped ? 'Brukere tilknyttet dine 110-sentraler' : 'Administrer operatører og administratorer'}
-            </p>
-          </div>
-          <button onClick={() => { setNewUser({ fullt_navn: '', epost: '', rolle: 'operator', sentral_ids: [] }); setShowAddModal(true) }} className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white">Brukere</h1>
+          <p className="text-sm text-gray-400 mb-3">
+            {isScoped ? 'Brukere tilknyttet dine 110-sentraler' : 'Administrer operatører og administratorer'}
+          </p>
+          <button onClick={() => { setNewUser({ fullt_navn: '', epost: '', rolle: 'operator', sentral_ids: [] }); setShowAddModal(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors touch-manipulation">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             Ny bruker
           </button>
@@ -232,7 +230,7 @@ export default function AdminBrukerePage() {
 
         {/* Filters */}
         <div className="flex gap-3 mb-6 flex-wrap">
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk på navn eller e-post..." className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 w-64" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk på navn eller e-post..." className="px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 w-full sm:w-64" />
           <select value={filterRolle} onChange={(e) => setFilterRolle(e.target.value)} className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
             <option value="">Alle roller</option>
             {isAdmin && <option value="admin">Administrator</option>}
@@ -269,12 +267,12 @@ export default function AdminBrukerePage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-[#2a2a2a]">
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Bruker</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">E-post</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Rolle</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">110-sentral</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Status</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
+                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Bruker</th>
+                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">E-post</th>
+                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Rolle</th>
+                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">110-sentral</th>
+                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">Status</th>
+                  <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
                 </tr>
               </thead>
               <tbody>
@@ -285,37 +283,37 @@ export default function AdminBrukerePage() {
                   const canDelete = isAdmin
                   return (
                     <tr key={user.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
-                      <td className="px-4 py-3">
+                      <td className="px-3 sm:px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+                          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center shrink-0">
                             <span className="text-xs text-white font-bold">{user.fullt_navn.split(' ').map(n => n[0]).join('')}</span>
                           </div>
                           <span className="text-sm text-white font-medium">{user.fullt_navn}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-3 hidden md:table-cell"><span className="text-sm text-gray-400">{user.epost}</span></td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 sm:px-4 py-3 hidden md:table-cell"><span className="text-sm text-gray-400">{user.epost}</span></td>
+                      <td className="px-3 sm:px-4 py-3">
                         <span className={`text-xs px-2 py-0.5 rounded ${getRolleColor(user.rolle)}`}>
                           {getRolleLabel(user.rolle)}
                         </span>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 sm:px-4 py-3 hidden sm:table-cell">
                         <div className="flex flex-wrap gap-1">
                           {userSentraler.length > 0 ? userSentraler.map(s => (
                             <span key={s!.id} className="text-xs bg-orange-500/10 text-orange-400 px-1.5 py-0.5 rounded">{s!.kort_navn}</span>
                           )) : <span className="text-xs text-gray-600">-</span>}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 sm:px-4 py-3 hidden sm:table-cell">
                         <span className={`text-xs ${user.aktiv ? 'text-green-400' : 'text-red-400'}`}>{user.aktiv ? 'Aktiv' : 'Deaktivert'}</span>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {canEdit && <button onClick={() => handleEdit(user)} className="text-xs text-blue-400 hover:text-blue-300">Rediger</button>}
-                          <button onClick={() => handleToggleActive(user.id)} className={`text-xs ${user.aktiv ? 'text-orange-400 hover:text-orange-300' : 'text-green-400 hover:text-green-300'}`}>
+                      <td className="px-3 sm:px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          {canEdit && <button onClick={() => handleEdit(user)} className="text-xs text-blue-400 hover:text-blue-300 py-1 touch-manipulation">Rediger</button>}
+                          <button onClick={() => handleToggleActive(user.id)} className={`text-xs py-1 touch-manipulation ${user.aktiv ? 'text-orange-400 hover:text-orange-300' : 'text-green-400 hover:text-green-300'}`}>
                             {user.aktiv ? 'Deaktiver' : 'Aktiver'}
                           </button>
-                          {canDelete && <button onClick={() => setDeleteConfirm(user.id)} className="text-xs text-red-400 hover:text-red-300">Slett</button>}
+                          {canDelete && <button onClick={() => setDeleteConfirm(user.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation">Slett</button>}
                         </div>
                       </td>
                     </tr>

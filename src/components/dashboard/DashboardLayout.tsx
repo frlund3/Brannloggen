@@ -127,13 +127,13 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       {/* Mobile header */}
       <header className="lg:hidden sticky top-0 z-40 bg-[#0a0a0a]/95 backdrop-blur border-b border-[#2a2a2a] px-4 py-3">
         <div className="flex items-center justify-between">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 -m-2 touch-manipulation">
             <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
           <span className="text-sm font-semibold text-white">{headerLabel}</span>
-          <a href="/" className="text-sm text-blue-400">Forside</a>
+          <a href="/" className="py-2 px-3 -mr-3 text-sm text-blue-400 touch-manipulation">Forside</a>
         </div>
       </header>
 
@@ -166,7 +166,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                 href={link.href}
                 onClick={() => setSidebarOpen(false)}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors',
+                  'flex items-center gap-3 px-3 py-3 rounded-lg text-sm transition-colors touch-manipulation',
                   pathname === link.href
                     ? 'bg-blue-500/10 text-blue-400'
                     : 'text-gray-400 hover:text-white hover:bg-[#1a1a1a]'
@@ -192,8 +192,8 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                 <p className="text-xs text-gray-400">{roleLabel}</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <a href="/" className="text-sm text-gray-400 hover:text-white">
+            <div className="flex items-center gap-4 mt-1">
+              <a href="/" className="py-2 text-sm text-gray-400 hover:text-white touch-manipulation">
                 Forside
               </a>
               <button
@@ -211,7 +211,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
                   })
                   window.location.href = '/'
                 }}
-                className="text-sm text-red-400 hover:text-red-300"
+                className="py-2 text-sm text-red-400 hover:text-red-300 touch-manipulation"
               >
                 Logg ut
               </button>

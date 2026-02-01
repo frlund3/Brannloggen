@@ -44,13 +44,13 @@ export default function PresseHendelserPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="flex bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] overflow-hidden">
             {(['alle', 'pågår', 'avsluttet'] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-4 py-2 text-sm capitalize transition-colors ${
+                className={`px-4 py-2.5 text-sm capitalize transition-colors touch-manipulation ${
                   filter === f
                     ? 'bg-blue-500 text-white'
                     : 'text-gray-400 hover:text-white'
@@ -85,7 +85,7 @@ export default function PresseHendelserPage() {
         </div>
 
         {/* Stats bar */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
           <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
             <p className="text-xs text-gray-400">Totalt</p>
             <p className="text-2xl font-bold text-white">{hendelser.length}</p>
@@ -120,7 +120,7 @@ export default function PresseHendelserPage() {
                   className="p-4 cursor-pointer hover:bg-[#222] transition-colors"
                   onClick={() => setExpandedId(isExpanded ? null : h.id)}
                 >
-                  <div className="flex items-start justify-between gap-2 mb-1">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-2 mb-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-400">{bv?.kort_navn}</span>
                       <span className="text-xs text-gray-500">&middot;</span>
@@ -186,7 +186,7 @@ export default function PresseHendelserPage() {
                     </div>
 
                     {/* Full details */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <p className="text-xs text-gray-500 mb-1">Sted</p>
                         <p className="text-sm text-white">{h.sted}</p>

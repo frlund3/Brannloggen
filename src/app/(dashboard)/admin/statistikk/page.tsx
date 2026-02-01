@@ -141,7 +141,7 @@ export default function AdminStatistikkPage() {
                 <div key={p.label} className="flex items-center justify-between">
                   <span className={`text-sm ${p.color}`}>{p.label}</span>
                   <div className="flex items-center gap-3">
-                    <div className="w-32 bg-[#0a0a0a] rounded-full h-2">
+                    <div className="w-16 sm:w-32 bg-[#0a0a0a] rounded-full h-2">
                       <div
                         className="bg-green-500 h-2 rounded-full"
                         style={{ width: `${total > 0 ? (p.count / total) * 100 : 0}%` }}
@@ -168,7 +168,7 @@ export default function AdminStatistikkPage() {
                 <div key={s.id} className="flex items-center justify-between">
                   <span className="text-sm text-white">{s.kort_navn}</span>
                   <div className="flex items-center gap-3">
-                    <div className="w-32 bg-[#0a0a0a] rounded-full h-2">
+                    <div className="w-16 sm:w-32 bg-[#0a0a0a] rounded-full h-2">
                       <div
                         className="bg-orange-500 h-2 rounded-full"
                         style={{ width: `${total > 0 ? (s.count / total) * 100 : 0}%` }}
@@ -189,7 +189,7 @@ export default function AdminStatistikkPage() {
                 <div key={f.id} className="flex items-center justify-between">
                   <span className="text-sm text-white">{f.navn}</span>
                   <div className="flex items-center gap-3">
-                    <div className="w-32 bg-[#0a0a0a] rounded-full h-2">
+                    <div className="w-16 sm:w-32 bg-[#0a0a0a] rounded-full h-2">
                       <div
                         className="bg-blue-500 h-2 rounded-full"
                         style={{ width: `${total > 0 ? (f.count / total) * 100 : 0}%` }}
@@ -212,7 +212,7 @@ export default function AdminStatistikkPage() {
                 <div key={k.id} className="flex items-center justify-between">
                   <span className="text-sm text-white">{k.navn}</span>
                   <div className="flex items-center gap-3">
-                    <div className="w-32 bg-[#0a0a0a] rounded-full h-2">
+                    <div className="w-16 sm:w-32 bg-[#0a0a0a] rounded-full h-2">
                       <div
                         className="h-2 rounded-full"
                         style={{ width: `${total > 0 ? (k.count / total) * 100 : 0}%`, backgroundColor: k.farge }}
@@ -230,9 +230,9 @@ export default function AdminStatistikkPage() {
 
         {/* Subscriber table */}
         <section>
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-            <h2 className="text-lg font-semibold text-white">Push-abonnenter</h2>
-            <div className="flex gap-2">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-white mb-3">Push-abonnenter</h2>
+            <div className="flex gap-2 flex-wrap">
               <select
                 value={filterPlatform}
                 onChange={(e) => setFilterPlatform(e.target.value)}

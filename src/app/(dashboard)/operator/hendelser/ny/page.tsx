@@ -104,7 +104,7 @@ export default function NyHendelsePage() {
           {/* Severity */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Alvorlighetsgrad *</label>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 sm:flex gap-2">
               {[
                 { value: 'lav', label: 'Lav', color: 'bg-green-500' },
                 { value: 'middels', label: 'Middels', color: 'bg-yellow-500' },
@@ -115,7 +115,7 @@ export default function NyHendelsePage() {
                   key={sev.value}
                   type="button"
                   onClick={() => setFormData({ ...formData, alvorlighetsgrad: sev.value })}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-manipulation ${
                     formData.alvorlighetsgrad === sev.value
                       ? 'border-blue-500 bg-blue-500/10 text-white'
                       : 'border-[#2a2a2a] bg-[#1a1a1a] text-gray-400 hover:border-[#3a3a3a]'
@@ -209,7 +209,7 @@ export default function NyHendelsePage() {
           </div>
 
           {/* Coordinates */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">Breddegrad (valgfritt)</label>
               <input
@@ -351,18 +351,18 @@ export default function NyHendelsePage() {
           </div>
 
           {/* Submit */}
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 touch-manipulation"
             >
               {saving ? 'Publiserer...' : 'Publiser hendelse'}
             </button>
             <button
               type="button"
               onClick={() => router.push('/operator/hendelser')}
-              className="px-6 py-3 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 rounded-lg hover:text-white transition-colors"
+              className="px-6 py-3 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 rounded-lg hover:text-white transition-colors touch-manipulation"
             >
               Avbryt
             </button>

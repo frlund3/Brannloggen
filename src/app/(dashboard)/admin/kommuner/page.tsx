@@ -63,19 +63,19 @@ export default function AdminKommunerPage() {
   return (
     <DashboardLayout role="admin">
       <div className="p-4 lg:p-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6">
           <div>
             <h1 className="text-2xl font-bold text-white">Kommuner</h1>
-            <p className="text-sm text-gray-400">{items.length} kommuner registrert</p>
+            <p className="text-sm text-gray-400 mb-3">{items.length} kommuner registrert</p>
           </div>
-          <button onClick={() => { setForm({ navn: '', nummer: '', fylke_id: '' }); setShowAdd(true) }} className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
+          <button onClick={() => { setForm({ navn: '', nummer: '', fylke_id: '' }); setShowAdd(true) }} className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors inline-flex items-center gap-2 touch-manipulation">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             Ny kommune
           </button>
         </div>
 
         <div className="flex gap-3 mb-6 flex-wrap">
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk etter kommune..." className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 w-64" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk etter kommune..." className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 w-full sm:w-64" />
           <select value={filterFylke} onChange={(e) => setFilterFylke(e.target.value)} className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
             <option value="">Alle fylker</option>
             {fylkerData.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
@@ -103,8 +103,8 @@ export default function AdminKommunerPage() {
                       <td className="px-4 py-3 text-sm text-gray-400">{fylke?.navn || '-'}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <button onClick={() => handleEdit(k)} className="text-xs text-blue-400 hover:text-blue-300">Rediger</button>
-                          <button onClick={() => setDeleteConfirm(k.id)} className="text-xs text-red-400 hover:text-red-300">Slett</button>
+                          <button onClick={() => handleEdit(k)} className="text-xs text-blue-400 hover:text-blue-300 touch-manipulation">Rediger</button>
+                          <button onClick={() => setDeleteConfirm(k.id)} className="text-xs text-red-400 hover:text-red-300 touch-manipulation">Slett</button>
                         </div>
                       </td>
                     </tr>
@@ -142,8 +142,8 @@ export default function AdminKommunerPage() {
                 </div>
               </div>
               <div className="flex gap-3 mt-6">
-                <button onClick={handleAdd} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">Legg til</button>
-                <button onClick={() => setShowAdd(false)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors">Avbryt</button>
+                <button onClick={handleAdd} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">Legg til</button>
+                <button onClick={() => setShowAdd(false)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors touch-manipulation">Avbryt</button>
               </div>
             </div>
           </div>
@@ -173,8 +173,8 @@ export default function AdminKommunerPage() {
                 </div>
               </div>
               <div className="flex gap-3 mt-6">
-                <button onClick={handleSaveEdit} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">Lagre</button>
-                <button onClick={() => setEditItem(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors">Avbryt</button>
+                <button onClick={handleSaveEdit} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">Lagre</button>
+                <button onClick={() => setEditItem(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors touch-manipulation">Avbryt</button>
               </div>
             </div>
           </div>
@@ -188,8 +188,8 @@ export default function AdminKommunerPage() {
               <h2 className="text-lg font-bold text-white mb-2">Slett kommune?</h2>
               <p className="text-sm text-gray-400 mb-6">Er du sikker på at du vil slette {items.find(k => k.id === deleteConfirm)?.navn}?</p>
               <div className="flex gap-3">
-                <button onClick={() => handleDelete(deleteConfirm!)} className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors">Slett</button>
-                <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors">Avbryt</button>
+                <button onClick={() => handleDelete(deleteConfirm!)} className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">Slett</button>
+                <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors touch-manipulation">Avbryt</button>
               </div>
             </div>
           </div>

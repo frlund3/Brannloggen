@@ -93,33 +93,28 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
     <DashboardLayout role="operator">
       <div className="p-4 lg:p-8 max-w-4xl">
         {/* Header */}
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <StatusBadge status={hendelse.status} />
-              <SeverityDot severity={hendelse.alvorlighetsgrad} showLabel />
-              {kat && (
-                <span
-                  className="text-xs px-2 py-0.5 rounded"
-                  style={{ backgroundColor: kat.farge + '22', color: kat.farge }}
-                >
-                  {kat.navn}
-                </span>
-              )}
-            </div>
-            <h1 className="text-2xl font-bold text-white">{hendelse.tittel}</h1>
-            <p className="text-sm text-gray-400 mt-1">
-              {bv?.kort_navn} &middot; {kommune?.navn} &middot; {formatDateTime(hendelse.opprettet_tidspunkt)}
-            </p>
-          </div>
-
-          <div className="flex gap-2">
-            {hendelse.status === 'pågår' && (
-              <button className="px-4 py-2 bg-green-600/20 text-green-400 border border-green-600/30 rounded-lg text-sm hover:bg-green-600/30 transition-colors">
-                Avslutt hendelse
-              </button>
+        <div className="mb-6">
+          <div className="flex items-center gap-2 flex-wrap mb-2">
+            <StatusBadge status={hendelse.status} />
+            <SeverityDot severity={hendelse.alvorlighetsgrad} showLabel />
+            {kat && (
+              <span
+                className="text-xs px-2 py-0.5 rounded"
+                style={{ backgroundColor: kat.farge + '22', color: kat.farge }}
+              >
+                {kat.navn}
+              </span>
             )}
           </div>
+          <h1 className="text-2xl font-bold text-white">{hendelse.tittel}</h1>
+          <p className="text-sm text-gray-400 mt-1">
+            {bv?.kort_navn} &middot; {kommune?.navn} &middot; {formatDateTime(hendelse.opprettet_tidspunkt)}
+          </p>
+          {hendelse.status === 'pågår' && (
+            <button className="mt-3 px-4 py-2.5 bg-green-600/20 text-green-400 border border-green-600/30 rounded-lg text-sm hover:bg-green-600/30 transition-colors touch-manipulation">
+              Avslutt hendelse
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -150,18 +145,18 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
                 )}
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   value={newUpdate}
                   onChange={(e) => setNewUpdate(e.target.value)}
                   placeholder="Legg til offentlig oppdatering..."
-                  className="flex-1 px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-blue-500"
+                  className="flex-1 px-3 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-blue-500"
                   onKeyDown={(e) => e.key === 'Enter' && handleAddUpdate()}
                 />
                 <button
                   onClick={handleAddUpdate}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors"
+                  className="px-4 py-2.5 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600 transition-colors touch-manipulation"
                 >
                   Publiser
                 </button>
@@ -230,18 +225,18 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
                 ))}
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
                   placeholder="Nytt internt notat..."
-                  className="flex-1 px-2 py-1.5 bg-[#1a1a1a] border border-yellow-500/20 rounded text-xs text-white focus:outline-none focus:border-yellow-500/50"
+                  className="flex-1 px-3 py-2.5 bg-[#1a1a1a] border border-yellow-500/20 rounded-lg text-xs text-white focus:outline-none focus:border-yellow-500/50"
                   onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
                 />
                 <button
                   onClick={handleAddNote}
-                  className="px-3 py-1.5 bg-yellow-500/20 text-yellow-400 rounded text-xs hover:bg-yellow-500/30 transition-colors"
+                  className="px-4 py-2.5 bg-yellow-500/20 text-yellow-400 rounded-lg text-xs hover:bg-yellow-500/30 transition-colors touch-manipulation"
                 >
                   Lagre
                 </button>

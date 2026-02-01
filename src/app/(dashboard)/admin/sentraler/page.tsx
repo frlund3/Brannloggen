@@ -117,15 +117,13 @@ export default function AdminSentralerPage() {
   return (
     <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
       <div className="p-4 lg:p-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white">110-sentraler</h1>
-            <p className="text-sm text-gray-400">
-              {isScoped ? `${displayItems.length} sentraler du har tilgang til` : `${items.length} sentraler registrert`}
-            </p>
-          </div>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-white">110-sentraler</h1>
+          <p className="text-sm text-gray-400 mb-3">
+            {isScoped ? `${displayItems.length} sentraler du har tilgang til` : `${items.length} sentraler registrert`}
+          </p>
           {isAdmin && (
-            <button onClick={() => { resetForm(); setShowAdd(true) }} className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors flex items-center gap-2">
+            <button onClick={() => { resetForm(); setShowAdd(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors touch-manipulation">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
               Ny 110-sentral
             </button>
@@ -140,9 +138,9 @@ export default function AdminSentralerPage() {
 
             return (
               <div key={s.id} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3">
-                  <button onClick={() => setExpandedId(isExpanded ? null : s.id)} className="flex items-center gap-3 text-left flex-1">
-                    <svg className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="px-4 py-3">
+                  <button onClick={() => setExpandedId(isExpanded ? null : s.id)} className="flex items-center gap-3 text-left w-full touch-manipulation">
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                     <div>
@@ -151,12 +149,12 @@ export default function AdminSentralerPage() {
                     </div>
                   </button>
                   {isAdmin ? (
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => handleEdit(s)} className="text-xs text-blue-400 hover:text-blue-300">Rediger</button>
-                      <button onClick={() => setDeleteConfirm(s.id)} className="text-xs text-red-400 hover:text-red-300">Slett</button>
+                    <div className="flex items-center gap-3 mt-2 ml-7">
+                      <button onClick={() => handleEdit(s)} className="text-xs text-blue-400 hover:text-blue-300 py-1 touch-manipulation">Rediger</button>
+                      <button onClick={() => setDeleteConfirm(s.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation">Slett</button>
                     </div>
                   ) : (
-                    <span className="text-xs text-gray-500">Kun visning</span>
+                    <span className="text-xs text-gray-500 mt-2 ml-7 block">Kun visning</span>
                   )}
                 </div>
                 {isExpanded && (

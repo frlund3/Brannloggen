@@ -274,12 +274,12 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
                 </div>
                 <button
                   onClick={() => setOnlyOngoing(!onlyOngoing)}
-                  className={`w-11 h-6 rounded-full transition-colors relative ${
+                  className={`w-12 h-7 rounded-full transition-colors relative touch-manipulation shrink-0 ${
                     onlyOngoing ? 'bg-orange-500' : 'bg-gray-600'
                   }`}
                 >
-                  <div className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
-                    onlyOngoing ? 'translate-x-5' : 'translate-x-0.5'
+                  <div className={`w-5.5 h-5.5 w-[22px] h-[22px] bg-white rounded-full absolute top-[3px] transition-transform ${
+                    onlyOngoing ? 'translate-x-[22px]' : 'translate-x-[3px]'
                   }`} />
                 </button>
               </div>
