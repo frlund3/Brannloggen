@@ -7,10 +7,10 @@ import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { useHendelser, useBrannvesen, useKategorier, useFylker, useKommuner, useSentraler, useBrukerprofiler } from '@/hooks/useSupabaseData'
 import { invalidateCache } from '@/hooks/useSupabaseData'
 import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
-import { formatDateTime, formatTime, formatTimeAgo } from '@/lib/utils'
+import { formatDateTime, formatTime, formatTimeAgo, formatDuration } from '@/lib/utils'
 import { useSentralScope } from '@/hooks/useSentralScope'
 import Link from 'next/link'
-import React, { useState, useMemo, useCallback, useRef } from 'react'
+import { useState, useMemo, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { logActivity } from '@/lib/logActivity'
@@ -57,6 +57,9 @@ export default function OperatorHendelserPage() {
   const [editBrannvesenId, setEditBrannvesenId] = useState('')
   const [editSentralId, setEditSentralId] = useState('')
   const [editPressetekst, setEditPressetekst] = useState('')
+  const [editStartTidspunkt, setEditStartTidspunkt] = useState('')
+  const [editAvsluttetTidspunkt, setEditAvsluttetTidspunkt] = useState('')
+  const [showAvsluttetDialog, setShowAvsluttetDialog] = useState(false)
 
   // Editing existing items
   const [editingUpdateId, setEditingUpdateId] = useState<string | null>(null)
@@ -176,6 +179,15 @@ export default function OperatorHendelserPage() {
     const matchedSentral = sentraler.find(s => s.brannvesen_ids.includes(h.brannvesen_id))
     setEditSentralId(matchedSentral?.id || '')
     setEditPressetekst(h.presse_tekst || '')
+    // Set time fields - convert ISO to datetime-local format
+    const toLocal = (iso: string) => {
+      const d = new Date(iso)
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+      return d.toISOString().slice(0, 16)
+    }
+    setEditStartTidspunkt(toLocal(h.opprettet_tidspunkt))
+    setEditAvsluttetTidspunkt(h.avsluttet_tidspunkt ? toLocal(h.avsluttet_tidspunkt) : '')
+    setShowAvsluttetDialog(false)
     setNewUpdate(''); setNewPresse(''); setNewNotat('')
     setNewUpdateImage(null); setNewPresseImage(null); setNewNotatImage(null); setNewHendelseBilde(null)
     setEditingUpdateId(null); setEditingPresseId(null); setEditingNotatId(null)
@@ -211,6 +223,10 @@ export default function OperatorHendelserPage() {
 
   const handleSaveChanges = async () => {
     if (!selectedH) return
+    if (editStatus === 'avsluttet' && !editAvsluttetTidspunkt) {
+      toast.error('Du må fylle inn avslutningstidspunkt')
+      return
+    }
     setSaving(true)
     try {
       const supabase = createClient()
@@ -221,7 +237,25 @@ export default function OperatorHendelserPage() {
       const updateData: Record<string, unknown> = {}
       if (editStatus !== selectedH.status) {
         updateData.status = editStatus
-        if (editStatus === 'avsluttet') updateData.avsluttet_tidspunkt = new Date().toISOString()
+        if (editStatus === 'avsluttet' && editAvsluttetTidspunkt) {
+          updateData.avsluttet_tidspunkt = new Date(editAvsluttetTidspunkt).toISOString()
+        } else if (editStatus === 'pågår') {
+          updateData.avsluttet_tidspunkt = null
+        }
+      }
+      // Check if start time changed
+      if (editStartTidspunkt) {
+        const newStart = new Date(editStartTidspunkt).toISOString()
+        if (newStart !== selectedH.opprettet_tidspunkt) {
+          updateData.opprettet_tidspunkt = newStart
+        }
+      }
+      // Check if end time changed (for already-avsluttet hendelser)
+      if (editStatus === 'avsluttet' && editAvsluttetTidspunkt && selectedH.status === 'avsluttet') {
+        const newEnd = new Date(editAvsluttetTidspunkt).toISOString()
+        if (newEnd !== selectedH.avsluttet_tidspunkt) {
+          updateData.avsluttet_tidspunkt = newEnd
+        }
       }
       if (editTittel !== selectedH.tittel) updateData.tittel = editTittel
       if (editBeskrivelse !== selectedH.beskrivelse) updateData.beskrivelse = editBeskrivelse
@@ -505,273 +539,266 @@ export default function OperatorHendelserPage() {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[#2a2a2a]">
-                  <th className="w-8 px-2 py-3"></th>
-                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium">Status</th>
-                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium">Tittel</th>
-                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">Kategori</th>
-                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">110-sentral</th>
-                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Alvor</th>
-                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Oppd.</th>
-                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Presse</th>
-                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Notater</th>
-                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">Opprettet</th>
-                  <th className="text-left px-3 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
-                </tr>
-              </thead>
-              <tbody>
-                {hendelser.map((h) => {
-                  const sentral = sentraler.find((s) => s.brannvesen_ids.includes(h.brannvesen_id))
-                  const bv = brannvesen.find((b) => b.id === h.brannvesen_id)
-                  const kat = kategorier.find((k) => k.id === h.kategori_id)
-                  const updCount = h.oppdateringer?.filter(u => !u.deaktivert).length || 0
-                  const presseCount = h.presseoppdateringer?.filter(p => !p.deaktivert).length || 0
-                  const notatCount = h.interne_notater?.filter(n => !n.deaktivert).length || 0
-                  const isExpanded = expandedId === h.id
-                  const hasPresse = !!h.presse_tekst || presseCount > 0
+        {/* Cards */}
+        <div className="space-y-3">
+          {hendelser.map((h) => {
+            const sentral = sentraler.find((s) => s.brannvesen_ids.includes(h.brannvesen_id))
+            const bv = brannvesen.find((b) => b.id === h.brannvesen_id)
+            const kat = kategorier.find((k) => k.id === h.kategori_id)
+            const updCount = h.oppdateringer?.filter(u => !u.deaktivert).length || 0
+            const presseCount = h.presseoppdateringer?.filter(p => !p.deaktivert).length || 0
+            const notatCount = h.interne_notater?.filter(n => !n.deaktivert).length || 0
+            const isExpanded = expandedId === h.id
+            const hasPresse = !!h.presse_tekst || presseCount > 0
+
+            return (
+              <div key={h.id} className={`bg-[#1a1a1a] rounded-xl border overflow-hidden transition-colors ${
+                h.status === 'pågår' ? 'border-l-4 border-l-red-500 border-[#2a2a2a]' : h.status === 'avsluttet' ? 'border-l-4 border-l-green-500 border-[#2a2a2a]' : 'border-[#2a2a2a]'
+              }`}>
+                {/* Card header - clickable */}
+                <div
+                  className="p-4 cursor-pointer hover:bg-[#222] transition-colors"
+                  onClick={() => setExpandedId(isExpanded ? null : h.id)}
+                >
+                  {/* Top row: status + severity + duration + time */}
+                  <div className="flex items-center gap-2 mb-2">
+                    <StatusBadge status={h.status} size="sm" />
+                    <SeverityDot severity={h.alvorlighetsgrad} showLabel />
+                    <span className={`text-[11px] px-1.5 py-0.5 rounded ${h.status === 'avsluttet' ? 'bg-gray-500/10 text-gray-500' : 'bg-amber-500/10 text-amber-400'}`}>
+                      {formatDuration(h.opprettet_tidspunkt, h.avsluttet_tidspunkt)}
+                    </span>
+                    <span className="text-xs text-gray-500 ml-auto">{formatTimeAgo(h.opprettet_tidspunkt)}</span>
+                    <ChevronIcon open={isExpanded} />
+                  </div>
+
+                  {/* Title + location */}
+                  <h3 className="text-base font-semibold text-white mb-1">{h.tittel}</h3>
+                  <p className="text-xs text-gray-400 mb-3">{h.sted}</p>
+
+                  {/* Info chips */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {kat && (
+                      <span className="text-[11px] px-2 py-0.5 rounded-full inline-flex items-center gap-1" style={{ backgroundColor: kat.farge + '18', color: kat.farge }}>
+                        <CategoryIcon iconName={kat.ikon} className="w-3 h-3" />{kat.navn}
+                      </span>
+                    )}
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-500/10 text-gray-400">
+                      {sentral?.kort_navn || bv?.kort_navn}
+                    </span>
+                    {updCount > 0 && (
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400">
+                        {updCount} oppd.
+                      </span>
+                    )}
+                    {hasPresse && (
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400">
+                        {presseCount > 0 ? presseCount : '1'} presse
+                      </span>
+                    )}
+                    {notatCount > 0 && (
+                      <span className="text-[11px] px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-400">
+                        {notatCount} notat
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#2a2a2a]" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => openHendelse(h.id)} className="text-xs text-blue-400 hover:text-blue-300 font-medium py-1 touch-manipulation flex items-center gap-1">
+                      <EditIcon /> Rediger
+                    </button>
+                    {hasAdminAccess && (
+                      <button onClick={() => setDeactivateConfirm(h.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation flex items-center gap-1">
+                        <DeactivateIcon /> Deaktiver
+                      </button>
+                    )}
+                    <span className="text-xs text-gray-600 ml-auto">{formatDateTime(h.opprettet_tidspunkt)}</span>
+                  </div>
+                </div>
+
+                {/* Expanded details */}
+                {isExpanded && (() => {
+                  const activeUpd = h.oppdateringer?.filter(u => !u.deaktivert) || []
+                  const activePrs = h.presseoppdateringer?.filter(p => !p.deaktivert) || []
+                  const activeNot = h.interne_notater?.filter(n => !n.deaktivert) || []
+
+                  type TimelineItem = {
+                    id: string
+                    type: 'publikum' | 'presse' | 'intern' | 'status'
+                    tekst: string
+                    opprettet_tidspunkt: string
+                    opprettet_av?: string
+                    bilde_url?: string | null
+                  }
+
+                  const timeline: TimelineItem[] = [
+                    ...activeUpd.map(u => ({ id: u.id, type: 'publikum' as const, tekst: u.tekst, opprettet_tidspunkt: u.opprettet_tidspunkt, opprettet_av: u.opprettet_av, bilde_url: u.bilde_url })),
+                    ...activePrs.map(p => ({ id: p.id, type: 'presse' as const, tekst: p.tekst, opprettet_tidspunkt: p.opprettet_tidspunkt, opprettet_av: p.opprettet_av, bilde_url: p.bilde_url })),
+                    ...activeNot.map(n => ({ id: n.id, type: 'intern' as const, tekst: n.notat, opprettet_tidspunkt: n.opprettet_tidspunkt, opprettet_av: n.opprettet_av, bilde_url: n.bilde_url })),
+                  ]
+
+                  if (h.status === 'avsluttet' && h.avsluttet_tidspunkt) {
+                    timeline.push({ id: 'status-avsluttet', type: 'status', tekst: 'Hendelsen ble avsluttet', opprettet_tidspunkt: h.avsluttet_tidspunkt })
+                  }
+                  timeline.unshift({ id: 'opprettet', type: 'status', tekst: 'Hendelsen ble opprettet', opprettet_tidspunkt: h.opprettet_tidspunkt, opprettet_av: h.opprettet_av })
+                  timeline.sort((a, b) => new Date(a.opprettet_tidspunkt).getTime() - new Date(b.opprettet_tidspunkt).getTime())
+
+                  const typeConfig = {
+                    publikum: { color: 'blue', label: 'Publikum', border: 'border-blue-500', line: 'bg-blue-500/30', badge: 'bg-blue-500/15 text-blue-400' },
+                    presse: { color: 'cyan', label: 'Kun presse', border: 'border-cyan-500', line: 'bg-cyan-500/30', badge: 'bg-cyan-500/20 text-cyan-400' },
+                    intern: { color: 'yellow', label: 'Internt', border: 'border-yellow-500', line: 'bg-yellow-500/30', badge: 'bg-yellow-500/20 text-yellow-400' },
+                    status: { color: 'gray', label: 'Status', border: 'border-gray-500', line: 'bg-gray-500/30', badge: 'bg-gray-500/20 text-gray-400' },
+                  }
 
                   return (
-                    <React.Fragment key={h.id}>
-                      <tr
-                        className={`border-b border-[#2a2a2a] hover:bg-[#222] transition-colors cursor-pointer border-l-4 ${
-                          h.status === 'pågår' ? 'border-l-red-500' : h.status === 'avsluttet' ? 'border-l-green-500' : 'border-l-gray-600'
-                        }`}
-                        onClick={() => setExpandedId(isExpanded ? null : h.id)}
-                      >
-                        <td className="px-2 py-3 text-gray-400">
-                          <ChevronIcon open={isExpanded} />
-                        </td>
-                        <td className="px-3 py-3"><StatusBadge status={h.status} size="sm" /></td>
-                        <td className="px-3 py-3">
-                          <span className="text-sm text-white font-medium">{h.tittel}</span>
-                          <p className="text-xs text-gray-500 mt-0.5">{h.sted}</p>
-                        </td>
-                        <td className="px-3 py-3 hidden md:table-cell">
-                          {kat && <span className="text-xs px-2 py-0.5 rounded inline-flex items-center gap-1" style={{ backgroundColor: kat.farge + '22', color: kat.farge }}><CategoryIcon iconName={kat.ikon} className="w-3 h-3" />{kat.navn}</span>}
-                        </td>
-                        <td className="px-3 py-3 hidden md:table-cell"><span className="text-xs text-gray-400">{sentral?.kort_navn || bv?.kort_navn}</span></td>
-                        <td className="px-3 py-3 hidden lg:table-cell"><SeverityDot severity={h.alvorlighetsgrad} showLabel /></td>
-                        <td className="px-3 py-3 hidden lg:table-cell">
-                          <span className={`text-xs ${updCount > 0 ? 'text-blue-400' : 'text-gray-600'}`}>{updCount}</span>
-                        </td>
-                        <td className="px-3 py-3 hidden lg:table-cell">
-                          {hasPresse ? (
-                            <span className="text-xs text-cyan-400">{presseCount > 0 ? presseCount : '1'}{h.presse_tekst && presseCount > 0 ? '+1' : ''}</span>
-                          ) : (
-                            <span className="text-xs text-gray-600">-</span>
-                          )}
-                        </td>
-                        <td className="px-3 py-3 hidden lg:table-cell">
-                          <span className={`text-xs ${notatCount > 0 ? 'text-yellow-400' : 'text-gray-600'}`}>{notatCount}</span>
-                        </td>
-                        <td className="px-3 py-3 hidden sm:table-cell"><span className="text-xs text-gray-400">{formatDateTime(h.opprettet_tidspunkt)}</span></td>
-                        <td className="px-3 py-3">
-                          <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                            <button onClick={() => openHendelse(h.id)} className="text-xs text-blue-400 hover:text-blue-300 py-1 touch-manipulation">Rediger</button>
-                            {hasAdminAccess && (
-                              <button onClick={() => setDeactivateConfirm(h.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation">Deaktiver</button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
+                    <div className="border-t border-[#2a2a2a] bg-[#111] p-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+                      {/* Hendelse bilde */}
+                      {h.bilde_url && (
+                        <div>
+                          <h4 className="text-xs font-semibold text-gray-400 mb-2 flex items-center gap-1.5">
+                            <ImageIcon /> Hendelsebilde
+                          </h4>
+                          <img src={h.bilde_url} alt="" className="rounded-lg max-h-48 object-cover" />
+                        </div>
+                      )}
+                      {/* Beskrivelse */}
+                      <div>
+                        <p className="text-sm text-gray-300">{h.beskrivelse}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Sted: {h.sted} &middot; Opprettet: {formatDateTime(h.opprettet_tidspunkt)}
+                          {getUserName(h.opprettet_av) && <> &middot; Av: {getUserName(h.opprettet_av)}</>}
+                          &middot; Sist oppdatert: {formatTimeAgo(h.oppdatert_tidspunkt)}
+                        </p>
+                      </div>
 
-                      {/* Expanded details row */}
-                      {isExpanded && (() => {
-                        // Build unified timeline from all sources
-                        const activeUpd = h.oppdateringer?.filter(u => !u.deaktivert) || []
-                        const activePrs = h.presseoppdateringer?.filter(p => !p.deaktivert) || []
-                        const activeNot = h.interne_notater?.filter(n => !n.deaktivert) || []
-
-                        type TimelineItem = {
-                          id: string
-                          type: 'publikum' | 'presse' | 'intern' | 'status'
-                          tekst: string
-                          opprettet_tidspunkt: string
-                          opprettet_av?: string
-                          bilde_url?: string | null
-                        }
-
-                        const timeline: TimelineItem[] = [
-                          ...activeUpd.map(u => ({ id: u.id, type: 'publikum' as const, tekst: u.tekst, opprettet_tidspunkt: u.opprettet_tidspunkt, opprettet_av: u.opprettet_av, bilde_url: u.bilde_url })),
-                          ...activePrs.map(p => ({ id: p.id, type: 'presse' as const, tekst: p.tekst, opprettet_tidspunkt: p.opprettet_tidspunkt, opprettet_av: p.opprettet_av, bilde_url: p.bilde_url })),
-                          ...activeNot.map(n => ({ id: n.id, type: 'intern' as const, tekst: n.notat, opprettet_tidspunkt: n.opprettet_tidspunkt, opprettet_av: n.opprettet_av, bilde_url: n.bilde_url })),
-                        ]
-
-                        // Add status change if avsluttet
-                        if (h.status === 'avsluttet' && h.avsluttet_tidspunkt) {
-                          timeline.push({ id: 'status-avsluttet', type: 'status', tekst: 'Hendelsen ble avsluttet', opprettet_tidspunkt: h.avsluttet_tidspunkt })
-                        }
-
-                        // Add creation event
-                        timeline.unshift({ id: 'opprettet', type: 'status', tekst: 'Hendelsen ble opprettet', opprettet_tidspunkt: h.opprettet_tidspunkt, opprettet_av: h.opprettet_av })
-
-                        timeline.sort((a, b) => new Date(a.opprettet_tidspunkt).getTime() - new Date(b.opprettet_tidspunkt).getTime())
-
-                        const typeConfig = {
-                          publikum: { color: 'blue', label: 'Publikum', border: 'border-blue-500', line: 'bg-blue-500/30', badge: 'bg-blue-500/15 text-blue-400' },
-                          presse: { color: 'cyan', label: 'Kun presse', border: 'border-cyan-500', line: 'bg-cyan-500/30', badge: 'bg-cyan-500/20 text-cyan-400' },
-                          intern: { color: 'yellow', label: 'Internt', border: 'border-yellow-500', line: 'bg-yellow-500/30', badge: 'bg-yellow-500/20 text-yellow-400' },
-                          status: { color: 'gray', label: 'Status', border: 'border-gray-500', line: 'bg-gray-500/30', badge: 'bg-gray-500/20 text-gray-400' },
-                        }
-
-                        return (
-                        <tr className={`border-b border-[#2a2a2a] border-l-4 ${
-                          h.status === 'pågår' ? 'border-l-red-500' : h.status === 'avsluttet' ? 'border-l-green-500' : 'border-l-gray-600'
-                        }`}>
-                          <td colSpan={11} className="p-0">
-                            <div className="bg-[#111] p-4 space-y-4" onClick={(e) => e.stopPropagation()}>
-                              {/* Hendelse bilde */}
-                              {h.bilde_url && (
-                                <div>
-                                  <h4 className="text-xs font-semibold text-gray-400 mb-2 flex items-center gap-1.5">
-                                    <ImageIcon /> Hendelsebilde
-                                  </h4>
-                                  <img src={h.bilde_url} alt="" className="rounded-lg max-h-48 object-cover" />
-                                </div>
-                              )}
-                              {/* Beskrivelse */}
-                              <div>
-                                <p className="text-sm text-gray-300">{h.beskrivelse}</p>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  Sted: {h.sted} &middot; Opprettet: {formatDateTime(h.opprettet_tidspunkt)}
-                                  {getUserName(h.opprettet_av) && <> &middot; Av: {getUserName(h.opprettet_av)}</>}
-                                  &middot; Sist oppdatert: {formatTimeAgo(h.oppdatert_tidspunkt)}
-                                </p>
+                      {/* Hovedpressemelding */}
+                      {h.presse_tekst && (
+                        <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="text-[10px] text-cyan-500/60 uppercase font-semibold">Hovedpressemelding</p>
+                                <span className="text-[10px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded font-bold">KUN PRESSE</span>
                               </div>
-
-                              {/* Hovedpressemelding */}
-                              {h.presse_tekst && (
-                                <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg p-3">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2 mb-1">
-                                        <p className="text-[10px] text-cyan-500/60 uppercase font-semibold">Hovedpressemelding</p>
-                                        <span className="text-[10px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded font-bold">KUN PRESSE</span>
-                                      </div>
-                                      <p className="text-sm text-gray-300 whitespace-pre-line">{h.presse_tekst}</p>
-                                    </div>
-                                    <button onClick={() => openHendelse(h.id)} className="p-1 text-gray-500 hover:text-cyan-400 shrink-0" title="Rediger pressemelding"><EditIcon /></button>
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* ── Unified Timeline ── */}
-                              {timeline.length > 0 && (
-                                <div>
-                                  <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                                    <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    Tidslinje
-                                  </h4>
-                                  <div className="relative ml-1">
-                                    {timeline.map((item, i) => {
-                                      const cfg = typeConfig[item.type]
-                                      const isStatusItem = item.type === 'status'
-
-                                      // Find original item for editing
-                                      const isEditingThis = (item.type === 'publikum' && editingUpdateId === item.id) ||
-                                        (item.type === 'presse' && editingPresseId === item.id) ||
-                                        (item.type === 'intern' && editingNotatId === item.id)
-
-                                      return (
-                                        <div key={item.id} className="relative pl-5 pb-4 last:pb-0">
-                                          {i < timeline.length - 1 && (
-                                            <div className={`absolute left-[5px] top-[10px] bottom-0 w-px ${typeConfig[timeline[i + 1].type].line}`} />
-                                          )}
-                                          <div className={`absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 ${cfg.border} bg-[#111]`} />
-
-                                          {isStatusItem ? (
-                                            <div className="flex items-center gap-2">
-                                              <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
-                                              <span className="text-xs text-gray-400 italic">{item.tekst}</span>
-                                              {item.opprettet_av && getUserName(item.opprettet_av) && (
-                                                <span className="text-xs text-gray-600">Av: {getUserName(item.opprettet_av)}</span>
-                                              )}
-                                            </div>
-                                          ) : isEditingThis ? (
-                                            <div>
-                                              <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
-                                                <span className={`text-[10px] ${cfg.badge} px-1.5 py-0.5 rounded font-bold`}>{cfg.label}</span>
-                                              </div>
-                                              <textarea
-                                                value={item.type === 'publikum' ? editUpdateText : item.type === 'presse' ? editPresseText : editNotatText}
-                                                onChange={(e) => item.type === 'publikum' ? setEditUpdateText(e.target.value) : item.type === 'presse' ? setEditPresseText(e.target.value) : setEditNotatText(e.target.value)}
-                                                className={`w-full px-2 py-1.5 bg-[#0a0a0a] border border-${cfg.color}-500/50 rounded text-white text-sm focus:outline-none h-16 resize-none`}
-                                              />
-                                              <ImageEditControls currentUrl={item.bilde_url || null} accentColor={cfg.color} />
-                                              <div className="flex gap-2 mt-2">
-                                                <button
-                                                  onClick={() => item.type === 'publikum' ? handleUpdateEdit(item.id, h.id) : item.type === 'presse' ? handlePresseEdit(item.id, h.id) : handleNotatEdit(item.id, h.id)}
-                                                  className={`px-3 py-1 bg-${cfg.color}-500 text-white rounded text-xs`}
-                                                >Lagre</button>
-                                                <button onClick={() => { item.type === 'publikum' ? setEditingUpdateId(null) : item.type === 'presse' ? setEditingPresseId(null) : setEditingNotatId(null); resetEditImageState() }} className="px-3 py-1 text-gray-400 text-xs">Avbryt</button>
-                                              </div>
-                                            </div>
-                                          ) : (
-                                            <div>
-                                              <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
-                                                <span className={`text-[10px] ${cfg.badge} px-1.5 py-0.5 rounded font-bold`}>{cfg.label}</span>
-                                                {item.opprettet_av && getUserName(item.opprettet_av) && (
-                                                  <span className="text-xs text-gray-600">Av: {getUserName(item.opprettet_av)}</span>
-                                                )}
-                                                <div className="flex items-center gap-1 ml-auto shrink-0">
-                                                  <button
-                                                    onClick={() => {
-                                                      resetEditImageState()
-                                                      if (item.type === 'publikum') { setEditingUpdateId(item.id); setEditUpdateText(item.tekst) }
-                                                      else if (item.type === 'presse') { setEditingPresseId(item.id); setEditPresseText(item.tekst) }
-                                                      else { setEditingNotatId(item.id); setEditNotatText(item.tekst) }
-                                                    }}
-                                                    className={`p-1 text-gray-500 hover:text-${cfg.color}-400`}
-                                                    title="Rediger"
-                                                  ><EditIcon /></button>
-                                                  <button
-                                                    onClick={() => item.type === 'publikum' ? handleDeactivateUpdate(item.id) : item.type === 'presse' ? handleDeactivatePresse(item.id) : handleDeactivateNotat(item.id)}
-                                                    className="p-1 text-gray-500 hover:text-red-400"
-                                                    title="Deaktiver"
-                                                  ><DeactivateIcon /></button>
-                                                </div>
-                                              </div>
-                                              <p className={`text-sm mt-0.5 ${item.type === 'presse' ? 'text-cyan-100' : item.type === 'intern' ? 'text-yellow-100' : 'text-gray-300'}`}>{item.tekst}</p>
-                                              {item.bilde_url && (
-                                                <img src={item.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />
-                                              )}
-                                            </div>
-                                          )}
-                                        </div>
-                                      )
-                                    })}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Quick action */}
-                              <button
-                                onClick={() => openHendelse(h.id)}
-                                className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
-                              >
-                                <EditIcon /> Åpne full redigeringsvisning
-                              </button>
+                              <p className="text-sm text-gray-300 whitespace-pre-line">{h.presse_tekst}</p>
                             </div>
-                          </td>
-                        </tr>
-                        )
-                      })()}
-                    </React.Fragment>
+                            <button onClick={() => openHendelse(h.id)} className="p-1 text-gray-500 hover:text-cyan-400 shrink-0" title="Rediger pressemelding"><EditIcon /></button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ── Unified Timeline ── */}
+                      {timeline.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Tidslinje
+                          </h4>
+                          <div className="relative ml-1">
+                            {timeline.map((item, i) => {
+                              const cfg = typeConfig[item.type]
+                              const isStatusItem = item.type === 'status'
+                              const isEditingThis = (item.type === 'publikum' && editingUpdateId === item.id) ||
+                                (item.type === 'presse' && editingPresseId === item.id) ||
+                                (item.type === 'intern' && editingNotatId === item.id)
+
+                              return (
+                                <div key={item.id} className="relative pl-5 pb-4 last:pb-0">
+                                  {i < timeline.length - 1 && (
+                                    <div className={`absolute left-[5px] top-[10px] bottom-0 w-px ${typeConfig[timeline[i + 1].type].line}`} />
+                                  )}
+                                  <div className={`absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 ${cfg.border} bg-[#111]`} />
+
+                                  {isStatusItem ? (
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
+                                      <span className="text-xs text-gray-400 italic">{item.tekst}</span>
+                                      {item.opprettet_av && getUserName(item.opprettet_av) && (
+                                        <span className="text-xs text-gray-600">Av: {getUserName(item.opprettet_av)}</span>
+                                      )}
+                                    </div>
+                                  ) : isEditingThis ? (
+                                    <div>
+                                      <div className="flex items-center gap-2 mb-1">
+                                        <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
+                                        <span className={`text-[10px] ${cfg.badge} px-1.5 py-0.5 rounded font-bold`}>{cfg.label}</span>
+                                      </div>
+                                      <textarea
+                                        value={item.type === 'publikum' ? editUpdateText : item.type === 'presse' ? editPresseText : editNotatText}
+                                        onChange={(e) => item.type === 'publikum' ? setEditUpdateText(e.target.value) : item.type === 'presse' ? setEditPresseText(e.target.value) : setEditNotatText(e.target.value)}
+                                        className={`w-full px-2 py-1.5 bg-[#0a0a0a] border border-${cfg.color}-500/50 rounded text-white text-sm focus:outline-none h-16 resize-none`}
+                                      />
+                                      <ImageEditControls currentUrl={item.bilde_url || null} accentColor={cfg.color} />
+                                      <div className="flex gap-2 mt-2">
+                                        <button
+                                          onClick={() => item.type === 'publikum' ? handleUpdateEdit(item.id, h.id) : item.type === 'presse' ? handlePresseEdit(item.id, h.id) : handleNotatEdit(item.id, h.id)}
+                                          className={`px-3 py-1 bg-${cfg.color}-500 text-white rounded text-xs`}
+                                        >Lagre</button>
+                                        <button onClick={() => { item.type === 'publikum' ? setEditingUpdateId(null) : item.type === 'presse' ? setEditingPresseId(null) : setEditingNotatId(null); resetEditImageState() }} className="px-3 py-1 text-gray-400 text-xs">Avbryt</button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
+                                        <span className={`text-[10px] ${cfg.badge} px-1.5 py-0.5 rounded font-bold`}>{cfg.label}</span>
+                                        {item.opprettet_av && getUserName(item.opprettet_av) && (
+                                          <span className="text-xs text-gray-600">Av: {getUserName(item.opprettet_av)}</span>
+                                        )}
+                                        <div className="flex items-center gap-1 ml-auto shrink-0">
+                                          <button
+                                            onClick={() => {
+                                              resetEditImageState()
+                                              if (item.type === 'publikum') { setEditingUpdateId(item.id); setEditUpdateText(item.tekst) }
+                                              else if (item.type === 'presse') { setEditingPresseId(item.id); setEditPresseText(item.tekst) }
+                                              else { setEditingNotatId(item.id); setEditNotatText(item.tekst) }
+                                            }}
+                                            className={`p-1 text-gray-500 hover:text-${cfg.color}-400`}
+                                            title="Rediger"
+                                          ><EditIcon /></button>
+                                          <button
+                                            onClick={() => item.type === 'publikum' ? handleDeactivateUpdate(item.id) : item.type === 'presse' ? handleDeactivatePresse(item.id) : handleDeactivateNotat(item.id)}
+                                            className="p-1 text-gray-500 hover:text-red-400"
+                                            title="Deaktiver"
+                                          ><DeactivateIcon /></button>
+                                        </div>
+                                      </div>
+                                      <p className={`text-sm mt-0.5 ${item.type === 'presse' ? 'text-cyan-100' : item.type === 'intern' ? 'text-yellow-100' : 'text-gray-300'}`}>{item.tekst}</p>
+                                      {item.bilde_url && (
+                                        <img src={item.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Quick action */}
+                      <button
+                        onClick={() => openHendelse(h.id)}
+                        className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                      >
+                        <EditIcon /> Åpne full redigeringsvisning
+                      </button>
+                    </div>
                   )
-                })}
-              </tbody>
-            </table>
+                })()}
+              </div>
+            )
+          })}
+        </div>
+
+        {hendelser.length === 0 && (
+          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-8 text-center text-gray-500 text-sm">
+            {search || activeFilterCount > 0 ? 'Ingen hendelser matcher filteret' : 'Ingen hendelser registrert'}
           </div>
-          <div className="px-4 py-3 border-t border-[#2a2a2a]">
-            <p className="text-xs text-gray-500">Viser {hendelser.length} av {scopedHendelser.filter(h => !deactivatedIds.includes(h.id)).length} hendelser</p>
-          </div>
+        )}
+
+        <div className="mt-3 text-center">
+          <p className="text-xs text-gray-500">Viser {hendelser.length} av {scopedHendelser.filter(h => !deactivatedIds.includes(h.id)).length} hendelser</p>
         </div>
       </div>
 
@@ -821,12 +848,33 @@ export default function OperatorHendelserPage() {
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Status</label>
                   <div className="flex gap-2">
-                    {['pågår', 'avsluttet'].map(s => (
-                      <button key={s} onClick={() => setEditStatus(s)} className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${editStatus === s ? (s === 'pågår' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30') : 'bg-[#0a0a0a] text-gray-400 border border-[#2a2a2a]'}`}>
-                        {s === 'pågår' ? 'Pågår' : 'Avsluttet'}
-                      </button>
-                    ))}
+                    <button onClick={() => { setEditStatus('pågår'); setEditAvsluttetTidspunkt(''); setShowAvsluttetDialog(false) }} className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${editStatus === 'pågår' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-[#0a0a0a] text-gray-400 border border-[#2a2a2a]'}`}>
+                      Pågår
+                    </button>
+                    <button onClick={() => {
+                      if (editStatus !== 'avsluttet') {
+                        const now = new Date()
+                        now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+                        setEditAvsluttetTidspunkt(now.toISOString().slice(0, 16))
+                        setShowAvsluttetDialog(true)
+                      }
+                      setEditStatus('avsluttet')
+                    }} className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${editStatus === 'avsluttet' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-[#0a0a0a] text-gray-400 border border-[#2a2a2a]'}`}>
+                      Avsluttet
+                    </button>
                   </div>
+                  {showAvsluttetDialog && (
+                    <div className="mt-3 p-3 bg-green-500/5 border border-green-500/20 rounded-lg">
+                      <label className="block text-xs text-green-400 mb-1 font-semibold">Tidspunkt for avslutning *</label>
+                      <p className="text-xs text-gray-500 mb-2">Sett klokkeslett for når hendelsen ble avsluttet.</p>
+                      <input
+                        type="datetime-local"
+                        value={editAvsluttetTidspunkt}
+                        onChange={(e) => setEditAvsluttetTidspunkt(e.target.value)}
+                        className="w-full px-3 py-2 bg-[#0a0a0a] border border-green-500/30 rounded-lg text-white text-sm focus:outline-none focus:border-green-500"
+                      />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Kategori</label>
@@ -853,6 +901,38 @@ export default function OperatorHendelserPage() {
                     <option value="">Velg brannvesen</option>
                     {(editSentralId ? brannvesen.filter(b => sentraler.find(s => s.id === editSentralId)?.brannvesen_ids.includes(b.id)) : brannvesen).sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(b => <option key={b.id} value={b.id}>{b.kort_navn}</option>)}
                   </select>
+                </div>
+              </div>
+            </div>
+
+            {/* ══════════ Tidspunkter ══════════ */}
+            <div className="border-t border-[#2a2a2a] pt-4 mb-4">
+              <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Tidspunkter
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Starttidspunkt</label>
+                  <input
+                    type="datetime-local"
+                    value={editStartTidspunkt}
+                    onChange={(e) => setEditStartTidspunkt(e.target.value)}
+                    className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Avslutningstidspunkt</label>
+                  {editStatus === 'avsluttet' ? (
+                    <input
+                      type="datetime-local"
+                      value={editAvsluttetTidspunkt}
+                      onChange={(e) => setEditAvsluttetTidspunkt(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#0a0a0a] border border-green-500/30 rounded-lg text-white text-sm focus:outline-none focus:border-green-500"
+                    />
+                  ) : (
+                    <p className="px-3 py-2 text-sm text-gray-600 italic">Hendelsen pågår fortsatt</p>
+                  )}
                 </div>
               </div>
             </div>

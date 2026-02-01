@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { useHendelser, useBrannvesen, useKategorier, useBrukerprofiler } from '@/hooks/useSupabaseData'
 import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
 import { useSentralScope } from '@/hooks/useSentralScope'
-import { formatTime, formatDateTime } from '@/lib/utils'
+import { formatTime, formatDateTime, formatDuration } from '@/lib/utils'
 import { useState, useMemo } from 'react'
 import type { Hendelse } from '@/hooks/useSupabaseData'
 
@@ -136,6 +136,8 @@ export default function NyVisningPage() {
                         <span>{formatTime(h.opprettet_tidspunkt)}</span>
                         <span>&middot;</span>
                         <span>{new Date(h.opprettet_tidspunkt).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        <span>&middot;</span>
+                        <span className={h.status === 'avsluttet' ? 'text-gray-500' : 'text-amber-400'}>{formatDuration(h.opprettet_tidspunkt, h.avsluttet_tidspunkt)}</span>
                         {kat && <span>&middot; {kat.navn}</span>}
                       </div>
                       <p className="text-sm text-white font-medium truncate">{h.tittel}</p>
@@ -180,8 +182,12 @@ export default function NyVisningPage() {
               {/* Header */}
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-1 flex-wrap">
                     <span>{formatDateTime(selected.opprettet_tidspunkt)}</span>
+                    <span>&middot;</span>
+                    <span className={selected.status === 'avsluttet' ? 'text-gray-500' : 'text-amber-400 font-medium'}>
+                      Varighet: {formatDuration(selected.opprettet_tidspunkt, selected.avsluttet_tidspunkt)}
+                    </span>
                     <span>&middot;</span>
                     <span>{getKat(selected.kategori_id)?.navn}</span>
                   </div>

@@ -19,20 +19,25 @@ export default function NyHendelsePage() {
   const { data: kommuner, loading: kommunerLoading } = useKommuner()
   const [selectedSentral, setSelectedSentral] = useState('')
   const [selectedFylke, setSelectedFylke] = useState('')
-  const [formData, setFormData] = useState({
-    tittel: '',
-    beskrivelse: '',
-    sted: '',
-    sentral_id: '',
-    brannvesen_id: '',
-    kommune_id: '',
-    fylke_id: '',
-    kategori_id: '',
-    alvorlighetsgrad: 'middels',
-    latitude: '',
-    longitude: '',
-    postnummer: '',
-    poststed: '',
+  const [formData, setFormData] = useState(() => {
+    const now = new Date()
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+    return {
+      tittel: '',
+      beskrivelse: '',
+      sted: '',
+      sentral_id: '',
+      brannvesen_id: '',
+      kommune_id: '',
+      fylke_id: '',
+      kategori_id: '',
+      alvorlighetsgrad: 'middels',
+      latitude: '',
+      longitude: '',
+      postnummer: '',
+      poststed: '',
+      starttidspunkt: now.toISOString().slice(0, 16),
+    }
   })
   const [presseInfo, setPresseInfo] = useState('')
   const [internNotat, setInternNotat] = useState('')
@@ -208,6 +213,7 @@ export default function NyHendelsePage() {
         kategori_id: formData.kategori_id,
         alvorlighetsgrad: formData.alvorlighetsgrad,
         opprettet_av: user.id,
+        opprettet_tidspunkt: formData.starttidspunkt ? new Date(formData.starttidspunkt).toISOString() : new Date().toISOString(),
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
         postnummer: formData.postnummer || null,
@@ -359,6 +365,18 @@ export default function NyHendelsePage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Start time */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Starttidspunkt</label>
+            <p className="text-xs text-gray-500 mb-2">Forhåndsutfylt med nåværende tid. Endre om hendelsen startet tidligere.</p>
+            <input
+              type="datetime-local"
+              value={formData.starttidspunkt}
+              onChange={(e) => setFormData({ ...formData, starttidspunkt: e.target.value })}
+              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+            />
           </div>
 
           {/* Title */}

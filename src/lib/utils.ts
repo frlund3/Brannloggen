@@ -55,3 +55,17 @@ export function getStatusColor(status: string): string {
     default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
   }
 }
+
+export function formatDuration(startDate: string, endDate?: string | null): string {
+  const start = new Date(startDate)
+  const end = endDate ? new Date(endDate) : new Date()
+  const diffMs = end.getTime() - start.getTime()
+  if (diffMs < 0) return '-'
+  const minutes = Math.floor(diffMs / 60000)
+  if (minutes < 60) return `${minutes} min`
+  const hours = Math.floor(minutes / 60)
+  const restMin = minutes % 60
+  if (hours < 24) return `${hours}t ${restMin}m`
+  const days = Math.floor(hours / 24)
+  return `${days}d ${hours % 24}t`
+}
