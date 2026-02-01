@@ -112,7 +112,7 @@ export default function OperatorHendelserPage() {
   const editItemImageRef = useRef<HTMLInputElement>(null)
 
   const isLoading = hendelserLoading || brannvesenLoading || kategorierLoading || fylkerLoading || kommunerLoading || sentralerLoading
-  if (isLoading) return <div className="p-8 text-center text-gray-400">Laster...</div>
+  if (isLoading) return <div className="p-8 text-center text-theme-secondary">Laster...</div>
 
   const filteredKommuner = filterFylke ? kommuner.filter(k => k.fylke_id === filterFylke) : kommuner
   const filteredBrannvesenList = filterSentral
@@ -208,7 +208,7 @@ export default function OperatorHendelserPage() {
       {removeEditItemImage && (
         <p className="text-xs text-red-400 mb-2 flex items-center gap-1">
           Bilde fjernes ved lagring
-          <button onClick={() => setRemoveEditItemImage(false)} className="text-gray-400 hover:text-white underline ml-1">Angre</button>
+          <button onClick={() => setRemoveEditItemImage(false)} className="text-theme-secondary hover:text-theme underline ml-1">Angre</button>
         </p>
       )}
       <div className="flex items-center gap-2">
@@ -476,8 +476,8 @@ export default function OperatorHendelserPage() {
     <DashboardLayout role={layoutRole}>
       <div className="p-4 lg:p-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Hendelser</h1>
-          <p className="text-sm text-gray-400 mb-3">
+          <h1 className="text-2xl font-bold text-theme">Hendelser</h1>
+          <p className="text-sm text-theme-secondary mb-3">
             {isScoped ? 'Hendelser for dine 110-sentraler' : 'Administrer hendelser'}
           </p>
           <Link href="/operator/hendelser/ny" className="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-sm transition-colors touch-manipulation">
@@ -493,7 +493,7 @@ export default function OperatorHendelserPage() {
             { value: 'pågår', label: 'Pågår' },
             { value: 'avsluttet', label: 'Avsluttet' },
           ].map((tab) => (
-            <button key={tab.value} onClick={() => setStatusFilter(tab.value)} className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors touch-manipulation ${statusFilter === tab.value ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-[#1a1a1a] text-gray-400 border border-[#2a2a2a] hover:text-white'}`}>
+            <button key={tab.value} onClick={() => setStatusFilter(tab.value)} className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors touch-manipulation ${statusFilter === tab.value ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-theme-card text-theme-secondary border border-theme hover:text-theme'}`}>
               {tab.label}
               <span className="ml-1.5 text-xs">({tab.value === 'alle' ? scopedHendelser.filter(h => !deactivatedIds.includes(h.id)).length : scopedHendelser.filter((h) => h.status === tab.value && !deactivatedIds.includes(h.id)).length})</span>
             </button>
@@ -502,34 +502,34 @@ export default function OperatorHendelserPage() {
 
         {/* Search + Filters */}
         <div className="space-y-3 mb-6">
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk på tittel eller sted..." className="w-full px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk på tittel eller sted..." className="w-full px-4 py-2 bg-theme-card border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
-            <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
+            <select value={filterKategori} onChange={(e) => setFilterKategori(e.target.value)} className="px-3 py-2.5 bg-theme-card border border-theme-input rounded-lg text-theme text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle kategorier</option>
               {kategorier.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map(k => <option key={k.id} value={k.id}>{k.navn}</option>)}
             </select>
-            <select value={filterAlvor} onChange={(e) => setFilterAlvor(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
+            <select value={filterAlvor} onChange={(e) => setFilterAlvor(e.target.value)} className="px-3 py-2.5 bg-theme-card border border-theme-input rounded-lg text-theme text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle alvorlighetsgrader</option>
               <option value="lav">Lav</option>
               <option value="middels">Middels</option>
               <option value="høy">Høy</option>
               <option value="kritisk">Kritisk</option>
             </select>
-            <select value={filterSentral} onChange={(e) => setFilterSentral(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
+            <select value={filterSentral} onChange={(e) => setFilterSentral(e.target.value)} className="px-3 py-2.5 bg-theme-card border border-theme-input rounded-lg text-theme text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle 110-sentraler</option>
               {sentraler.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
             </select>
-            <select value={filterFylke} onChange={(e) => { setFilterFylke(e.target.value); setFilterKommune(''); setFilterBrannvesen('') }} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
+            <select value={filterFylke} onChange={(e) => { setFilterFylke(e.target.value); setFilterKommune(''); setFilterBrannvesen('') }} className="px-3 py-2.5 bg-theme-card border border-theme-input rounded-lg text-theme text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle fylker</option>
               {fylker.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
             </select>
             {filterFylke && (
-              <select value={filterKommune} onChange={(e) => setFilterKommune(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
+              <select value={filterKommune} onChange={(e) => setFilterKommune(e.target.value)} className="px-3 py-2.5 bg-theme-card border border-theme-input rounded-lg text-theme text-xs focus:outline-none focus:border-blue-500">
                 <option value="">Alle kommuner</option>
                 {filteredKommuner.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map(k => <option key={k.id} value={k.id}>{k.navn}</option>)}
               </select>
             )}
-            <select value={filterBrannvesen} onChange={(e) => setFilterBrannvesen(e.target.value)} className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-xs focus:outline-none focus:border-blue-500">
+            <select value={filterBrannvesen} onChange={(e) => setFilterBrannvesen(e.target.value)} className="px-3 py-2.5 bg-theme-card border border-theme-input rounded-lg text-theme text-xs focus:outline-none focus:border-blue-500">
               <option value="">Alle brannvesen</option>
               {filteredBrannvesenList.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(b => <option key={b.id} value={b.id}>{b.kort_navn}</option>)}
             </select>
@@ -552,28 +552,28 @@ export default function OperatorHendelserPage() {
             const hasPresse = !!h.presse_tekst || presseCount > 0
 
             return (
-              <div key={h.id} className={`bg-[#1a1a1a] rounded-xl border overflow-hidden transition-colors ${
-                h.status === 'pågår' ? 'border-l-4 border-l-red-500 border-[#2a2a2a]' : h.status === 'avsluttet' ? 'border-l-4 border-l-green-500 border-[#2a2a2a]' : 'border-[#2a2a2a]'
+              <div key={h.id} className={`bg-theme-card rounded-xl border overflow-hidden transition-colors ${
+                h.status === 'pågår' ? 'border-l-4 border-l-red-500 border-theme' : h.status === 'avsluttet' ? 'border-l-4 border-l-green-500 border-theme' : 'border-theme'
               }`}>
                 {/* Card header - clickable */}
                 <div
-                  className="p-4 cursor-pointer hover:bg-[#222] transition-colors"
+                  className="p-4 cursor-pointer hover:bg-theme-card-hover transition-colors"
                   onClick={() => setExpandedId(isExpanded ? null : h.id)}
                 >
                   {/* Top row: status + severity + duration + time */}
                   <div className="flex items-center gap-2 mb-2">
                     <StatusBadge status={h.status} size="sm" />
                     <SeverityDot severity={h.alvorlighetsgrad} showLabel />
-                    <span className={`text-[11px] px-1.5 py-0.5 rounded ${h.status === 'avsluttet' ? 'bg-gray-500/10 text-gray-500' : 'bg-amber-500/10 text-amber-400'}`}>
+                    <span className={`text-[11px] px-1.5 py-0.5 rounded ${h.status === 'avsluttet' ? 'bg-gray-500/10 text-theme-muted' : 'bg-amber-500/10 text-amber-400'}`}>
                       {formatDuration(h.opprettet_tidspunkt, h.avsluttet_tidspunkt)}
                     </span>
-                    <span className="text-xs text-gray-500 ml-auto">{formatTimeAgo(h.opprettet_tidspunkt)}</span>
+                    <span className="text-xs text-theme-muted ml-auto">{formatTimeAgo(h.opprettet_tidspunkt)}</span>
                     <ChevronIcon open={isExpanded} />
                   </div>
 
                   {/* Title + location */}
-                  <h3 className="text-base font-semibold text-white mb-1">{h.tittel}</h3>
-                  <p className="text-xs text-gray-400 mb-3">{h.sted}</p>
+                  <h3 className="text-base font-semibold text-theme mb-1">{h.tittel}</h3>
+                  <p className="text-xs text-theme-secondary mb-3">{h.sted}</p>
 
                   {/* Info chips */}
                   <div className="flex flex-wrap items-center gap-2">
@@ -582,7 +582,7 @@ export default function OperatorHendelserPage() {
                         <CategoryIcon iconName={kat.ikon} className="w-3 h-3" />{kat.navn}
                       </span>
                     )}
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-500/10 text-gray-400">
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-500/10 text-theme-secondary">
                       {sentral?.kort_navn || bv?.kort_navn}
                     </span>
                     {updCount > 0 && (
@@ -603,7 +603,7 @@ export default function OperatorHendelserPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#2a2a2a]" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-theme" onClick={(e) => e.stopPropagation()}>
                     <button onClick={() => openHendelse(h.id)} className="text-xs text-blue-400 hover:text-blue-300 font-medium py-1 touch-manipulation flex items-center gap-1">
                       <EditIcon /> Rediger
                     </button>
@@ -612,7 +612,7 @@ export default function OperatorHendelserPage() {
                         <DeactivateIcon /> Deaktiver
                       </button>
                     )}
-                    <span className="text-xs text-gray-600 ml-auto">{formatDateTime(h.opprettet_tidspunkt)}</span>
+                    <span className="text-xs text-theme-dim ml-auto">{formatDateTime(h.opprettet_tidspunkt)}</span>
                   </div>
                 </div>
 
@@ -647,15 +647,15 @@ export default function OperatorHendelserPage() {
                     publikum: { color: 'blue', label: 'Publikum', border: 'border-blue-500', line: 'bg-blue-500/30', badge: 'bg-blue-500/15 text-blue-400' },
                     presse: { color: 'cyan', label: 'Kun presse', border: 'border-cyan-500', line: 'bg-cyan-500/30', badge: 'bg-cyan-500/20 text-cyan-400' },
                     intern: { color: 'yellow', label: 'Internt', border: 'border-yellow-500', line: 'bg-yellow-500/30', badge: 'bg-yellow-500/20 text-yellow-400' },
-                    status: { color: 'gray', label: 'Status', border: 'border-gray-500', line: 'bg-gray-500/30', badge: 'bg-gray-500/20 text-gray-400' },
+                    status: { color: 'gray', label: 'Status', border: 'border-gray-500', line: 'bg-gray-500/30', badge: 'bg-gray-500/20 text-theme-secondary' },
                   }
 
                   return (
-                    <div className="border-t border-[#2a2a2a] bg-[#111] p-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+                    <div className="border-t border-theme bg-theme-sidebar p-4 space-y-4" onClick={(e) => e.stopPropagation()}>
                       {/* Hendelse bilde */}
                       {h.bilde_url && (
                         <div>
-                          <h4 className="text-xs font-semibold text-gray-400 mb-2 flex items-center gap-1.5">
+                          <h4 className="text-xs font-semibold text-theme-secondary mb-2 flex items-center gap-1.5">
                             <ImageIcon /> Hendelsebilde
                           </h4>
                           <img src={h.bilde_url} alt="" className="rounded-lg max-h-48 object-cover" />
@@ -664,7 +664,7 @@ export default function OperatorHendelserPage() {
                       {/* Beskrivelse */}
                       <div>
                         <p className="text-sm text-gray-300">{h.beskrivelse}</p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-theme-muted mt-1">
                           Sted: {h.sted} &middot; Opprettet: {formatDateTime(h.opprettet_tidspunkt)}
                           {getUserName(h.opprettet_av) && <> &middot; Av: {getUserName(h.opprettet_av)}</>}
                           &middot; Sist oppdatert: {formatTimeAgo(h.oppdatert_tidspunkt)}
@@ -682,7 +682,7 @@ export default function OperatorHendelserPage() {
                               </div>
                               <p className="text-sm text-gray-300 whitespace-pre-line">{h.presse_tekst}</p>
                             </div>
-                            <button onClick={() => openHendelse(h.id)} className="p-1 text-gray-500 hover:text-cyan-400 shrink-0" title="Rediger pressemelding"><EditIcon /></button>
+                            <button onClick={() => openHendelse(h.id)} className="p-1 text-theme-muted hover:text-cyan-400 shrink-0" title="Rediger pressemelding"><EditIcon /></button>
                           </div>
                         </div>
                       )}
@@ -690,8 +690,8 @@ export default function OperatorHendelserPage() {
                       {/* ── Unified Timeline ── */}
                       {timeline.length > 0 && (
                         <div>
-                          <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                            <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          <h4 className="text-sm font-semibold text-theme mb-3 flex items-center gap-2">
+                            <svg className="w-4 h-4 text-theme-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                             Tidslinje
                           </h4>
                           <div className="relative ml-1">
@@ -707,26 +707,26 @@ export default function OperatorHendelserPage() {
                                   {i < timeline.length - 1 && (
                                     <div className={`absolute left-[5px] top-[10px] bottom-0 w-px ${typeConfig[timeline[i + 1].type].line}`} />
                                   )}
-                                  <div className={`absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 ${cfg.border} bg-[#111]`} />
+                                  <div className={`absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 ${cfg.border} bg-theme-sidebar`} />
 
                                   {isStatusItem ? (
                                     <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
-                                      <span className="text-xs text-gray-400 italic">{item.tekst}</span>
+                                      <span className="text-xs text-theme-muted">{formatTime(item.opprettet_tidspunkt)}</span>
+                                      <span className="text-xs text-theme-secondary italic">{item.tekst}</span>
                                       {item.opprettet_av && getUserName(item.opprettet_av) && (
-                                        <span className="text-xs text-gray-600">Av: {getUserName(item.opprettet_av)}</span>
+                                        <span className="text-xs text-theme-dim">Av: {getUserName(item.opprettet_av)}</span>
                                       )}
                                     </div>
                                   ) : isEditingThis ? (
                                     <div>
                                       <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
+                                        <span className="text-xs text-theme-muted">{formatTime(item.opprettet_tidspunkt)}</span>
                                         <span className={`text-[10px] ${cfg.badge} px-1.5 py-0.5 rounded font-bold`}>{cfg.label}</span>
                                       </div>
                                       <textarea
                                         value={item.type === 'publikum' ? editUpdateText : item.type === 'presse' ? editPresseText : editNotatText}
                                         onChange={(e) => item.type === 'publikum' ? setEditUpdateText(e.target.value) : item.type === 'presse' ? setEditPresseText(e.target.value) : setEditNotatText(e.target.value)}
-                                        className={`w-full px-2 py-1.5 bg-[#0a0a0a] border border-${cfg.color}-500/50 rounded text-white text-sm focus:outline-none h-16 resize-none`}
+                                        className={`w-full px-2 py-1.5 bg-theme-input border border-${cfg.color}-500/50 rounded text-theme text-sm focus:outline-none h-16 resize-none`}
                                       />
                                       <ImageEditControls currentUrl={item.bilde_url || null} accentColor={cfg.color} />
                                       <div className="flex gap-2 mt-2">
@@ -734,16 +734,16 @@ export default function OperatorHendelserPage() {
                                           onClick={() => item.type === 'publikum' ? handleUpdateEdit(item.id, h.id) : item.type === 'presse' ? handlePresseEdit(item.id, h.id) : handleNotatEdit(item.id, h.id)}
                                           className={`px-3 py-1 bg-${cfg.color}-500 text-white rounded text-xs`}
                                         >Lagre</button>
-                                        <button onClick={() => { item.type === 'publikum' ? setEditingUpdateId(null) : item.type === 'presse' ? setEditingPresseId(null) : setEditingNotatId(null); resetEditImageState() }} className="px-3 py-1 text-gray-400 text-xs">Avbryt</button>
+                                        <button onClick={() => { item.type === 'publikum' ? setEditingUpdateId(null) : item.type === 'presse' ? setEditingPresseId(null) : setEditingNotatId(null); resetEditImageState() }} className="px-3 py-1 text-theme-secondary text-xs">Avbryt</button>
                                       </div>
                                     </div>
                                   ) : (
                                     <div>
                                       <div className="flex items-center gap-2 flex-wrap">
-                                        <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
+                                        <span className="text-xs text-theme-muted">{formatTime(item.opprettet_tidspunkt)}</span>
                                         <span className={`text-[10px] ${cfg.badge} px-1.5 py-0.5 rounded font-bold`}>{cfg.label}</span>
                                         {item.opprettet_av && getUserName(item.opprettet_av) && (
-                                          <span className="text-xs text-gray-600">Av: {getUserName(item.opprettet_av)}</span>
+                                          <span className="text-xs text-theme-dim">Av: {getUserName(item.opprettet_av)}</span>
                                         )}
                                         <div className="flex items-center gap-1 ml-auto shrink-0">
                                           <button
@@ -753,12 +753,12 @@ export default function OperatorHendelserPage() {
                                               else if (item.type === 'presse') { setEditingPresseId(item.id); setEditPresseText(item.tekst) }
                                               else { setEditingNotatId(item.id); setEditNotatText(item.tekst) }
                                             }}
-                                            className={`p-1 text-gray-500 hover:text-${cfg.color}-400`}
+                                            className={`p-1 text-theme-muted hover:text-${cfg.color}-400`}
                                             title="Rediger"
                                           ><EditIcon /></button>
                                           <button
                                             onClick={() => item.type === 'publikum' ? handleDeactivateUpdate(item.id) : item.type === 'presse' ? handleDeactivatePresse(item.id) : handleDeactivateNotat(item.id)}
-                                            className="p-1 text-gray-500 hover:text-red-400"
+                                            className="p-1 text-theme-muted hover:text-red-400"
                                             title="Deaktiver"
                                           ><DeactivateIcon /></button>
                                         </div>
@@ -792,27 +792,27 @@ export default function OperatorHendelserPage() {
         </div>
 
         {hendelser.length === 0 && (
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-8 text-center text-gray-500 text-sm">
+          <div className="bg-theme-card rounded-xl border border-theme p-8 text-center text-theme-muted text-sm">
             {search || activeFilterCount > 0 ? 'Ingen hendelser matcher filteret' : 'Ingen hendelser registrert'}
           </div>
         )}
 
         <div className="mt-3 text-center">
-          <p className="text-xs text-gray-500">Viser {hendelser.length} av {scopedHendelser.filter(h => !deactivatedIds.includes(h.id)).length} hendelser</p>
+          <p className="text-xs text-theme-muted">Viser {hendelser.length} av {scopedHendelser.filter(h => !deactivatedIds.includes(h.id)).length} hendelser</p>
         </div>
       </div>
 
       {/* Deactivate confirm modal */}
       {deactivateConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setDeactivateConfirm(null)} />
-          <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-sm mx-4">
-            <h2 className="text-lg font-bold text-white mb-2">Deaktiver hendelse?</h2>
-            <p className="text-sm text-gray-400 mb-2">{allHendelser.find(h => h.id === deactivateConfirm)?.tittel}</p>
-            <p className="text-xs text-gray-500 mb-6">Hendelsen vil bli skjult fra oversikten.</p>
+          <div className="absolute inset-0 bg-theme-overlay" onClick={() => setDeactivateConfirm(null)} />
+          <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-sm mx-4">
+            <h2 className="text-lg font-bold text-theme mb-2">Deaktiver hendelse?</h2>
+            <p className="text-sm text-theme-secondary mb-2">{allHendelser.find(h => h.id === deactivateConfirm)?.tittel}</p>
+            <p className="text-xs text-theme-muted mb-6">Hendelsen vil bli skjult fra oversikten.</p>
             <div className="flex gap-3">
               <button onClick={() => handleDeactivate(deactivateConfirm)} className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors">Deaktiver</button>
-              <button onClick={() => setDeactivateConfirm(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors">Avbryt</button>
+              <button onClick={() => setDeactivateConfirm(null)} className="px-4 py-2.5 bg-theme border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors">Avbryt</button>
             </div>
           </div>
         </div>
@@ -821,11 +821,11 @@ export default function OperatorHendelserPage() {
       {/* ── Edit Modal ── */}
       {selectedH && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setSelectedHendelse(null)} />
-          <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="absolute inset-0 bg-theme-overlay" onClick={() => setSelectedHendelse(null)} />
+          <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between mb-4">
-              <h2 className="text-lg font-bold text-white">Rediger hendelse</h2>
-              <button onClick={() => setSelectedHendelse(null)} className="text-gray-400 hover:text-white">
+              <h2 className="text-lg font-bold text-theme">Rediger hendelse</h2>
+              <button onClick={() => setSelectedHendelse(null)} className="text-theme-secondary hover:text-theme">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -833,22 +833,22 @@ export default function OperatorHendelserPage() {
             {/* ── Basic fields ── */}
             <div className="space-y-4 mb-6">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Tittel</label>
-                <input type="text" value={editTittel} onChange={(e) => setEditTittel(e.target.value)} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+                <label className="block text-xs text-theme-muted mb-1">Tittel</label>
+                <input type="text" value={editTittel} onChange={(e) => setEditTittel(e.target.value)} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Beskrivelse</label>
-                <textarea value={editBeskrivelse} onChange={(e) => setEditBeskrivelse(e.target.value)} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 h-20 resize-none" />
+                <label className="block text-xs text-theme-muted mb-1">Beskrivelse</label>
+                <textarea value={editBeskrivelse} onChange={(e) => setEditBeskrivelse(e.target.value)} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500 h-20 resize-none" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Sted</label>
-                  <input type="text" value={editSted} onChange={(e) => setEditSted(e.target.value)} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+                  <label className="block text-xs text-theme-muted mb-1">Sted</label>
+                  <input type="text" value={editSted} onChange={(e) => setEditSted(e.target.value)} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Status</label>
+                  <label className="block text-xs text-theme-muted mb-1">Status</label>
                   <div className="flex gap-2">
-                    <button onClick={() => { setEditStatus('pågår'); setEditAvsluttetTidspunkt(''); setShowAvsluttetDialog(false) }} className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${editStatus === 'pågår' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-[#0a0a0a] text-gray-400 border border-[#2a2a2a]'}`}>
+                    <button onClick={() => { setEditStatus('pågår'); setEditAvsluttetTidspunkt(''); setShowAvsluttetDialog(false) }} className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${editStatus === 'pågår' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-theme text-theme-secondary border border-theme'}`}>
                       Pågår
                     </button>
                     <button onClick={() => {
@@ -859,45 +859,45 @@ export default function OperatorHendelserPage() {
                         setShowAvsluttetDialog(true)
                       }
                       setEditStatus('avsluttet')
-                    }} className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${editStatus === 'avsluttet' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-[#0a0a0a] text-gray-400 border border-[#2a2a2a]'}`}>
+                    }} className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${editStatus === 'avsluttet' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-theme text-theme-secondary border border-theme'}`}>
                       Avsluttet
                     </button>
                   </div>
                   {showAvsluttetDialog && (
                     <div className="mt-3 p-3 bg-green-500/5 border border-green-500/20 rounded-lg">
                       <label className="block text-xs text-green-400 mb-1 font-semibold">Tidspunkt for avslutning *</label>
-                      <p className="text-xs text-gray-500 mb-2">Sett klokkeslett for når hendelsen ble avsluttet.</p>
+                      <p className="text-xs text-theme-muted mb-2">Sett klokkeslett for når hendelsen ble avsluttet.</p>
                       <input
                         type="datetime-local"
                         value={editAvsluttetTidspunkt}
                         onChange={(e) => setEditAvsluttetTidspunkt(e.target.value)}
-                        className="w-full px-3 py-2 bg-[#0a0a0a] border border-green-500/30 rounded-lg text-white text-sm focus:outline-none focus:border-green-500"
+                        className="w-full px-3 py-2 bg-theme-input border border-green-500/30 rounded-lg text-theme text-sm focus:outline-none focus:border-green-500"
                       />
                     </div>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Kategori</label>
-                  <select value={editKategoriId} onChange={(e) => setEditKategoriId(e.target.value)} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
+                  <label className="block text-xs text-theme-muted mb-1">Kategori</label>
+                  <select value={editKategoriId} onChange={(e) => setEditKategoriId(e.target.value)} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
                     {kategorier.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map(k => <option key={k.id} value={k.id}>{k.navn}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Alvorlighetsgrad</label>
-                  <select value={editAlvor} onChange={(e) => setEditAlvor(e.target.value)} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
+                  <label className="block text-xs text-theme-muted mb-1">Alvorlighetsgrad</label>
+                  <select value={editAlvor} onChange={(e) => setEditAlvor(e.target.value)} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
                     <option value="lav">Lav</option><option value="middels">Middels</option><option value="høy">Høy</option><option value="kritisk">Kritisk</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">110-sentral</label>
-                  <select value={editSentralId} onChange={(e) => { setEditSentralId(e.target.value); setEditBrannvesenId('') }} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
+                  <label className="block text-xs text-theme-muted mb-1">110-sentral</label>
+                  <select value={editSentralId} onChange={(e) => { setEditSentralId(e.target.value); setEditBrannvesenId('') }} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
                     <option value="">Velg 110-sentral</option>
                     {sentraler.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Brannvesen</label>
-                  <select value={editBrannvesenId} onChange={(e) => setEditBrannvesenId(e.target.value)} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
+                  <label className="block text-xs text-theme-muted mb-1">Brannvesen</label>
+                  <select value={editBrannvesenId} onChange={(e) => setEditBrannvesenId(e.target.value)} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
                     <option value="">Velg brannvesen</option>
                     {(editSentralId ? brannvesen.filter(b => sentraler.find(s => s.id === editSentralId)?.brannvesen_ids.includes(b.id)) : brannvesen).sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(b => <option key={b.id} value={b.id}>{b.kort_navn}</option>)}
                   </select>
@@ -906,43 +906,43 @@ export default function OperatorHendelserPage() {
             </div>
 
             {/* ══════════ Tidspunkter ══════════ */}
-            <div className="border-t border-[#2a2a2a] pt-4 mb-4">
+            <div className="border-t border-theme pt-4 mb-4">
               <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 Tidspunkter
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Starttidspunkt</label>
+                  <label className="block text-xs text-theme-muted mb-1">Starttidspunkt</label>
                   <input
                     type="datetime-local"
                     value={editStartTidspunkt}
                     onChange={(e) => setEditStartTidspunkt(e.target.value)}
-                    className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Avslutningstidspunkt</label>
+                  <label className="block text-xs text-theme-muted mb-1">Avslutningstidspunkt</label>
                   {editStatus === 'avsluttet' ? (
                     <input
                       type="datetime-local"
                       value={editAvsluttetTidspunkt}
                       onChange={(e) => setEditAvsluttetTidspunkt(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#0a0a0a] border border-green-500/30 rounded-lg text-white text-sm focus:outline-none focus:border-green-500"
+                      className="w-full px-3 py-2 bg-theme-input border border-green-500/30 rounded-lg text-theme text-sm focus:outline-none focus:border-green-500"
                     />
                   ) : (
-                    <p className="px-3 py-2 text-sm text-gray-600 italic">Hendelsen pågår fortsatt</p>
+                    <p className="px-3 py-2 text-sm text-theme-dim italic">Hendelsen pågår fortsatt</p>
                   )}
                 </div>
               </div>
             </div>
 
             {/* ══════════ Hendelsebilde ══════════ */}
-            <div className="border-t border-[#2a2a2a] pt-4 mb-4">
+            <div className="border-t border-theme pt-4 mb-4">
               <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
                 <ImageIcon />
                 Hendelsebilde
-                <span className="text-xs text-gray-500 font-normal">Synlig for alle</span>
+                <span className="text-xs text-theme-muted font-normal">Synlig for alle</span>
               </h3>
               {selectedH.bilde_url && !newHendelseBilde && (
                 <div className="mb-3 relative inline-block">
@@ -967,7 +967,7 @@ export default function OperatorHendelserPage() {
               )}
               <div className="flex items-center gap-3">
                 <input type="file" ref={hendelseBildeRef} accept="image/*" className="hidden" onChange={(e) => setNewHendelseBilde(e.target.files?.[0] || null)} />
-                <button onClick={() => hendelseBildeRef.current?.click()} className="flex items-center gap-1.5 px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-xs text-gray-400 hover:text-white transition-colors">
+                <button onClick={() => hendelseBildeRef.current?.click()} className="flex items-center gap-1.5 px-3 py-2 bg-theme border border-theme rounded-lg text-xs text-theme-secondary hover:text-theme transition-colors">
                   <ImageIcon />
                   {newHendelseBilde ? newHendelseBilde.name : selectedH.bilde_url ? 'Bytt bilde' : 'Legg til bilde'}
                 </button>
@@ -976,26 +976,26 @@ export default function OperatorHendelserPage() {
             </div>
 
             {/* ══════════ SECTION 1: Oppdateringer (public) ══════════ */}
-            <div className="border-t border-[#2a2a2a] pt-4 mb-4">
+            <div className="border-t border-theme pt-4 mb-4">
               <h3 className="text-sm font-semibold text-blue-400 mb-3 flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 Oppdateringer ({selectedH.oppdateringer?.filter(u => !u.deaktivert).length || 0})
-                <span className="text-xs text-gray-500 font-normal">Synlig for alle</span>
+                <span className="text-xs text-theme-muted font-normal">Synlig for alle</span>
               </h3>
 
               {(selectedH.oppdateringer?.length ?? 0) > 0 && (
                 <div className="space-y-2 mb-4">
                   {selectedH.oppdateringer?.map(u => (
-                    <div key={u.id} className={`rounded-lg p-3 ${u.deaktivert ? 'bg-[#0a0a0a] opacity-40' : 'bg-[#0a0a0a]'}`}>
+                    <div key={u.id} className={`rounded-lg p-3 ${u.deaktivert ? 'bg-theme-card-inner opacity-40' : 'bg-theme-card-inner'}`}>
                       {u.deaktivert ? (
-                        <p className="text-xs text-gray-600 italic">Deaktivert oppdatering</p>
+                        <p className="text-xs text-theme-dim italic">Deaktivert oppdatering</p>
                       ) : editingUpdateId === u.id ? (
                         <div>
-                          <textarea value={editUpdateText} onChange={(e) => setEditUpdateText(e.target.value)} className="w-full px-2 py-1.5 bg-[#111] border border-blue-500/50 rounded text-white text-sm focus:outline-none h-16 resize-none" />
+                          <textarea value={editUpdateText} onChange={(e) => setEditUpdateText(e.target.value)} className="w-full px-2 py-1.5 bg-theme-sidebar border border-blue-500/50 rounded text-theme text-sm focus:outline-none h-16 resize-none" />
                           <ImageEditControls currentUrl={u.bilde_url} accentColor="blue" />
                           <div className="flex gap-2 mt-2">
                             <button onClick={() => handleUpdateEdit(u.id, selectedH.id)} className="px-3 py-1 bg-blue-500 text-white rounded text-xs">Lagre</button>
-                            <button onClick={() => { setEditingUpdateId(null); resetEditImageState() }} className="px-3 py-1 text-gray-400 text-xs">Avbryt</button>
+                            <button onClick={() => { setEditingUpdateId(null); resetEditImageState() }} className="px-3 py-1 text-theme-secondary text-xs">Avbryt</button>
                           </div>
                         </div>
                       ) : (
@@ -1003,14 +1003,14 @@ export default function OperatorHendelserPage() {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-gray-300">{u.tekst}</p>
                             {u.bilde_url && <img src={u.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />}
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-theme-muted mt-1">
                               {formatDateTime(u.opprettet_tidspunkt)}
                               {getUserName(u.opprettet_av) && <> &middot; Av: {getUserName(u.opprettet_av)}</>}
                             </p>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            <button onClick={() => { setEditingUpdateId(u.id); setEditUpdateText(u.tekst); resetEditImageState() }} className="p-1 text-gray-500 hover:text-blue-400" title="Rediger"><EditIcon /></button>
-                            <button onClick={() => handleDeactivateUpdate(u.id)} className="p-1 text-gray-500 hover:text-red-400" title="Deaktiver"><DeactivateIcon /></button>
+                            <button onClick={() => { setEditingUpdateId(u.id); setEditUpdateText(u.tekst); resetEditImageState() }} className="p-1 text-theme-muted hover:text-blue-400" title="Rediger"><EditIcon /></button>
+                            <button onClick={() => handleDeactivateUpdate(u.id)} className="p-1 text-theme-muted hover:text-red-400" title="Deaktiver"><DeactivateIcon /></button>
                           </div>
                         </div>
                       )}
@@ -1020,11 +1020,11 @@ export default function OperatorHendelserPage() {
               )}
 
               <div className="space-y-2">
-                <label className="block text-xs text-gray-500">Ny oppdatering</label>
-                <textarea value={newUpdate} onChange={(e) => setNewUpdate(e.target.value)} placeholder="Skriv en oppdatering (synlig for alle)..." className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 h-16 resize-none" />
+                <label className="block text-xs text-theme-muted">Ny oppdatering</label>
+                <textarea value={newUpdate} onChange={(e) => setNewUpdate(e.target.value)} placeholder="Skriv en oppdatering (synlig for alle)..." className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500 h-16 resize-none" />
                 <div className="flex items-center gap-3">
                   <input type="file" ref={updateImageRef} accept="image/*" className="hidden" onChange={(e) => setNewUpdateImage(e.target.files?.[0] || null)} />
-                  <button onClick={() => updateImageRef.current?.click()} className="flex items-center gap-1 text-xs text-gray-400 hover:text-white">
+                  <button onClick={() => updateImageRef.current?.click()} className="flex items-center gap-1 text-xs text-theme-secondary hover:text-theme">
                     <ImageIcon />
                     {newUpdateImage ? newUpdateImage.name : 'Legg til bilde'}
                   </button>
@@ -1038,13 +1038,13 @@ export default function OperatorHendelserPage() {
               <h3 className="text-sm font-semibold text-cyan-400 mb-3 flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
                 Pressemeldinger
-                <span className="text-xs text-gray-500 font-normal">Synlig for presse</span>
+                <span className="text-xs text-theme-muted font-normal">Synlig for presse</span>
               </h3>
 
               {/* Main pressemelding */}
               <div className="mb-3">
                 <label className="block text-xs text-cyan-500/60 mb-1 uppercase font-semibold">Hovedpressemelding</label>
-                <textarea value={editPressetekst} onChange={(e) => setEditPressetekst(e.target.value)} placeholder="Skriv hovedpressemelding..." className="w-full px-3 py-2 bg-[#0a0a0a] border border-cyan-500/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500 h-16 resize-none" />
+                <textarea value={editPressetekst} onChange={(e) => setEditPressetekst(e.target.value)} placeholder="Skriv hovedpressemelding..." className="w-full px-3 py-2 bg-theme-input border border-cyan-500/30 rounded-lg text-theme text-sm focus:outline-none focus:border-cyan-500 h-16 resize-none" />
               </div>
 
               {/* Existing presseoppdateringer */}
@@ -1053,14 +1053,14 @@ export default function OperatorHendelserPage() {
                   {selectedH.presseoppdateringer?.map(p => (
                     <div key={p.id} className={`rounded-lg p-3 ${p.deaktivert ? 'bg-cyan-500/5 border border-cyan-500/10 opacity-40' : 'bg-cyan-500/5 border border-cyan-500/20'}`}>
                       {p.deaktivert ? (
-                        <p className="text-xs text-gray-600 italic">Deaktivert pressemelding</p>
+                        <p className="text-xs text-theme-dim italic">Deaktivert pressemelding</p>
                       ) : editingPresseId === p.id ? (
                         <div>
-                          <textarea value={editPresseText} onChange={(e) => setEditPresseText(e.target.value)} className="w-full px-2 py-1.5 bg-[#111] border border-cyan-500/50 rounded text-white text-sm focus:outline-none h-16 resize-none" />
+                          <textarea value={editPresseText} onChange={(e) => setEditPresseText(e.target.value)} className="w-full px-2 py-1.5 bg-theme-sidebar border border-cyan-500/50 rounded text-theme text-sm focus:outline-none h-16 resize-none" />
                           <ImageEditControls currentUrl={p.bilde_url} accentColor="cyan" />
                           <div className="flex gap-2 mt-2">
                             <button onClick={() => handlePresseEdit(p.id, selectedH.id)} className="px-3 py-1 bg-cyan-600 text-white rounded text-xs">Lagre</button>
-                            <button onClick={() => { setEditingPresseId(null); resetEditImageState() }} className="px-3 py-1 text-gray-400 text-xs">Avbryt</button>
+                            <button onClick={() => { setEditingPresseId(null); resetEditImageState() }} className="px-3 py-1 text-theme-secondary text-xs">Avbryt</button>
                           </div>
                         </div>
                       ) : (
@@ -1068,14 +1068,14 @@ export default function OperatorHendelserPage() {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-gray-300">{p.tekst}</p>
                             {p.bilde_url && <img src={p.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />}
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-theme-muted mt-1">
                               {formatDateTime(p.opprettet_tidspunkt)}
                               {getUserName(p.opprettet_av) && <> &middot; Av: {getUserName(p.opprettet_av)}</>}
                             </p>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            <button onClick={() => { setEditingPresseId(p.id); setEditPresseText(p.tekst); resetEditImageState() }} className="p-1 text-gray-500 hover:text-cyan-400" title="Rediger"><EditIcon /></button>
-                            <button onClick={() => handleDeactivatePresse(p.id)} className="p-1 text-gray-500 hover:text-red-400" title="Deaktiver"><DeactivateIcon /></button>
+                            <button onClick={() => { setEditingPresseId(p.id); setEditPresseText(p.tekst); resetEditImageState() }} className="p-1 text-theme-muted hover:text-cyan-400" title="Rediger"><EditIcon /></button>
+                            <button onClick={() => handleDeactivatePresse(p.id)} className="p-1 text-theme-muted hover:text-red-400" title="Deaktiver"><DeactivateIcon /></button>
                           </div>
                         </div>
                       )}
@@ -1086,11 +1086,11 @@ export default function OperatorHendelserPage() {
 
               {/* New presseoppdatering */}
               <div className="space-y-2">
-                <label className="block text-xs text-gray-500">Ny pressemelding</label>
-                <textarea value={newPresse} onChange={(e) => setNewPresse(e.target.value)} placeholder="Skriv en pressemelding..." className="w-full px-3 py-2 bg-[#0a0a0a] border border-cyan-500/30 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500 h-16 resize-none" />
+                <label className="block text-xs text-theme-muted">Ny pressemelding</label>
+                <textarea value={newPresse} onChange={(e) => setNewPresse(e.target.value)} placeholder="Skriv en pressemelding..." className="w-full px-3 py-2 bg-theme-input border border-cyan-500/30 rounded-lg text-theme text-sm focus:outline-none focus:border-cyan-500 h-16 resize-none" />
                 <div className="flex items-center gap-3">
                   <input type="file" ref={presseImageRef} accept="image/*" className="hidden" onChange={(e) => setNewPresseImage(e.target.files?.[0] || null)} />
-                  <button onClick={() => presseImageRef.current?.click()} className="flex items-center gap-1 text-xs text-gray-400 hover:text-white">
+                  <button onClick={() => presseImageRef.current?.click()} className="flex items-center gap-1 text-xs text-theme-secondary hover:text-theme">
                     <ImageIcon />
                     {newPresseImage ? newPresseImage.name : 'Legg til bilde'}
                   </button>
@@ -1112,14 +1112,14 @@ export default function OperatorHendelserPage() {
                   {selectedH.interne_notater?.map(n => (
                     <div key={n.id} className={`rounded-lg p-3 ${n.deaktivert ? 'bg-yellow-500/5 border border-yellow-500/10 opacity-40' : 'bg-yellow-500/5 border border-yellow-500/20'}`}>
                       {n.deaktivert ? (
-                        <p className="text-xs text-gray-600 italic">Deaktivert notat</p>
+                        <p className="text-xs text-theme-dim italic">Deaktivert notat</p>
                       ) : editingNotatId === n.id ? (
                         <div>
-                          <textarea value={editNotatText} onChange={(e) => setEditNotatText(e.target.value)} className="w-full px-2 py-1.5 bg-[#111] border border-yellow-500/50 rounded text-white text-sm focus:outline-none h-16 resize-none" />
+                          <textarea value={editNotatText} onChange={(e) => setEditNotatText(e.target.value)} className="w-full px-2 py-1.5 bg-theme-sidebar border border-yellow-500/50 rounded text-theme text-sm focus:outline-none h-16 resize-none" />
                           <ImageEditControls currentUrl={n.bilde_url} accentColor="yellow" />
                           <div className="flex gap-2 mt-2">
                             <button onClick={() => handleNotatEdit(n.id, selectedH.id)} className="px-3 py-1 bg-yellow-600 text-white rounded text-xs">Lagre</button>
-                            <button onClick={() => { setEditingNotatId(null); resetEditImageState() }} className="px-3 py-1 text-gray-400 text-xs">Avbryt</button>
+                            <button onClick={() => { setEditingNotatId(null); resetEditImageState() }} className="px-3 py-1 text-theme-secondary text-xs">Avbryt</button>
                           </div>
                         </div>
                       ) : (
@@ -1127,14 +1127,14 @@ export default function OperatorHendelserPage() {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-gray-300">{n.notat}</p>
                             {n.bilde_url && <img src={n.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />}
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-theme-muted mt-1">
                               {formatDateTime(n.opprettet_tidspunkt)}
                               {getUserName(n.opprettet_av) && <> &middot; Av: {getUserName(n.opprettet_av)}</>}
                             </p>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
-                            <button onClick={() => { setEditingNotatId(n.id); setEditNotatText(n.notat); resetEditImageState() }} className="p-1 text-gray-500 hover:text-yellow-400" title="Rediger"><EditIcon /></button>
-                            <button onClick={() => handleDeactivateNotat(n.id)} className="p-1 text-gray-500 hover:text-red-400" title="Deaktiver"><DeactivateIcon /></button>
+                            <button onClick={() => { setEditingNotatId(n.id); setEditNotatText(n.notat); resetEditImageState() }} className="p-1 text-theme-muted hover:text-yellow-400" title="Rediger"><EditIcon /></button>
+                            <button onClick={() => handleDeactivateNotat(n.id)} className="p-1 text-theme-muted hover:text-red-400" title="Deaktiver"><DeactivateIcon /></button>
                           </div>
                         </div>
                       )}
@@ -1144,11 +1144,11 @@ export default function OperatorHendelserPage() {
               )}
 
               <div className="space-y-2">
-                <label className="block text-xs text-gray-500">Nytt internt notat</label>
-                <textarea value={newNotat} onChange={(e) => setNewNotat(e.target.value)} placeholder="Skriv et internt notat (kun synlig for operatører)..." className="w-full px-3 py-2 bg-[#0a0a0a] border border-yellow-500/30 rounded-lg text-white text-sm focus:outline-none focus:border-yellow-500 h-16 resize-none" />
+                <label className="block text-xs text-theme-muted">Nytt internt notat</label>
+                <textarea value={newNotat} onChange={(e) => setNewNotat(e.target.value)} placeholder="Skriv et internt notat (kun synlig for operatører)..." className="w-full px-3 py-2 bg-theme-input border border-yellow-500/30 rounded-lg text-theme text-sm focus:outline-none focus:border-yellow-500 h-16 resize-none" />
                 <div className="flex items-center gap-3">
                   <input type="file" ref={notatImageRef} accept="image/*" className="hidden" onChange={(e) => setNewNotatImage(e.target.files?.[0] || null)} />
-                  <button onClick={() => notatImageRef.current?.click()} className="flex items-center gap-1 text-xs text-gray-400 hover:text-white">
+                  <button onClick={() => notatImageRef.current?.click()} className="flex items-center gap-1 text-xs text-theme-secondary hover:text-theme">
                     <ImageIcon />
                     {newNotatImage ? newNotatImage.name : 'Legg til bilde'}
                   </button>
@@ -1162,7 +1162,7 @@ export default function OperatorHendelserPage() {
               <button onClick={handleSaveChanges} disabled={saving || uploadingImage} className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">
                 {uploadingImage ? 'Laster opp bilde...' : saving ? 'Lagrer...' : 'Lagre endringer'}
               </button>
-              <button onClick={() => setSelectedHendelse(null)} className="py-3 sm:px-4 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors touch-manipulation">Lukk</button>
+              <button onClick={() => setSelectedHendelse(null)} className="py-3 sm:px-4 bg-theme border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors touch-manipulation">Lukk</button>
             </div>
           </div>
         </div>

@@ -169,7 +169,7 @@ export default function NyHendelsePage() {
   }
 
   const isLoading = fylkerLoading || brannvesenLoading || kategorierLoading || sentralerLoading || kommunerLoading
-  if (isLoading) return <div className="p-8 text-center text-gray-400">Laster...</div>
+  if (isLoading) return <div className="p-8 text-center text-theme-secondary">Laster...</div>
 
   const sentral = selectedSentral ? sentraler.find(s => s.id === selectedSentral) : null
 
@@ -288,7 +288,7 @@ export default function NyHendelsePage() {
   }) => (
     <div className="flex items-center gap-2 mt-2">
       <input type="file" ref={inputRef} accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) onSelect(e.target.files[0]) }} />
-      <button type="button" onClick={() => inputRef.current?.click()} className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors">
+      <button type="button" onClick={() => inputRef.current?.click()} className="flex items-center gap-1.5 text-xs text-theme-secondary hover:text-theme transition-colors">
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
         {file ? file.name : label}
       </button>
@@ -304,8 +304,8 @@ export default function NyHendelsePage() {
     <DashboardLayout role="operator">
       <div className="p-4 lg:p-8 max-w-3xl">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Ny hendelse</h1>
-          <p className="text-sm text-gray-400">Opprett en ny hendelse for publisering</p>
+          <h1 className="text-2xl font-bold text-theme">Ny hendelse</h1>
+          <p className="text-sm text-theme-secondary">Opprett en ny hendelse for publisering</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -317,7 +317,7 @@ export default function NyHendelsePage() {
               value={kategoriSearch}
               onChange={(e) => setKategoriSearch(e.target.value)}
               placeholder="Søk kategori..."
-              className="w-full px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 mb-2"
+              className="w-full px-4 py-2.5 bg-theme-card border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500 mb-2"
             />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-72 overflow-y-auto overflow-x-hidden relative">
               {filteredKategorier.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map((kat) => (
@@ -328,7 +328,7 @@ export default function NyHendelsePage() {
                   className={`px-3 py-2 rounded-lg text-xs text-left border transition-colors inline-flex items-center gap-1.5 ${
                     formData.kategori_id === kat.id
                       ? 'border-blue-500 bg-blue-500/10'
-                      : 'border-[#2a2a2a] bg-[#1a1a1a] hover:border-[#3a3a3a]'
+                      : 'border-theme bg-theme-card hover:border-[#3a3a3a]'
                   }`}
                 >
                   <span className="shrink-0" style={{ color: kat.farge }}>
@@ -356,8 +356,8 @@ export default function NyHendelsePage() {
                   onClick={() => setFormData({ ...formData, alvorlighetsgrad: sev.value })}
                   className={`flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm border transition-colors touch-manipulation ${
                     formData.alvorlighetsgrad === sev.value
-                      ? 'border-blue-500 bg-blue-500/10 text-white'
-                      : 'border-[#2a2a2a] bg-[#1a1a1a] text-gray-400 hover:border-[#3a3a3a]'
+                      ? 'border-blue-500 bg-blue-500/10 text-theme'
+                      : 'border-theme bg-theme-card text-theme-secondary hover:border-[#3a3a3a]'
                   }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${sev.color}`} />
@@ -370,12 +370,12 @@ export default function NyHendelsePage() {
           {/* Start time */}
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Starttidspunkt</label>
-            <p className="text-xs text-gray-500 mb-2">Forhåndsutfylt med nåværende tid. Endre om hendelsen startet tidligere.</p>
+            <p className="text-xs text-theme-muted mb-2">Forhåndsutfylt med nåværende tid. Endre om hendelsen startet tidligere.</p>
             <input
               type="datetime-local"
               value={formData.starttidspunkt}
               onChange={(e) => setFormData({ ...formData, starttidspunkt: e.target.value })}
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 bg-theme-card border border-theme-input rounded-lg text-theme focus:outline-none focus:border-blue-500"
             />
           </div>
 
@@ -387,7 +387,7 @@ export default function NyHendelsePage() {
               value={formData.tittel}
               onChange={(e) => setFormData({ ...formData, tittel: e.target.value })}
               placeholder="F.eks: Brann: Bergen, Sandviken"
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 bg-theme-card border border-theme-input rounded-lg text-theme focus:outline-none focus:border-blue-500"
               required
             />
           </div>
@@ -402,7 +402,7 @@ export default function NyHendelsePage() {
                 setSelectedFylke('')
                 setFormData({ ...formData, sentral_id: e.target.value, fylke_id: '', brannvesen_id: '' })
               }}
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 bg-theme-card border border-theme-input rounded-lg text-theme focus:outline-none focus:border-blue-500"
               required
             >
               <option value="">Velg 110-sentral</option>
@@ -422,7 +422,7 @@ export default function NyHendelsePage() {
                   setSelectedFylke(e.target.value)
                   setFormData({ ...formData, fylke_id: e.target.value, brannvesen_id: '' })
                 }}
-                className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 bg-theme-card border border-theme-input rounded-lg text-theme focus:outline-none focus:border-blue-500"
                 required
               >
                 <option value="">Velg fylke</option>
@@ -436,7 +436,7 @@ export default function NyHendelsePage() {
               <select
                 value={formData.brannvesen_id}
                 onChange={(e) => setFormData({ ...formData, brannvesen_id: e.target.value })}
-                className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                className="w-full px-4 py-3 bg-theme-card border border-theme-input rounded-lg text-theme focus:outline-none focus:border-blue-500"
                 required
               >
                 <option value="">Velg brannvesen</option>
@@ -455,21 +455,21 @@ export default function NyHendelsePage() {
               onChange={(e) => handleAddressChange(e.target.value)}
               onFocus={() => { if (addressSuggestions.length > 0) setShowSuggestions(true) }}
               placeholder="F.eks: Sandviksveien 42, Sandviken"
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 bg-theme-card border border-theme-input rounded-lg text-theme focus:outline-none focus:border-blue-500"
               autoComplete="off"
               required
             />
             {showSuggestions && addressSuggestions.length > 0 && (
-              <div className="absolute z-20 left-0 right-0 mt-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg overflow-hidden shadow-xl">
+              <div className="absolute z-20 left-0 right-0 mt-1 bg-theme-card border border-theme rounded-lg overflow-hidden shadow-xl">
                 {addressSuggestions.map((addr, i) => (
                   <button
                     key={i}
                     type="button"
                     onClick={() => selectAddress(addr)}
-                    className="w-full text-left px-4 py-2.5 hover:bg-[#222] transition-colors border-b border-[#2a2a2a] last:border-b-0"
+                    className="w-full text-left px-4 py-2.5 hover:bg-theme-card-hover transition-colors border-b border-theme last:border-b-0"
                   >
-                    <p className="text-sm text-white">{addr.adressetekst}</p>
-                    <p className="text-xs text-gray-500">{addr.kommunenavn}, {addr.fylkesnavn}</p>
+                    <p className="text-sm text-theme">{addr.adressetekst}</p>
+                    <p className="text-xs text-theme-muted">{addr.kommunenavn}, {addr.fylkesnavn}</p>
                   </button>
                 ))}
               </div>
@@ -481,7 +481,7 @@ export default function NyHendelsePage() {
             <select
               value={formData.kommune_id}
               onChange={(e) => setFormData({ ...formData, kommune_id: e.target.value })}
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 bg-theme-card border border-theme-input rounded-lg text-theme focus:outline-none focus:border-blue-500"
               required
             >
               <option value="">Velg kommune</option>
@@ -510,23 +510,23 @@ export default function NyHendelsePage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Breddegrad</label>
+                <label className="block text-xs text-theme-muted mb-1">Breddegrad</label>
                 <input
                   type="text"
                   value={formData.latitude}
                   onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
                   placeholder="60.4055"
-                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-input rounded-lg text-theme focus:outline-none focus:border-blue-500"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Lengdegrad</label>
+                <label className="block text-xs text-theme-muted mb-1">Lengdegrad</label>
                 <input
                   type="text"
                   value={formData.longitude}
                   onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
                   placeholder="5.3275"
-                  className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-input rounded-lg text-theme focus:outline-none focus:border-blue-500"
                 />
               </div>
             </div>
@@ -540,18 +540,18 @@ export default function NyHendelsePage() {
               onChange={(e) => setFormData({ ...formData, beskrivelse: e.target.value })}
               placeholder="Beskriv hendelsen..."
               rows={4}
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500 resize-none"
+              className="w-full px-4 py-3 bg-theme-card border border-theme-input rounded-lg text-theme focus:outline-none focus:border-blue-500 resize-none"
               required
             />
           </div>
 
           {/* Hendelsebilde */}
-          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-4">
+          <div className="bg-theme-card border border-theme rounded-xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
               <h3 className="text-sm font-semibold text-gray-300">Hendelsebilde</h3>
             </div>
-            <p className="text-xs text-gray-500 mb-2">Hovedbilde for hendelsen. Synlig for alle.</p>
+            <p className="text-xs text-theme-muted mb-2">Hovedbilde for hendelsen. Synlig for alle.</p>
             <ImageUploadButton
               file={publikumBilde}
               onSelect={setPublikumBilde}
@@ -577,7 +577,7 @@ export default function NyHendelsePage() {
               onChange={(e) => setPresseInfo(e.target.value)}
               placeholder="F.eks. kontaktperson, pressekonferanse tidspunkt, ekstra bakgrunn..."
               rows={3}
-              className="w-full px-3 py-2 bg-[#0a0a0a] border border-cyan-500/20 rounded-lg text-white text-sm focus:outline-none focus:border-cyan-500/50 resize-none"
+              className="w-full px-3 py-2 bg-theme-input border border-cyan-500/20 rounded-lg text-theme text-sm focus:outline-none focus:border-cyan-500/50 resize-none"
             />
             <ImageUploadButton
               file={presseBilde}
@@ -604,7 +604,7 @@ export default function NyHendelsePage() {
               onChange={(e) => setInternNotat(e.target.value)}
               placeholder="Skriv et internt notat..."
               rows={3}
-              className="w-full px-3 py-2 bg-[#0a0a0a] border border-yellow-500/20 rounded-lg text-white text-sm focus:outline-none focus:border-yellow-500/50 resize-none"
+              className="w-full px-3 py-2 bg-theme-input border border-yellow-500/20 rounded-lg text-theme text-sm focus:outline-none focus:border-yellow-500/50 resize-none"
             />
             <ImageUploadButton
               file={internBilde}
@@ -627,7 +627,7 @@ export default function NyHendelsePage() {
             <button
               type="button"
               onClick={() => router.push('/operator/hendelser')}
-              className="px-6 py-3 bg-[#1a1a1a] border border-[#2a2a2a] text-gray-400 rounded-lg hover:text-white transition-colors touch-manipulation"
+              className="px-6 py-3 bg-theme-card border border-theme text-theme-secondary rounded-lg hover:text-theme transition-colors touch-manipulation"
             >
               Avbryt
             </button>

@@ -60,7 +60,7 @@ export default function AdminBrukerePage() {
   if (sentralerLoading || brukereLoading) {
     return (
       <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
-        <div className="p-8 text-center text-gray-400">Laster...</div>
+        <div className="p-8 text-center text-theme-secondary">Laster...</div>
       </DashboardLayout>
     )
   }
@@ -234,16 +234,16 @@ export default function AdminBrukerePage() {
   const userFormFields = (values: UserForm, onChange: (v: UserForm) => void) => (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm text-gray-400 mb-1">Fullt navn</label>
-        <input type="text" value={values.fullt_navn} onChange={(e) => onChange({ ...values, fullt_navn: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+        <label className="block text-sm text-theme-secondary mb-1">Fullt navn</label>
+        <input type="text" value={values.fullt_navn} onChange={(e) => onChange({ ...values, fullt_navn: e.target.value })} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
       </div>
       <div>
-        <label className="block text-sm text-gray-400 mb-1">E-post</label>
-        <input type="email" value={values.epost} onChange={(e) => onChange({ ...values, epost: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+        <label className="block text-sm text-theme-secondary mb-1">E-post</label>
+        <input type="email" value={values.epost} onChange={(e) => onChange({ ...values, epost: e.target.value })} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
       </div>
       <div>
-        <label className="block text-sm text-gray-400 mb-1">Rolle</label>
-        <select value={values.rolle} onChange={(e) => onChange({ ...values, rolle: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
+        <label className="block text-sm text-theme-secondary mb-1">Rolle</label>
+        <select value={values.rolle} onChange={(e) => onChange({ ...values, rolle: e.target.value })} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
           {availableRoles.map(r => (
             <option key={r.value} value={r.value}>{r.label}</option>
           ))}
@@ -251,18 +251,18 @@ export default function AdminBrukerePage() {
       </div>
       {(values.rolle === 'operator' || values.rolle === '110-admin') && (
         <div>
-          <label className="block text-sm text-gray-400 mb-2">110-sentraler</label>
-          <p className="text-xs text-gray-500 mb-2">
+          <label className="block text-sm text-theme-secondary mb-2">110-sentraler</label>
+          <p className="text-xs text-theme-muted mb-2">
             {values.rolle === '110-admin'
               ? 'Velg sentraler som denne admin skal ha tilgang til'
               : 'Velg en eller flere sentraler (inkl. makkersentraler)'}
           </p>
-          <div className="max-h-48 overflow-y-auto bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg p-2 space-y-1">
+          <div className="max-h-48 overflow-y-auto bg-theme-card-inner border border-theme-input rounded-lg p-2 space-y-1">
             {availableSentraler.map(s => (
-              <label key={s.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#1a1a1a] cursor-pointer">
+              <label key={s.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-theme-card cursor-pointer">
                 <input type="checkbox" checked={values.sentral_ids.includes(s.id)} onChange={() => toggleSentral(values, onChange, s.id)} className="rounded border-gray-600" />
-                <span className="text-sm text-white">{s.kort_navn}</span>
-                <span className="text-xs text-gray-500 ml-auto">{s.navn}</span>
+                <span className="text-sm text-theme">{s.kort_navn}</span>
+                <span className="text-xs text-theme-muted ml-auto">{s.navn}</span>
               </label>
             ))}
           </div>
@@ -290,8 +290,8 @@ export default function AdminBrukerePage() {
     <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
       <div className="p-4 lg:p-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Brukere</h1>
-          <p className="text-sm text-gray-400 mb-3">
+          <h1 className="text-2xl font-bold text-theme">Brukere</h1>
+          <p className="text-sm text-theme-secondary mb-3">
             {isScoped ? 'Brukere tilknyttet dine 110-sentraler' : 'Administrer operatører og administratorer'}
           </p>
           <div className="flex items-center gap-3">
@@ -299,7 +299,7 @@ export default function AdminBrukerePage() {
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
               Ny bruker
             </button>
-            <button onClick={() => setShowRoleInfo(!showRoleInfo)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] hover:border-blue-500 text-gray-400 hover:text-white rounded-lg text-sm transition-colors touch-manipulation">
+            <button onClick={() => setShowRoleInfo(!showRoleInfo)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-theme-card border border-theme hover:border-blue-500 text-theme-secondary hover:text-theme rounded-lg text-sm transition-colors touch-manipulation">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               Rollebeskrivelser
             </button>
@@ -308,20 +308,20 @@ export default function AdminBrukerePage() {
 
         {/* Role access overview */}
         {showRoleInfo && (
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4 mb-6">
-            <h3 className="text-sm font-semibold text-white mb-3">Tilganger per rolle</h3>
+          <div className="bg-theme-card rounded-xl border border-theme p-4 mb-6">
+            <h3 className="text-sm font-semibold text-theme mb-3">Tilganger per rolle</h3>
             <div className="space-y-3">
               <div className="flex gap-3">
                 <span className="text-xs px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 shrink-0 h-fit">Admin</span>
-                <p className="text-xs text-gray-400">Full tilgang til alt. Alle hendelser, alle sentraler, brukeradministrasjon, systeminnstillinger, rapporter, kategorier, fylker, kommuner og brannvesen.</p>
+                <p className="text-xs text-theme-secondary">Full tilgang til alt. Alle hendelser, alle sentraler, brukeradministrasjon, systeminnstillinger, rapporter, kategorier, fylker, kommuner og brannvesen.</p>
               </div>
               <div className="flex gap-3">
                 <span className="text-xs px-2 py-0.5 rounded bg-orange-500/20 text-orange-400 shrink-0 h-fit">110-Admin</span>
-                <p className="text-xs text-gray-400">Hendelser, ny hendelse, brukere, brannvesen, 110-sentraler, statistikk, rapporter, innstillinger og presse — begrenset til sine tildelte 110-sentraler.</p>
+                <p className="text-xs text-theme-secondary">Hendelser, ny hendelse, brukere, brannvesen, 110-sentraler, statistikk, rapporter, innstillinger og presse — begrenset til sine tildelte 110-sentraler.</p>
               </div>
               <div className="flex gap-3">
                 <span className="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 shrink-0 h-fit">Operatør</span>
-                <p className="text-xs text-gray-400">Hendelser, ny hendelse, rapporter og presse — begrenset til sine tildelte 110-sentraler.</p>
+                <p className="text-xs text-theme-secondary">Hendelser, ny hendelse, rapporter og presse — begrenset til sine tildelte 110-sentraler.</p>
               </div>
             </div>
           </div>
@@ -329,14 +329,14 @@ export default function AdminBrukerePage() {
 
         {/* Filters */}
         <div className="flex gap-3 mb-6 flex-wrap">
-          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk på navn eller e-post..." className="px-4 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 w-full sm:w-64" />
-          <select value={filterRolle} onChange={(e) => setFilterRolle(e.target.value)} className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk på navn eller e-post..." className="px-4 py-2.5 bg-theme-card border border-theme rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500 w-full sm:w-64" />
+          <select value={filterRolle} onChange={(e) => setFilterRolle(e.target.value)} className="px-4 py-2 bg-theme-card border border-theme rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
             <option value="">Alle roller</option>
             {isAdmin && <option value="admin">Administrator</option>}
             <option value="110-admin">110-sentral Admin</option>
             <option value="operator">Operatør</option>
           </select>
-          <select value={filterSentral} onChange={(e) => setFilterSentral(e.target.value)} className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
+          <select value={filterSentral} onChange={(e) => setFilterSentral(e.target.value)} className="px-4 py-2 bg-theme-card border border-theme rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500">
             <option value="">Alle 110-sentraler</option>
             {availableSentraler.map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
           </select>
@@ -345,14 +345,14 @@ export default function AdminBrukerePage() {
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           {[
-            { label: 'Totalt', value: scopedBrukere.length, color: 'text-white' },
+            { label: 'Totalt', value: scopedBrukere.length, color: 'text-theme' },
             ...(isAdmin ? [{ label: 'Administratorer', value: scopedBrukere.filter(u => u.rolle === 'admin').length, color: 'text-purple-400' }] : []),
             { label: '110-admin', value: scopedBrukere.filter(u => u.rolle === '110-admin').length, color: 'text-orange-400' },
             { label: 'Operatører', value: scopedBrukere.filter(u => u.rolle === 'operator').length, color: 'text-blue-400' },
             { label: 'Deaktivert', value: scopedBrukere.filter(u => !u.aktiv).length, color: 'text-red-400' },
           ].map((stat) => (
-            <div key={stat.label} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-              <p className="text-xs text-gray-400">{stat.label}</p>
+            <div key={stat.label} className="bg-theme-card rounded-xl border border-theme p-4">
+              <p className="text-xs text-theme-secondary">{stat.label}</p>
               <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
             </div>
           ))}
@@ -365,14 +365,14 @@ export default function AdminBrukerePage() {
             const canEdit = isAdmin || (is110Admin && user.rolle !== 'admin' && user.rolle !== '110-admin')
             const canDelete = isAdmin
             return (
-              <div key={user.id} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
+              <div key={user.id} className="bg-theme-card rounded-xl border border-theme p-4">
                 <div className="flex items-start gap-3">
                   <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center shrink-0">
-                    <span className="text-sm text-white font-bold">{user.fullt_navn.split(' ').map(n => n[0]).join('')}</span>
+                    <span className="text-sm text-theme font-bold">{user.fullt_navn.split(' ').map(n => n[0]).join('')}</span>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm text-white font-medium">{user.fullt_navn}</span>
+                      <span className="text-sm text-theme font-medium">{user.fullt_navn}</span>
                       <span className={`text-xs px-2 py-0.5 rounded ${getRolleColor(user.rolle)}`}>
                         {getRolleLabel(user.rolle)}
                       </span>
@@ -380,7 +380,7 @@ export default function AdminBrukerePage() {
                         {user.aktiv ? 'Aktiv' : 'Deaktivert'}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-400 mt-0.5 truncate">{user.epost}</p>
+                    <p className="text-xs text-theme-secondary mt-0.5 truncate">{user.epost}</p>
                     {userSentraler.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
                         {userSentraler.map(s => (
@@ -390,7 +390,7 @@ export default function AdminBrukerePage() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 mt-3 pt-3 border-t border-[#2a2a2a]">
+                <div className="flex items-center gap-3 mt-3 pt-3 border-t border-theme">
                   {canEdit && <button onClick={() => handleEdit(user)} className="text-xs text-blue-400 hover:text-blue-300 py-1 touch-manipulation">Rediger</button>}
                   <button onClick={() => handleToggleActive(user.id)} className={`text-xs py-1 touch-manipulation ${user.aktiv ? 'text-orange-400 hover:text-orange-300' : 'text-green-400 hover:text-green-300'}`}>
                     {user.aktiv ? 'Deaktiver' : 'Aktiver'}
@@ -400,19 +400,19 @@ export default function AdminBrukerePage() {
               </div>
             )
           })}
-          <p className="text-xs text-gray-500">Viser {filtered.length} av {scopedBrukere.length} brukere</p>
+          <p className="text-xs text-theme-muted">Viser {filtered.length} av {scopedBrukere.length} brukere</p>
         </div>
 
         {/* Add modal */}
         {showAddModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setShowAddModal(false)} />
-            <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-              <h2 className="text-lg font-bold text-white mb-4">Ny bruker</h2>
+            <div className="absolute inset-0 bg-theme-overlay" onClick={() => setShowAddModal(false)} />
+            <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+              <h2 className="text-lg font-bold text-theme mb-4">Ny bruker</h2>
               {userFormFields(newUser, setNewUser)}
               <div className="flex gap-3 mt-6">
                 <button onClick={handleAdd} disabled={adding} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-800 text-white rounded-lg text-sm font-medium transition-colors">{adding ? 'Oppretter...' : 'Opprett bruker'}</button>
-                <button onClick={() => setShowAddModal(false)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors">Avbryt</button>
+                <button onClick={() => setShowAddModal(false)} className="px-4 py-2.5 bg-theme border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors">Avbryt</button>
               </div>
             </div>
           </div>
@@ -421,13 +421,13 @@ export default function AdminBrukerePage() {
         {/* Edit modal */}
         {editUser && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setEditUser(null)} />
-            <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-              <h2 className="text-lg font-bold text-white mb-4">Rediger bruker</h2>
+            <div className="absolute inset-0 bg-theme-overlay" onClick={() => setEditUser(null)} />
+            <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+              <h2 className="text-lg font-bold text-theme mb-4">Rediger bruker</h2>
               {userFormFields(editForm, setEditForm)}
               <div className="flex gap-3 mt-6">
                 <button onClick={handleSaveEdit} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">Lagre endringer</button>
-                <button onClick={() => setEditUser(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors">Avbryt</button>
+                <button onClick={() => setEditUser(null)} className="px-4 py-2.5 bg-theme border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors">Avbryt</button>
               </div>
             </div>
           </div>
@@ -436,13 +436,13 @@ export default function AdminBrukerePage() {
         {/* Delete confirm */}
         {deleteConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setDeleteConfirm(null)} />
-            <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-sm mx-4">
-              <h2 className="text-lg font-bold text-white mb-2">Slett bruker?</h2>
-              <p className="text-sm text-gray-400 mb-6">Er du sikker på at du vil slette {brukere.find(u => u.id === deleteConfirm)?.fullt_navn}?</p>
+            <div className="absolute inset-0 bg-theme-overlay" onClick={() => setDeleteConfirm(null)} />
+            <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-sm mx-4">
+              <h2 className="text-lg font-bold text-theme mb-2">Slett bruker?</h2>
+              <p className="text-sm text-theme-secondary mb-6">Er du sikker på at du vil slette {brukere.find(u => u.id === deleteConfirm)?.fullt_navn}?</p>
               <div className="flex gap-3">
                 <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors">Slett</button>
-                <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors">Avbryt</button>
+                <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2.5 bg-theme border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors">Avbryt</button>
               </div>
             </div>
           </div>

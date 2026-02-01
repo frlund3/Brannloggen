@@ -26,7 +26,7 @@ export default function PresseHendelserPage() {
   if (hendelserLoading) {
     return (
       <PresseLayout>
-        <div className="p-8 text-center text-gray-400">Laster...</div>
+        <div className="p-8 text-center text-theme-secondary">Laster...</div>
       </PresseLayout>
     )
   }
@@ -43,13 +43,13 @@ export default function PresseHendelserPage() {
     <PresseLayout>
       <div className="py-4">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Hendelser</h1>
-          <p className="text-sm text-gray-400">Presseoversikt med utvidet informasjon</p>
+          <h1 className="text-2xl font-bold text-theme">Hendelser</h1>
+          <p className="text-sm text-theme-secondary">Presseoversikt med utvidet informasjon</p>
         </div>
 
         {/* Filters */}
         <div className="flex flex-col gap-3 mb-6">
-          <div className="flex bg-[#1a1a1a] rounded-lg border border-[#2a2a2a] overflow-hidden w-fit">
+          <div className="flex bg-theme-card rounded-lg border border-theme overflow-hidden w-fit">
             {(['alle', 'pågår', 'avsluttet'] as const).map((f) => (
               <button
                 key={f}
@@ -57,7 +57,7 @@ export default function PresseHendelserPage() {
                 className={`px-4 py-2.5 text-sm capitalize transition-colors touch-manipulation ${
                   filter === f
                     ? 'bg-blue-500 text-white'
-                    : 'text-gray-400 hover:text-white'
+                    : 'text-theme-secondary hover:text-theme'
                 }`}
               >
                 {f === 'alle' ? `Alle (${hendelser.length})` : f === 'pågår' ? `Pågår (${hendelser.filter(h => h.status === 'pågår').length})` : `Avsluttet (${hendelser.filter(h => h.status === 'avsluttet').length})`}
@@ -71,12 +71,12 @@ export default function PresseHendelserPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Søk på tittel eller sted..."
-              className="flex-1 px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-blue-500"
+              className="flex-1 px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-sm text-theme focus:outline-none focus:border-blue-500"
             />
             <select
               value={selectedFylke}
               onChange={(e) => setSelectedFylke(e.target.value)}
-              className="px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-blue-500"
+              className="px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-sm text-theme focus:outline-none focus:border-blue-500"
             >
               <option value="">Alle fylker</option>
               {fylker.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map((f) => (
@@ -86,7 +86,7 @@ export default function PresseHendelserPage() {
             <select
               value={selectedKategori}
               onChange={(e) => setSelectedKategori(e.target.value)}
-              className="px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-blue-500"
+              className="px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-sm text-theme focus:outline-none focus:border-blue-500"
             >
               <option value="">Alle kategorier</option>
               {kategorier.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map((k) => (
@@ -98,16 +98,16 @@ export default function PresseHendelserPage() {
 
         {/* Stats bar */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-            <p className="text-xs text-gray-400">Totalt</p>
-            <p className="text-2xl font-bold text-white">{hendelser.length}</p>
+          <div className="bg-theme-card rounded-xl border border-theme p-4">
+            <p className="text-xs text-theme-secondary">Totalt</p>
+            <p className="text-2xl font-bold text-theme">{hendelser.length}</p>
           </div>
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-            <p className="text-xs text-gray-400">Pågår nå</p>
+          <div className="bg-theme-card rounded-xl border border-theme p-4">
+            <p className="text-xs text-theme-secondary">Pågår nå</p>
             <p className="text-2xl font-bold text-red-400">{hendelser.filter(h => h.status === 'pågår').length}</p>
           </div>
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-            <p className="text-xs text-gray-400">Siste 24t</p>
+          <div className="bg-theme-card rounded-xl border border-theme p-4">
+            <p className="text-xs text-theme-secondary">Siste 24t</p>
             <p className="text-2xl font-bold text-blue-400">{hendelser.filter(h => {
               const t = new Date(h.opprettet_tidspunkt).getTime()
               return Date.now() - t < 24 * 60 * 60 * 1000
@@ -131,20 +131,20 @@ export default function PresseHendelserPage() {
             return (
               <div
                 key={h.id}
-                className={`bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden border-l-4 ${
+                className={`bg-theme-card rounded-xl border border-theme overflow-hidden border-l-4 ${
                   h.status === 'pågår' ? 'border-l-red-500' : h.status === 'avsluttet' ? 'border-l-green-500' : 'border-l-gray-600'
                 }`}
               >
                 {/* Card header - always visible */}
                 <div
-                  className="p-4 cursor-pointer hover:bg-[#222] transition-colors"
+                  className="p-4 cursor-pointer hover:bg-theme-card-hover transition-colors"
                   onClick={() => setExpandedId(isExpanded ? null : h.id)}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-2 mb-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs text-gray-400">{sentral?.kort_navn || bv?.kort_navn}</span>
-                      <span className="text-xs text-gray-500">&middot;</span>
-                      <span className="text-xs text-gray-400">{kommune?.navn}, {fylke?.navn}</span>
+                      <span className="text-xs text-theme-secondary">{sentral?.kort_navn || bv?.kort_navn}</span>
+                      <span className="text-xs text-theme-muted">&middot;</span>
+                      <span className="text-xs text-theme-secondary">{kommune?.navn}, {fylke?.navn}</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <StatusBadge status={h.status} />
@@ -152,12 +152,12 @@ export default function PresseHendelserPage() {
                     </div>
                   </div>
 
-                  <h3 className="text-base font-bold text-white mb-1">{h.tittel}</h3>
+                  <h3 className="text-base font-bold text-theme mb-1">{h.tittel}</h3>
 
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="text-xs text-gray-500">{formatDateTime(h.opprettet_tidspunkt)}</span>
+                    <span className="text-xs text-theme-muted">{formatDateTime(h.opprettet_tidspunkt)}</span>
                     {h.oppdatert_tidspunkt !== h.opprettet_tidspunkt && (
-                      <span className="text-xs text-gray-600">Sist redigert {formatTimeAgo(h.oppdatert_tidspunkt)}</span>
+                      <span className="text-xs text-theme-dim">Sist redigert {formatTimeAgo(h.oppdatert_tidspunkt)}</span>
                     )}
                     {kat && (
                       <span
@@ -192,7 +192,7 @@ export default function PresseHendelserPage() {
                       </span>
                     )}
                     <svg
-                      className={`w-4 h-4 text-gray-400 transition-transform ml-auto ${isExpanded ? 'rotate-180' : ''}`}
+                      className={`w-4 h-4 text-theme-secondary transition-transform ml-auto ${isExpanded ? 'rotate-180' : ''}`}
                       fill="none" viewBox="0 0 24 24" stroke="currentColor"
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -214,7 +214,7 @@ export default function PresseHendelserPage() {
                   timelineItems.sort((a, b) => new Date(a.opprettet_tidspunkt).getTime() - new Date(b.opprettet_tidspunkt).getTime())
 
                   return (
-                  <div className="border-t border-[#2a2a2a] p-4 space-y-5">
+                  <div className="border-t border-theme p-4 space-y-5">
 
                     {/* ── Hovedpressemelding ── */}
                     {h.presse_tekst && (
@@ -230,8 +230,8 @@ export default function PresseHendelserPage() {
                     {/* ── Unified timeline ── */}
                     {timelineItems.length > 0 && (
                       <div>
-                        <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                          <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <h4 className="text-sm font-semibold text-theme mb-3 flex items-center gap-2">
+                          <svg className="w-4 h-4 text-theme-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                           Tidslinje ({timelineItems.length} oppdatering{timelineItems.length !== 1 ? 'er' : ''})
                         </h4>
                         <div className="relative ml-1">
@@ -239,7 +239,7 @@ export default function PresseHendelserPage() {
                             const cfgMap = {
                               publikum: { dot: 'border-blue-500', badge: 'bg-blue-500/15 text-blue-400', label: 'Publikum', textColor: 'text-gray-300' },
                               presse: { dot: 'border-cyan-500', badge: 'bg-cyan-500/20 text-cyan-400', label: 'KUN PRESSE', textColor: 'text-cyan-100' },
-                              status: { dot: 'border-gray-500', badge: 'bg-gray-500/20 text-gray-400', label: 'Status', textColor: 'text-gray-400' },
+                              status: { dot: 'border-gray-500', badge: 'bg-gray-500/20 text-theme-secondary', label: 'Status', textColor: 'text-theme-secondary' },
                             }
                             const cfg = cfgMap[item.type]
                             const nextCfg = i < timelineItems.length - 1 ? cfgMap[timelineItems[i + 1].type] : null
@@ -251,17 +251,17 @@ export default function PresseHendelserPage() {
                                     timelineItems[i + 1].type === 'presse' ? 'bg-cyan-500/30' : timelineItems[i + 1].type === 'publikum' ? 'bg-blue-500/30' : 'bg-gray-500/30'
                                   }`} />
                                 )}
-                                <div className={`absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 ${cfg.dot} bg-[#1a1a1a]`} />
+                                <div className={`absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 ${cfg.dot} bg-theme-card`} />
                                 {item.type === 'status' ? (
                                   <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
-                                    <span className="text-xs text-gray-400 italic">{item.tekst}</span>
+                                    <span className="text-xs text-theme-muted">{formatTime(item.opprettet_tidspunkt)}</span>
+                                    <span className="text-xs text-theme-secondary italic">{item.tekst}</span>
                                   </div>
                                 ) : (
                                   <>
                                     <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="text-xs text-gray-500">{formatTime(item.opprettet_tidspunkt)}</span>
-                                      <span className="text-xs text-gray-600">{formatDateTime(item.opprettet_tidspunkt)}</span>
+                                      <span className="text-xs text-theme-muted">{formatTime(item.opprettet_tidspunkt)}</span>
+                                      <span className="text-xs text-theme-dim">{formatDateTime(item.opprettet_tidspunkt)}</span>
                                       <span className={`text-[10px] ${cfg.badge} px-1.5 py-0.5 rounded font-bold`}>{cfg.label}</span>
                                     </div>
                                     <p className={`text-sm mt-0.5 ${cfg.textColor}`}>{item.tekst}</p>
@@ -278,37 +278,37 @@ export default function PresseHendelserPage() {
                     )}
 
                     {/* ── Full details grid ── */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-[#111] rounded-lg p-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-theme-sidebar rounded-lg p-4">
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Sted</p>
-                        <p className="text-sm text-white">{h.sted}</p>
+                        <p className="text-xs text-theme-muted mb-1">Sted</p>
+                        <p className="text-sm text-theme">{h.sted}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">110-sentral</p>
-                        <p className="text-sm text-white">{sentral?.kort_navn || '-'}</p>
+                        <p className="text-xs text-theme-muted mb-1">110-sentral</p>
+                        <p className="text-sm text-theme">{sentral?.kort_navn || '-'}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Brannvesen</p>
-                        <p className="text-sm text-white">{bv?.navn}</p>
+                        <p className="text-xs text-theme-muted mb-1">Brannvesen</p>
+                        <p className="text-sm text-theme">{bv?.navn}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Kommune / Fylke</p>
-                        <p className="text-sm text-white">{kommune?.navn}, {fylke?.navn}</p>
+                        <p className="text-xs text-theme-muted mb-1">Kommune / Fylke</p>
+                        <p className="text-sm text-theme">{kommune?.navn}, {fylke?.navn}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Opprettet</p>
-                        <p className="text-sm text-white">{formatDateTime(h.opprettet_tidspunkt)}</p>
+                        <p className="text-xs text-theme-muted mb-1">Opprettet</p>
+                        <p className="text-sm text-theme">{formatDateTime(h.opprettet_tidspunkt)}</p>
                       </div>
                       {h.avsluttet_tidspunkt && (
                         <div>
-                          <p className="text-xs text-gray-500 mb-1">Avsluttet</p>
-                          <p className="text-sm text-white">{formatDateTime(h.avsluttet_tidspunkt)}</p>
+                          <p className="text-xs text-theme-muted mb-1">Avsluttet</p>
+                          <p className="text-sm text-theme">{formatDateTime(h.avsluttet_tidspunkt)}</p>
                         </div>
                       )}
                       {h.latitude && (
                         <div>
-                          <p className="text-xs text-gray-500 mb-1">Koordinater</p>
-                          <p className="text-sm text-white">{h.latitude}, {h.longitude}</p>
+                          <p className="text-xs text-theme-muted mb-1">Koordinater</p>
+                          <p className="text-sm text-theme">{h.latitude}, {h.longitude}</p>
                         </div>
                       )}
                     </div>
@@ -320,7 +320,7 @@ export default function PresseHendelserPage() {
           })}
 
           {filtered.length === 0 && (
-            <div className="text-center py-12 text-gray-500">
+            <div className="text-center py-12 text-theme-muted">
               Ingen hendelser matcher filteret.
             </div>
           )}

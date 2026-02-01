@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { AuthProvider } from '@/components/providers/AuthProvider'
-import { Toaster } from 'sonner'
+import { ThemeProvider } from '@/components/providers/ThemeProvider'
+import { ThemeToaster } from '@/components/providers/ThemeToaster'
+import { PushInit } from '@/components/providers/PushInit'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -23,10 +25,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="no" className="dark">
-      <body className="min-h-screen bg-[#0a0a0a] text-white">
-        <AuthProvider>{children}</AuthProvider>
-        <Toaster theme="dark" position="top-right" richColors closeButton />
+    <html lang="no" className="dark" suppressHydrationWarning>
+      <body className="min-h-screen bg-theme text-theme">
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+          <ThemeToaster />
+          <PushInit />
+        </ThemeProvider>
       </body>
     </html>
   )

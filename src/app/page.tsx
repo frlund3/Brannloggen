@@ -9,6 +9,7 @@ import { PushOnboarding, useShouldShowPushOnboarding } from '@/components/public
 import { useHendelser, useSentraler } from '@/hooks/useSupabaseData'
 import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
 import { useAuth } from '@/components/providers/AuthProvider'
+import { useTheme } from '@/components/providers/ThemeProvider'
 
 const PREFS_KEY = 'brannloggen_push_prefs'
 
@@ -38,6 +39,7 @@ export default function HomePage() {
   useRealtimeHendelser(refetch)
   const { data: sentraler, loading: sentralerLoading } = useSentraler()
   const { rolle } = useAuth()
+  const { theme, toggleTheme } = useTheme()
 
   const dashboardHref = rolle === 'admin' || rolle === '110-admin' ? '/operator/hendelser'
     : rolle === 'operator' ? '/operator/hendelser'
@@ -148,14 +150,14 @@ export default function HomePage() {
   const prefsFilterCount = pushPrefs.sentraler.length + pushPrefs.fylker.length + pushPrefs.kategorier.length + pushPrefs.brannvesen.length
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] pb-20 lg:pb-0">
+    <div className="min-h-screen bg-theme pb-20 lg:pb-0">
       {/* Push Onboarding Popup */}
       {showOnboarding && !onboardingDismissed && (
         <PushOnboarding onComplete={() => setOnboardingDismissed(true)} />
       )}
 
       {/* Shared Header */}
-      <header className="sticky top-0 z-30 bg-[#0a0a0a]/95 backdrop-blur border-b border-[#2a2a2a]">
+      <header className="sticky top-0 z-30 bg-theme/95 backdrop-blur border-b border-theme">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           {/* Logo + Name */}
           <div className="flex items-center gap-2.5">
@@ -165,7 +167,7 @@ export default function HomePage() {
 
           {/* Desktop Tab Navigation */}
           <div className="hidden lg:flex items-center gap-3">
-            <nav className="flex items-center gap-1 bg-[#1a1a1a] rounded-lg p-1">
+            <nav className="flex items-center gap-1 bg-theme-card rounded-lg p-1">
               {([
                 { id: 'følger' as Tab, label: 'Jeg følger' },
                 { id: 'alle' as Tab, label: 'Alle' },
@@ -175,13 +177,28 @@ export default function HomePage() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                    activeTab === tab.id ? 'bg-[#2a2a2a] text-white' : 'text-gray-400 hover:text-white'
+                    activeTab === tab.id ? 'bg-theme-card-hover text-theme' : 'text-theme-secondary hover:text-theme'
                   }`}
                 >
                   {tab.label}
                 </button>
               ))}
             </nav>
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg bg-theme-card hover:bg-theme-card-hover text-theme-secondary hover:text-theme transition-colors"
+              title={theme === 'dark' ? 'Bytt til lyst tema' : 'Bytt til mørkt tema'}
+            >
+              {theme === 'dark' ? (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </button>
             {dashboardHref ? (
               <a
                 href={dashboardHref}
@@ -195,7 +212,7 @@ export default function HomePage() {
             ) : (
               <a
                 href="/login"
-                className="px-4 py-1.5 bg-[#1a1a1a] hover:bg-[#2a2a2a] text-gray-400 hover:text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                className="px-4 py-1.5 bg-theme-card hover:bg-theme-card-hover text-theme-secondary hover:text-theme rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
@@ -258,11 +275,11 @@ export default function HomePage() {
               </div>
             )}
             <div className="px-4 pb-3 max-w-md">
-              <div className="flex bg-[#1a1a1a] rounded-lg p-1">
+              <div className="flex bg-theme-card rounded-lg p-1">
                 <button
                   onClick={() => setSubTab('alle')}
                   className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${
-                    subTab === 'alle' ? 'bg-[#2a2a2a] text-white' : 'text-gray-400'
+                    subTab === 'alle' ? 'bg-theme-card-hover text-theme' : 'text-theme-secondary'
                   }`}
                 >
                   Alle
@@ -270,7 +287,7 @@ export default function HomePage() {
                 <button
                   onClick={() => setSubTab('pågår')}
                   className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${
-                    subTab === 'pågår' ? 'bg-blue-500 text-white' : 'text-gray-400'
+                    subTab === 'pågår' ? 'bg-blue-500 text-white' : 'text-theme-secondary'
                   }`}
                 >
                   Pågår
@@ -285,7 +302,7 @@ export default function HomePage() {
       <div className="max-w-7xl mx-auto lg:flex">
         {/* Desktop Sidebar - filter panel for "Alle" tab */}
         {activeTab === 'alle' && (
-          <aside className="hidden lg:block w-80 shrink-0 sticky top-[57px] h-[calc(100vh-57px)] border-r border-[#2a2a2a]">
+          <aside className="hidden lg:block w-80 shrink-0 sticky top-[57px] h-[calc(100vh-57px)] border-r border-theme">
             <FilterSheet
               isOpen={true}
               onClose={() => {}}
@@ -302,15 +319,15 @@ export default function HomePage() {
           {activeTab === 'følger' && (
             <div className="max-w-5xl mx-auto">
               {loading ? (
-                <p className="text-center text-gray-400 py-12">Laster hendelser...</p>
+                <p className="text-center text-theme-secondary py-12">Laster hendelser...</p>
               ) : !hasPrefs ? (
                 <div className="text-center py-12">
-                  <svg className="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-12 h-12 text-theme-dim mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  <p className="text-gray-400 mb-2">Ingen preferanser satt ennå</p>
-                  <p className="text-xs text-gray-500 mb-4">Gå til innstillinger og velg hvilke 110-sentraler, fylker eller kategorier du vil følge.</p>
+                  <p className="text-theme-secondary mb-2">Ingen preferanser satt ennå</p>
+                  <p className="text-xs text-theme-muted mb-4">Gå til innstillinger og velg hvilke 110-sentraler, fylker eller kategorier du vil følge.</p>
                   <button
                     onClick={() => setActiveTab('innstillinger')}
                     className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
@@ -325,7 +342,7 @@ export default function HomePage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-gray-500 py-12">
+                <p className="text-center text-theme-muted py-12">
                   {subTab === 'pågår'
                     ? 'Ingen pågående hendelser matcher dine preferanser.'
                     : 'Ingen hendelser matcher dine preferanser.'}
@@ -338,7 +355,7 @@ export default function HomePage() {
           {activeTab === 'alle' && (
             <div className="max-w-5xl mx-auto">
               {loading ? (
-                <p className="text-center text-gray-400 py-12">Laster hendelser...</p>
+                <p className="text-center text-theme-secondary py-12">Laster hendelser...</p>
               ) : allHendelser.length > 0 ? (
                 <div className="space-y-3">
                   {allHendelser.map((h) => (
@@ -346,7 +363,7 @@ export default function HomePage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-gray-500 py-12">
+                <p className="text-center text-theme-muted py-12">
                   Ingen hendelser funnet med valgte filtre.
                 </p>
               )}

@@ -87,7 +87,7 @@ export default function AdminFylkerPage() {
     return (
       <DashboardLayout role="admin">
         <div className="p-4 lg:p-8">
-          <p className="text-gray-400">Laster...</p>
+          <p className="text-theme-secondary">Laster...</p>
         </div>
       </DashboardLayout>
     )
@@ -98,8 +98,8 @@ export default function AdminFylkerPage() {
       <div className="p-4 lg:p-8">
         <div className="mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-white">Fylker</h1>
-            <p className="text-sm text-gray-400 mb-3">{items.length} fylker registrert</p>
+            <h1 className="text-2xl font-bold text-theme">Fylker</h1>
+            <p className="text-sm text-theme-secondary mb-3">{items.length} fylker registrert</p>
           </div>
           <button onClick={() => { setForm({ navn: '', nummer: '' }); setShowAdd(true) }} className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium text-sm transition-colors inline-flex items-center gap-2 touch-manipulation">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -107,22 +107,22 @@ export default function AdminFylkerPage() {
           </button>
         </div>
 
-        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk etter fylke..." className="mb-6 px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 w-full sm:w-64" />
+        <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Søk etter fylke..." className="mb-6 px-4 py-2 bg-theme-card border border-theme rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500 w-full sm:w-64" />
 
         <div className="space-y-3">
           {filtered.map((f) => {
             const fKommuner = kommunerData.filter(k => k.fylke_id === f.id).sort((a, b) => a.navn.localeCompare(b.navn, 'no'))
             const isExpanded = expandedId === f.id
             return (
-              <div key={f.id} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
+              <div key={f.id} className="bg-theme-card rounded-xl border border-theme overflow-hidden">
                 <div className="px-4 py-3">
                   <button onClick={() => setExpandedId(isExpanded ? null : f.id)} className="flex items-center gap-3 text-left w-full touch-manipulation">
-                    <svg className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className={`w-4 h-4 text-theme-secondary transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                     <div>
-                      <p className="text-sm text-white font-medium">{f.navn}</p>
-                      <p className="text-xs text-gray-500">Nr. {f.nummer} &middot; {fKommuner.length} kommuner</p>
+                      <p className="text-sm text-theme font-medium">{f.navn}</p>
+                      <p className="text-xs text-theme-muted">Nr. {f.nummer} &middot; {fKommuner.length} kommuner</p>
                     </div>
                   </button>
                   <div className="flex items-center gap-3 mt-2 ml-7">
@@ -131,13 +131,13 @@ export default function AdminFylkerPage() {
                   </div>
                 </div>
                 {isExpanded && (
-                  <div className="px-4 pb-3 border-t border-[#2a2a2a] pt-3">
-                    <p className="text-xs text-gray-400 mb-2">Kommuner ({fKommuner.length})</p>
+                  <div className="px-4 pb-3 border-t border-theme pt-3">
+                    <p className="text-xs text-theme-secondary mb-2">Kommuner ({fKommuner.length})</p>
                     <div className="flex flex-wrap gap-1">
                       {fKommuner.map(k => (
                         <span key={k.id} className="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded">{k.navn}</span>
                       ))}
-                      {fKommuner.length === 0 && <span className="text-xs text-gray-500">Ingen kommuner</span>}
+                      {fKommuner.length === 0 && <span className="text-xs text-theme-muted">Ingen kommuner</span>}
                     </div>
                   </div>
                 )}
@@ -149,22 +149,22 @@ export default function AdminFylkerPage() {
         {/* Add modal */}
         {showAdd && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setShowAdd(false)} />
-            <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-md mx-4">
-              <h2 className="text-lg font-bold text-white mb-4">Nytt fylke</h2>
+            <div className="absolute inset-0 bg-theme-overlay" onClick={() => setShowAdd(false)} />
+            <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-md mx-4">
+              <h2 className="text-lg font-bold text-theme mb-4">Nytt fylke</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Navn</label>
-                  <input type="text" value={form.navn} onChange={(e) => setForm({ ...form, navn: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+                  <label className="block text-sm text-theme-secondary mb-1">Navn</label>
+                  <input type="text" value={form.navn} onChange={(e) => setForm({ ...form, navn: e.target.value })} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Fylkesnummer</label>
-                  <input type="text" value={form.nummer} onChange={(e) => setForm({ ...form, nummer: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+                  <label className="block text-sm text-theme-secondary mb-1">Fylkesnummer</label>
+                  <input type="text" value={form.nummer} onChange={(e) => setForm({ ...form, nummer: e.target.value })} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
                 </div>
               </div>
               <div className="flex gap-3 mt-6">
                 <button onClick={handleAdd} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">Legg til</button>
-                <button onClick={() => setShowAdd(false)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors touch-manipulation">Avbryt</button>
+                <button onClick={() => setShowAdd(false)} className="px-4 py-2.5 bg-theme border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors touch-manipulation">Avbryt</button>
               </div>
             </div>
           </div>
@@ -173,22 +173,22 @@ export default function AdminFylkerPage() {
         {/* Edit modal */}
         {editItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setEditItem(null)} />
-            <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-md mx-4">
-              <h2 className="text-lg font-bold text-white mb-4">Rediger fylke</h2>
+            <div className="absolute inset-0 bg-theme-overlay" onClick={() => setEditItem(null)} />
+            <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-md mx-4">
+              <h2 className="text-lg font-bold text-theme mb-4">Rediger fylke</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Navn</label>
-                  <input type="text" value={form.navn} onChange={(e) => setForm({ ...form, navn: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+                  <label className="block text-sm text-theme-secondary mb-1">Navn</label>
+                  <input type="text" value={form.navn} onChange={(e) => setForm({ ...form, navn: e.target.value })} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-400 mb-1">Fylkesnummer</label>
-                  <input type="text" value={form.nummer} onChange={(e) => setForm({ ...form, nummer: e.target.value })} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+                  <label className="block text-sm text-theme-secondary mb-1">Fylkesnummer</label>
+                  <input type="text" value={form.nummer} onChange={(e) => setForm({ ...form, nummer: e.target.value })} className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
                 </div>
               </div>
               <div className="flex gap-3 mt-6">
                 <button onClick={handleSaveEdit} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">Lagre</button>
-                <button onClick={() => setEditItem(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors touch-manipulation">Avbryt</button>
+                <button onClick={() => setEditItem(null)} className="px-4 py-2.5 bg-theme border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors touch-manipulation">Avbryt</button>
               </div>
             </div>
           </div>
@@ -197,13 +197,13 @@ export default function AdminFylkerPage() {
         {/* Delete confirm */}
         {deleteConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setDeleteConfirm(null)} />
-            <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-sm mx-4">
-              <h2 className="text-lg font-bold text-white mb-2">Slett fylke?</h2>
-              <p className="text-sm text-gray-400 mb-6">Er du sikker på at du vil slette {items.find(f => f.id === deleteConfirm)?.navn}?</p>
+            <div className="absolute inset-0 bg-theme-overlay" onClick={() => setDeleteConfirm(null)} />
+            <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-sm mx-4">
+              <h2 className="text-lg font-bold text-theme mb-2">Slett fylke?</h2>
+              <p className="text-sm text-theme-secondary mb-6">Er du sikker på at du vil slette {items.find(f => f.id === deleteConfirm)?.navn}?</p>
               <div className="flex gap-3">
                 <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">Slett</button>
-                <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors touch-manipulation">Avbryt</button>
+                <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2.5 bg-theme border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors touch-manipulation">Avbryt</button>
               </div>
             </div>
           </div>

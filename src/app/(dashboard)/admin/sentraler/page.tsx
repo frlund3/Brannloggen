@@ -108,7 +108,7 @@ export default function AdminSentralerPage() {
     return (
       <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
         <div className="p-4 lg:p-8">
-          <p className="text-gray-400">Laster...</p>
+          <p className="text-theme-secondary">Laster...</p>
         </div>
       </DashboardLayout>
     )
@@ -117,36 +117,36 @@ export default function AdminSentralerPage() {
   const formContent = (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm text-gray-400 mb-1">Navn</label>
-        <input type="text" value={form.navn} onChange={(e) => setForm({ ...form, navn: e.target.value })} placeholder="Rogaland 110-sentral" className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+        <label className="block text-sm text-theme-secondary mb-1">Navn</label>
+        <input type="text" value={form.navn} onChange={(e) => setForm({ ...form, navn: e.target.value })} placeholder="Rogaland 110-sentral" className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
       </div>
       <div>
-        <label className="block text-sm text-gray-400 mb-1">Kort navn</label>
-        <input type="text" value={form.kort_navn} onChange={(e) => setForm({ ...form, kort_navn: e.target.value })} placeholder="Rogaland 110" className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+        <label className="block text-sm text-theme-secondary mb-1">Kort navn</label>
+        <input type="text" value={form.kort_navn} onChange={(e) => setForm({ ...form, kort_navn: e.target.value })} placeholder="Rogaland 110" className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
       </div>
       <div>
-        <label className="block text-sm text-gray-400 mb-1">Kontakt e-post</label>
-        <input type="email" value={form.kontakt_epost} onChange={(e) => setForm({ ...form, kontakt_epost: e.target.value })} placeholder="post@110sentral.no" className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+        <label className="block text-sm text-theme-secondary mb-1">Kontakt e-post</label>
+        <input type="email" value={form.kontakt_epost} onChange={(e) => setForm({ ...form, kontakt_epost: e.target.value })} placeholder="post@110sentral.no" className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-blue-500" />
       </div>
       <div>
-        <label className="block text-sm text-gray-400 mb-2">Fylker</label>
-        <div className="max-h-40 overflow-y-auto bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg p-2 space-y-1">
+        <label className="block text-sm text-theme-secondary mb-2">Fylker</label>
+        <div className="max-h-40 overflow-y-auto bg-theme-card-inner border border-theme rounded-lg p-2 space-y-1">
           {fylkerData.map(f => (
-            <label key={f.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#1a1a1a] cursor-pointer">
+            <label key={f.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-theme-card cursor-pointer">
               <input type="checkbox" checked={form.fylke_ids.includes(f.id)} onChange={() => toggleFylke(f.id)} className="rounded border-gray-600" />
-              <span className="text-sm text-white">{f.navn}</span>
+              <span className="text-sm text-theme">{f.navn}</span>
             </label>
           ))}
         </div>
       </div>
       <div>
-        <label className="block text-sm text-gray-400 mb-2">Brannvesen {form.fylke_ids.length > 0 && <span className="text-xs text-gray-500">(filtrert etter valgte fylker)</span>}</label>
-        <div className="max-h-48 overflow-y-auto bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg p-2 space-y-1">
+        <label className="block text-sm text-theme-secondary mb-2">Brannvesen {form.fylke_ids.length > 0 && <span className="text-xs text-theme-muted">(filtrert etter valgte fylker)</span>}</label>
+        <div className="max-h-48 overflow-y-auto bg-theme-card-inner border border-theme rounded-lg p-2 space-y-1">
           {filteredBrannvesen.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(b => (
-            <label key={b.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#1a1a1a] cursor-pointer">
+            <label key={b.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-theme-card cursor-pointer">
               <input type="checkbox" checked={form.brannvesen_ids.includes(b.id)} onChange={() => toggleBrannvesen(b.id)} className="rounded border-gray-600" />
-              <span className="text-sm text-white">{b.kort_navn}</span>
-              <span className="text-xs text-gray-500 ml-auto">{fylkerData.find(f => f.id === b.fylke_id)?.navn}</span>
+              <span className="text-sm text-theme">{b.kort_navn}</span>
+              <span className="text-xs text-theme-muted ml-auto">{fylkerData.find(f => f.id === b.fylke_id)?.navn}</span>
             </label>
           ))}
         </div>
@@ -158,8 +158,8 @@ export default function AdminSentralerPage() {
     <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
       <div className="p-4 lg:p-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">110-sentraler</h1>
-          <p className="text-sm text-gray-400 mb-3">
+          <h1 className="text-2xl font-bold text-theme">110-sentraler</h1>
+          <p className="text-sm text-theme-secondary mb-3">
             {isScoped ? `${displayItems.length} sentraler du har tilgang til` : `${items.length} sentraler registrert`}
           </p>
           {isAdmin && (
@@ -177,15 +177,15 @@ export default function AdminSentralerPage() {
             const isExpanded = expandedId === s.id
 
             return (
-              <div key={s.id} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
+              <div key={s.id} className="bg-theme-card rounded-xl border border-theme overflow-hidden">
                 <div className="px-4 py-3">
                   <button onClick={() => setExpandedId(isExpanded ? null : s.id)} className="flex items-center gap-3 text-left w-full touch-manipulation">
-                    <svg className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className={`w-4 h-4 text-theme-secondary transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                     <div>
-                      <p className="text-sm text-white font-medium">{s.navn}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm text-theme font-medium">{s.navn}</p>
+                      <p className="text-xs text-theme-muted">
                         {sFylker.map(f => f.navn).join(', ')} &middot; {sBrannvesen.length} brannvesen
                         {s.kontakt_epost && <> &middot; {s.kontakt_epost}</>}
                       </p>
@@ -197,14 +197,14 @@ export default function AdminSentralerPage() {
                       <button onClick={() => setDeleteConfirm(s.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation">Slett</button>
                     </div>
                   ) : (
-                    <span className="text-xs text-gray-500 mt-2 ml-7 block">Kun visning</span>
+                    <span className="text-xs text-theme-muted mt-2 ml-7 block">Kun visning</span>
                   )}
                 </div>
                 {isExpanded && (
-                  <div className="px-4 pb-3 border-t border-[#2a2a2a] pt-3">
+                  <div className="px-4 pb-3 border-t border-theme pt-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs text-gray-400 mb-2">Fylker ({sFylker.length})</p>
+                        <p className="text-xs text-theme-secondary mb-2">Fylker ({sFylker.length})</p>
                         <div className="flex flex-wrap gap-1">
                           {sFylker.map(f => (
                             <span key={f.id} className="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded">{f.navn}</span>
@@ -212,12 +212,12 @@ export default function AdminSentralerPage() {
                         </div>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-400 mb-2">Brannvesen ({sBrannvesen.length})</p>
+                        <p className="text-xs text-theme-secondary mb-2">Brannvesen ({sBrannvesen.length})</p>
                         <div className="flex flex-wrap gap-1">
                           {sBrannvesen.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(b => (
                             <span key={b.id} className="text-xs bg-red-500/10 text-red-400 px-2 py-0.5 rounded">{b.kort_navn}</span>
                           ))}
-                          {sBrannvesen.length === 0 && <span className="text-xs text-gray-500">Ingen brannvesen tilknyttet</span>}
+                          {sBrannvesen.length === 0 && <span className="text-xs text-theme-muted">Ingen brannvesen tilknyttet</span>}
                         </div>
                       </div>
                     </div>
@@ -231,13 +231,13 @@ export default function AdminSentralerPage() {
         {/* Add modal */}
         {showAdd && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setShowAdd(false)} />
-            <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
-              <h2 className="text-lg font-bold text-white mb-4">Ny 110-sentral</h2>
+            <div className="absolute inset-0 bg-theme-overlay" onClick={() => setShowAdd(false)} />
+            <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+              <h2 className="text-lg font-bold text-theme mb-4">Ny 110-sentral</h2>
               {formContent}
               <div className="flex gap-3 mt-6">
                 <button onClick={handleAdd} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">Legg til</button>
-                <button onClick={() => setShowAdd(false)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors">Avbryt</button>
+                <button onClick={() => setShowAdd(false)} className="px-4 py-2.5 bg-theme-card-inner border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors">Avbryt</button>
               </div>
             </div>
           </div>
@@ -246,13 +246,13 @@ export default function AdminSentralerPage() {
         {/* Edit modal */}
         {editItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setEditItem(null)} />
-            <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
-              <h2 className="text-lg font-bold text-white mb-4">Rediger 110-sentral</h2>
+            <div className="absolute inset-0 bg-theme-overlay" onClick={() => setEditItem(null)} />
+            <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+              <h2 className="text-lg font-bold text-theme mb-4">Rediger 110-sentral</h2>
               {formContent}
               <div className="flex gap-3 mt-6">
                 <button onClick={handleSaveEdit} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">Lagre</button>
-                <button onClick={() => setEditItem(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors">Avbryt</button>
+                <button onClick={() => setEditItem(null)} className="px-4 py-2.5 bg-theme-card-inner border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors">Avbryt</button>
               </div>
             </div>
           </div>
@@ -261,13 +261,13 @@ export default function AdminSentralerPage() {
         {/* Delete confirm */}
         {deleteConfirm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/60" onClick={() => setDeleteConfirm(null)} />
-            <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-sm mx-4">
-              <h2 className="text-lg font-bold text-white mb-2">Slett 110-sentral?</h2>
-              <p className="text-sm text-gray-400 mb-6">Er du sikker på at du vil slette {items.find(s => s.id === deleteConfirm)?.navn}?</p>
+            <div className="absolute inset-0 bg-theme-overlay" onClick={() => setDeleteConfirm(null)} />
+            <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-sm mx-4">
+              <h2 className="text-lg font-bold text-theme mb-2">Slett 110-sentral?</h2>
+              <p className="text-sm text-theme-secondary mb-6">Er du sikker på at du vil slette {items.find(s => s.id === deleteConfirm)?.navn}?</p>
               <div className="flex gap-3">
                 <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors">Slett</button>
-                <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors">Avbryt</button>
+                <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2.5 bg-theme-card-inner border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors">Avbryt</button>
               </div>
             </div>
           </div>

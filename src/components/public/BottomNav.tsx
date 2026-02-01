@@ -31,13 +31,13 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   const dashboardLabel = getDashboardLabel()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-[#0a0a0a] border-t border-[#2a2a2a] z-40">
+    <nav className="fixed bottom-0 left-0 right-0 bg-theme border-t border-theme z-40">
       <div className="max-w-lg mx-auto flex items-center justify-around py-2">
         <button
           onClick={() => onTabChange('følger')}
           className={cn(
             'flex flex-col items-center gap-0.5 px-3 py-1',
-            activeTab === 'følger' ? 'text-blue-400' : 'text-gray-500'
+            activeTab === 'følger' ? 'text-blue-400' : 'text-theme-muted'
           )}
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -50,7 +50,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
           onClick={() => onTabChange('alle')}
           className={cn(
             'flex flex-col items-center gap-0.5 px-3 py-1',
-            activeTab === 'alle' ? 'text-blue-400' : 'text-gray-500'
+            activeTab === 'alle' ? 'text-blue-400' : 'text-theme-muted'
           )}
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -63,7 +63,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
           onClick={() => onTabChange('innstillinger')}
           className={cn(
             'flex flex-col items-center gap-0.5 px-3 py-1',
-            activeTab === 'innstillinger' ? 'text-blue-400' : 'text-gray-500'
+            activeTab === 'innstillinger' ? 'text-blue-400' : 'text-theme-muted'
           )}
         >
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

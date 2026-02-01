@@ -88,14 +88,14 @@ export default function LoginPage() {
 
   if (checkingSession) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="text-gray-400 text-sm">Sjekker innlogging...</div>
+      <div className="min-h-screen bg-theme flex items-center justify-center">
+        <div className="text-theme-secondary text-sm">Sjekker innlogging...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-theme flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -104,8 +104,8 @@ export default function LoginPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white">Brannloggen</h1>
-          <p className="text-gray-400 text-sm mt-1">Logg inn for 110-sentral eller admin</p>
+          <h1 className="text-2xl font-bold text-theme">Brannloggen</h1>
+          <p className="text-theme-secondary text-sm mt-1">Logg inn for 110-sentral eller admin</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
@@ -116,24 +116,24 @@ export default function LoginPage() {
           )}
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">E-post</label>
+            <label className="block text-sm text-theme-secondary mb-1">E-post</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 bg-theme-card border border-theme-input rounded-lg text-theme focus:outline-none focus:border-blue-500"
               placeholder="operatør@brannvesen.no"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Passord</label>
+            <label className="block text-sm text-theme-secondary mb-1">Passord</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+              className="w-full px-4 py-3 bg-theme-card border border-theme-input rounded-lg text-theme focus:outline-none focus:border-blue-500"
               placeholder="Skriv inn passord"
               required
             />
@@ -152,7 +152,7 @@ export default function LoginPage() {
           <a href="/presse-registrering" className="block text-sm text-cyan-400 hover:text-cyan-300">
             Er du journalist? Registrer deg her
           </a>
-          <a href="/" className="block text-sm text-gray-400 hover:text-white">
+          <a href="/" className="block text-sm text-theme-secondary hover:text-theme">
             Tilbake til forsiden
           </a>
         </div>

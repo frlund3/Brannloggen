@@ -72,7 +72,7 @@ export function SettingsView() {
     return (
       <div className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-xl font-bold mb-1">Innstillinger</h1>
-        <p className="text-sm text-gray-400 mt-8 text-center">Laster...</p>
+        <p className="text-sm text-theme-secondary mt-8 text-center">Laster...</p>
       </div>
     )
   }
@@ -80,7 +80,7 @@ export function SettingsView() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">
       <h1 className="text-xl font-bold mb-1">Innstillinger</h1>
-      <p className="text-xs text-gray-500 mb-6">Velg hva du vil få varsler om. Lagres lokalt på denne enheten.</p>
+      <p className="text-xs text-theme-muted mb-6">Velg hva du vil få varsler om. Lagres lokalt på denne enheten.</p>
 
       {/* Saved toast */}
       {saved && (
@@ -92,11 +92,11 @@ export function SettingsView() {
       {/* Push section - full width */}
       <section className="mb-8">
         <h2 className="text-lg font-semibold mb-3">Push-varsler</h2>
-        <div className="bg-[#1a1a1a] rounded-xl p-4 border border-[#2a2a2a] max-w-lg">
+        <div className="bg-theme-card rounded-xl p-4 border border-theme max-w-lg">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <span className="text-sm text-white">Aktiver push-varsler</span>
-              <p className="text-xs text-gray-500 mt-0.5">Få varsel om hendelser på enheten</p>
+              <span className="text-sm text-theme">Aktiver push-varsler</span>
+              <p className="text-xs text-theme-muted mt-0.5">Få varsel om hendelser på enheten</p>
             </div>
             <button
               disabled={pushRegistering}
@@ -115,7 +115,7 @@ export function SettingsView() {
                 savePrefs({ ...prefs, pushEnabled: newEnabled })
               }}
               className={`w-12 h-6 rounded-full transition-colors relative ${
-                prefs.pushEnabled ? 'bg-blue-500' : 'bg-gray-600'
+                prefs.pushEnabled ? 'bg-blue-500' : 'bg-theme-card-hover'
               } ${pushRegistering ? 'opacity-50' : ''}`}
             >
               <div
@@ -128,13 +128,13 @@ export function SettingsView() {
 
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-sm text-white">Kun pågående hendelser</span>
-              <p className="text-xs text-gray-500 mt-0.5">Ikke varsle om avsluttede hendelser</p>
+              <span className="text-sm text-theme">Kun pågående hendelser</span>
+              <p className="text-xs text-theme-muted mt-0.5">Ikke varsle om avsluttede hendelser</p>
             </div>
             <button
               onClick={() => savePrefs({ ...prefs, onlyOngoing: !prefs.onlyOngoing })}
               className={`w-12 h-6 rounded-full transition-colors relative ${
-                prefs.onlyOngoing ? 'bg-blue-500' : 'bg-gray-600'
+                prefs.onlyOngoing ? 'bg-blue-500' : 'bg-theme-card-hover'
               }`}
             >
               <div
@@ -161,24 +161,24 @@ export function SettingsView() {
               )}
             </h2>
             {prefs.sentraler.length > 0 && (
-              <button onClick={() => savePrefs({ ...prefs, sentraler: [] })} className="text-xs text-gray-400">
+              <button onClick={() => savePrefs({ ...prefs, sentraler: [] })} className="text-xs text-theme-secondary">
                 Nullstill
               </button>
             )}
           </div>
-          <p className="text-xs text-gray-500 mb-2">Ingen valgt = alle sentraler</p>
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
+          <p className="text-xs text-theme-muted mb-2">Ingen valgt = alle sentraler</p>
+          <div className="bg-theme-card rounded-xl border border-theme overflow-hidden">
             {sentraler.map((s, i) => (
               <button
                 key={s.id}
                 onClick={() => toggleItem('sentraler', s.id)}
                 className={`w-full flex items-center justify-between px-4 py-3 text-left ${
-                  i < sentraler.length - 1 ? 'border-b border-[#2a2a2a]' : ''
-                } ${prefs.sentraler.includes(s.id) ? 'text-blue-400' : 'text-white'}`}
+                  i < sentraler.length - 1 ? 'border-b border-theme' : ''
+                } ${prefs.sentraler.includes(s.id) ? 'text-blue-400' : 'text-theme'}`}
               >
                 <div>
                   <span className="text-sm">{s.kort_navn}</span>
-                  <span className="text-xs text-gray-500 ml-2">{s.navn !== s.kort_navn ? s.navn : ''}</span>
+                  <span className="text-xs text-theme-muted ml-2">{s.navn !== s.kort_navn ? s.navn : ''}</span>
                 </div>
                 {prefs.sentraler.includes(s.id) && (
                   <svg className="w-4 h-4 text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -202,20 +202,20 @@ export function SettingsView() {
               )}
             </h2>
             {prefs.fylker.length > 0 && (
-              <button onClick={() => savePrefs({ ...prefs, fylker: [] })} className="text-xs text-gray-400">
+              <button onClick={() => savePrefs({ ...prefs, fylker: [] })} className="text-xs text-theme-secondary">
                 Nullstill
               </button>
             )}
           </div>
-          <p className="text-xs text-gray-500 mb-2">Ingen valgt = alle fylker. Valgte fylker filtrerer brannvesen nedenfor.</p>
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
+          <p className="text-xs text-theme-muted mb-2">Ingen valgt = alle fylker. Valgte fylker filtrerer brannvesen nedenfor.</p>
+          <div className="bg-theme-card rounded-xl border border-theme overflow-hidden">
             {fylker.map((f, i) => (
               <button
                 key={f.id}
                 onClick={() => toggleItem('fylker', f.id)}
                 className={`w-full flex items-center justify-between px-4 py-3 text-left ${
-                  i < fylker.length - 1 ? 'border-b border-[#2a2a2a]' : ''
-                } ${prefs.fylker.includes(f.id) ? 'text-blue-400' : 'text-white'}`}
+                  i < fylker.length - 1 ? 'border-b border-theme' : ''
+                } ${prefs.fylker.includes(f.id) ? 'text-blue-400' : 'text-theme'}`}
               >
                 <span className="text-sm">{f.navn}</span>
                 {prefs.fylker.includes(f.id) && (
@@ -240,20 +240,20 @@ export function SettingsView() {
               )}
             </h2>
             {prefs.kategorier.length > 0 && (
-              <button onClick={() => savePrefs({ ...prefs, kategorier: [] })} className="text-xs text-gray-400">
+              <button onClick={() => savePrefs({ ...prefs, kategorier: [] })} className="text-xs text-theme-secondary">
                 Nullstill
               </button>
             )}
           </div>
-          <p className="text-xs text-gray-500 mb-2">Ingen valgt = alle typer</p>
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] max-h-80 overflow-y-auto">
+          <p className="text-xs text-theme-muted mb-2">Ingen valgt = alle typer</p>
+          <div className="bg-theme-card rounded-xl border border-theme max-h-80 overflow-y-auto">
             {kategorier.map((k, i) => (
               <button
                 key={k.id}
                 onClick={() => toggleItem('kategorier', k.id)}
                 className={`w-full flex items-center justify-between px-4 py-3 text-left ${
-                  i < kategorier.length - 1 ? 'border-b border-[#2a2a2a]' : ''
-                } ${prefs.kategorier.includes(k.id) ? 'text-blue-400' : 'text-white'}`}
+                  i < kategorier.length - 1 ? 'border-b border-theme' : ''
+                } ${prefs.kategorier.includes(k.id) ? 'text-blue-400' : 'text-theme'}`}
               >
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-full" style={{ backgroundColor: k.farge }} />
@@ -281,24 +281,24 @@ export function SettingsView() {
               )}
             </h2>
             {prefs.brannvesen.length > 0 && (
-              <button onClick={() => savePrefs({ ...prefs, brannvesen: [] })} className="text-xs text-gray-400">
+              <button onClick={() => savePrefs({ ...prefs, brannvesen: [] })} className="text-xs text-theme-secondary">
                 Nullstill
               </button>
             )}
           </div>
-          <p className="text-xs text-gray-500 mb-2">
+          <p className="text-xs text-theme-muted mb-2">
             {prefs.fylker.length > 0
               ? `Filtrert etter valgte fylker (${filteredBrannvesen.length} brannvesen)`
               : 'Ingen valgt = alle brannvesen'}
           </p>
-          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] max-h-80 overflow-y-auto">
+          <div className="bg-theme-card rounded-xl border border-theme max-h-80 overflow-y-auto">
             {filteredBrannvesen.map((b, i) => (
               <button
                 key={b.id}
                 onClick={() => toggleItem('brannvesen', b.id)}
                 className={`w-full flex items-center justify-between px-4 py-2.5 text-left ${
-                  i < filteredBrannvesen.length - 1 ? 'border-b border-[#2a2a2a]' : ''
-                } ${prefs.brannvesen.includes(b.id) ? 'text-blue-400' : 'text-white'}`}
+                  i < filteredBrannvesen.length - 1 ? 'border-b border-theme' : ''
+                } ${prefs.brannvesen.includes(b.id) ? 'text-blue-400' : 'text-theme'}`}
               >
                 <span className="text-sm">{b.kort_navn}</span>
                 {prefs.brannvesen.includes(b.id) && (
@@ -315,9 +315,9 @@ export function SettingsView() {
       {/* Version info + login/logout */}
       <section className="mb-24">
         <div className="text-center space-y-2">
-          <a href="/presse-info" className="text-xs text-gray-500 hover:text-gray-400 block mb-2">Pressetilgang</a>
-          <a href="/personvern" className="text-xs text-gray-500 hover:text-gray-400 block mb-2">Personvern</a>
-          <p className="text-xs text-gray-600">Brannloggen v0.1.0</p>
+          <a href="/presse-info" className="text-xs text-theme-muted hover:text-theme-secondary block mb-2">Pressetilgang</a>
+          <a href="/personvern" className="text-xs text-theme-muted hover:text-theme-secondary block mb-2">Personvern</a>
+          <p className="text-xs text-theme-dim">Brannloggen v0.1.0</p>
           {user ? (
             <button
               onClick={() => {
@@ -340,7 +340,7 @@ export function SettingsView() {
               Logg ut ({user.email})
             </button>
           ) : (
-            <a href="/login" className="text-xs text-gray-600 hover:text-gray-400">
+            <a href="/login" className="text-xs text-theme-dim hover:text-theme-secondary">
               Operatør / Admin
             </a>
           )}

@@ -96,6 +96,50 @@ export async function setupPushListeners(
   }
 }
 
+// ── Badge Management ─────────────────────────────────────────────────
+
+/**
+ * Set the app icon badge count. Works on iOS (native) and Android 8+.
+ * On web, uses navigator.setAppBadge if available.
+ */
+export async function setBadgeCount(count: number): Promise<void> {
+  if (isNative()) {
+    try {
+      const { Badge } = await import('@capawesome/capacitor-badge')
+      await Badge.set({ count })
+    } catch {
+      // Badge plugin not available
+    }
+  } else if (typeof navigator !== 'undefined' && 'setAppBadge' in navigator) {
+    try {
+      if (count > 0) {
+        await (navigator as Navigator & { setAppBadge: (n: number) => Promise<void> }).setAppBadge(count)
+      } else {
+        await (navigator as Navigator & { clearAppBadge: () => Promise<void> }).clearAppBadge()
+      }
+    } catch {
+      // Web badge API not supported
+    }
+  }
+}
+
+/**
+ * Clear the app icon badge.
+ */
+export async function clearBadge(): Promise<void> {
+  await setBadgeCount(0)
+
+  // Also clear delivered notifications on native
+  if (isNative()) {
+    try {
+      const { PushNotifications } = await import('@capacitor/push-notifications')
+      await PushNotifications.removeAllDeliveredNotifications()
+    } catch {
+      // Not available
+    }
+  }
+}
+
 // ── Web Push (Service Worker based) ────────────────────────────────
 
 async function registerWebPush(): Promise<string | null> {

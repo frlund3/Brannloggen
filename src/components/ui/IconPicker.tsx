@@ -85,22 +85,22 @@ export function IconPicker({ value, onChange, color = '#fff' }: IconPickerProps)
 
   return (
     <div>
-      <label className="block text-sm text-gray-400 mb-1">Ikon</label>
+      <label className="block text-sm text-theme-secondary mb-1">Ikon</label>
 
       {/* Current selection preview */}
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-3 px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm hover:border-[#3a3a3a] transition-colors"
+        className="w-full flex items-center gap-3 px-3 py-2 bg-theme-input border border-theme rounded-lg text-theme text-sm hover:border-[#3a3a3a] transition-colors"
       >
         {SelectedIcon ? (
           <SelectedIcon className="w-5 h-5" style={{ color }} />
         ) : (
-          <span className="w-5 h-5 rounded bg-[#2a2a2a]" />
+          <span className="w-5 h-5 rounded bg-theme-card-hover" />
         )}
         <span className="flex-1 text-left">{value || 'Velg ikon...'}</span>
         <svg
-          className={`w-4 h-4 text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-theme-secondary transition-transform ${expanded ? 'rotate-180' : ''}`}
           fill="none" viewBox="0 0 24 24" stroke="currentColor"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -109,18 +109,18 @@ export function IconPicker({ value, onChange, color = '#fff' }: IconPickerProps)
 
       {/* Icon grid */}
       {expanded && (
-        <div className="mt-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg p-3 max-h-64 overflow-y-auto">
+        <div className="mt-2 bg-theme-input border border-theme rounded-lg p-3 max-h-64 overflow-y-auto">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Søk ikon..."
-            className="w-full px-3 py-1.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded text-white text-xs focus:outline-none focus:border-blue-500 mb-3"
+            className="w-full px-3 py-1.5 bg-theme-card border border-theme rounded text-theme text-xs focus:outline-none focus:border-blue-500 mb-3"
           />
 
           {filteredGroups.map((group) => (
             <div key={group.label} className="mb-3 last:mb-0">
-              <p className="text-xs text-gray-500 mb-1.5">{group.label}</p>
+              <p className="text-xs text-theme-muted mb-1.5">{group.label}</p>
               <div className="grid grid-cols-8 gap-1">
                 {group.icons.map((name) => {
                   const Icon: LucideIcon | undefined = icons[name as keyof typeof icons]
@@ -135,7 +135,7 @@ export function IconPicker({ value, onChange, color = '#fff' }: IconPickerProps)
                       className={`p-1.5 rounded flex items-center justify-center transition-colors ${
                         isSelected
                           ? 'bg-blue-500/20 ring-1 ring-blue-500'
-                          : 'hover:bg-[#1a1a1a]'
+                          : 'hover:bg-theme-card-hover'
                       }`}
                     >
                       <Icon className="w-4 h-4" style={{ color: isSelected ? color : '#9ca3af' }} />
@@ -147,7 +147,7 @@ export function IconPicker({ value, onChange, color = '#fff' }: IconPickerProps)
           ))}
 
           {filteredGroups.length === 0 && (
-            <p className="text-xs text-gray-500 text-center py-2">Ingen ikoner funnet</p>
+            <p className="text-xs text-theme-muted text-center py-2">Ingen ikoner funnet</p>
           )}
         </div>
       )}

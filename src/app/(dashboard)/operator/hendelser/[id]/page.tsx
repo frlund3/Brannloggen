@@ -49,14 +49,14 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
   }, [id, notesLoaded])
 
   const isLoading = hendelserLoading || brannvesenLoading || kommunerLoading || kategorierLoading
-  if (isLoading) return <div className="p-8 text-center text-gray-400">Laster...</div>
+  if (isLoading) return <div className="p-8 text-center text-theme-secondary">Laster...</div>
 
   const hendelse = allHendelser.find((h) => h.id === id)
 
   if (!hendelse) {
     return (
       <DashboardLayout role="operator">
-        <div className="p-8 text-center text-gray-400">Hendelse ikke funnet.</div>
+        <div className="p-8 text-center text-theme-secondary">Hendelse ikke funnet.</div>
       </DashboardLayout>
     )
   }
@@ -177,8 +177,8 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
               </span>
             )}
           </div>
-          <h1 className="text-2xl font-bold text-white">{hendelse.tittel}</h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-theme">{hendelse.tittel}</h1>
+          <p className="text-sm text-theme-secondary mt-1">
             {bv?.kort_navn} &middot; {kommune?.navn} &middot; {formatDateTime(hendelse.opprettet_tidspunkt)}
           </p>
           {hendelse.status === 'pågår' && (
@@ -192,27 +192,27 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
           {/* Main content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Description */}
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-              <h2 className="text-sm font-semibold text-gray-400 mb-2">Beskrivelse</h2>
-              <p className="text-sm text-white leading-relaxed">{hendelse.beskrivelse}</p>
-              <p className="text-xs text-gray-500 mt-2">{hendelse.sted}</p>
+            <div className="bg-theme-card rounded-xl border border-theme p-4">
+              <h2 className="text-sm font-semibold text-theme-secondary mb-2">Beskrivelse</h2>
+              <p className="text-sm text-theme leading-relaxed">{hendelse.beskrivelse}</p>
+              <p className="text-xs text-theme-muted mt-2">{hendelse.sted}</p>
             </div>
 
             {/* Public updates */}
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-              <h2 className="text-sm font-semibold text-gray-400 mb-4">
+            <div className="bg-theme-card rounded-xl border border-theme p-4">
+              <h2 className="text-sm font-semibold text-theme-secondary mb-4">
                 Oppdateringer ({updates.length})
               </h2>
 
               <div className="space-y-3 mb-4">
                 {updates.map((upd) => (
                   <div key={upd.id} className="border-l-2 border-blue-500/30 pl-3">
-                    <span className="text-xs text-gray-500">{formatTime(upd.opprettet_tidspunkt)}</span>
-                    <p className="text-sm text-white">{upd.tekst}</p>
+                    <span className="text-xs text-theme-muted">{formatTime(upd.opprettet_tidspunkt)}</span>
+                    <p className="text-sm text-theme">{upd.tekst}</p>
                   </div>
                 ))}
                 {updates.length === 0 && (
-                  <p className="text-sm text-gray-500">Ingen oppdateringer ennå.</p>
+                  <p className="text-sm text-theme-muted">Ingen oppdateringer ennå.</p>
                 )}
               </div>
 
@@ -222,7 +222,7 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
                   value={newUpdate}
                   onChange={(e) => setNewUpdate(e.target.value)}
                   placeholder="Legg til offentlig oppdatering..."
-                  className="flex-1 px-3 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-blue-500"
+                  className="flex-1 px-3 py-2.5 bg-theme-input border border-theme-input rounded-lg text-sm text-theme focus:outline-none focus:border-blue-500"
                   onKeyDown={(e) => e.key === 'Enter' && handleAddUpdate()}
                 />
                 <button
@@ -235,15 +235,15 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
             </div>
 
             {/* Images section */}
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-              <h2 className="text-sm font-semibold text-gray-400 mb-4">Bilder</h2>
-              <div className="bg-[#0a0a0a] border border-[#2a2a2a] border-dashed rounded-lg p-6 text-center">
+            <div className="bg-theme-card rounded-xl border border-theme p-4">
+              <h2 className="text-sm font-semibold text-theme-secondary mb-4">Bilder</h2>
+              <div className="bg-theme-card-inner border border-theme border-dashed rounded-lg p-6 text-center">
                 <input type="file" accept="image/*" multiple className="hidden" id="detail-image-upload" />
                 <label htmlFor="detail-image-upload" className="cursor-pointer">
-                  <svg className="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-8 h-8 text-theme-secondary mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  <p className="text-sm text-gray-400">Last opp bilder fra hendelsen</p>
+                  <p className="text-sm text-theme-secondary">Last opp bilder fra hendelsen</p>
                 </label>
               </div>
             </div>
@@ -265,7 +265,7 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
                 value={presseTekst}
                 onChange={(e) => setPresseTekst(e.target.value)}
                 placeholder="Skriv pressemelding her... F.eks. kontaktperson, pressekonferanse-tidspunkt, sikkerhetsinformasjon for media."
-                className="w-full px-3 py-2 bg-[#0a0a0a] border border-cyan-500/20 rounded-lg text-sm text-white focus:outline-none focus:border-cyan-500/50 min-h-[80px] resize-y mb-3"
+                className="w-full px-3 py-2 bg-theme-input border border-cyan-500/20 rounded-lg text-sm text-theme focus:outline-none focus:border-cyan-500/50 min-h-[80px] resize-y mb-3"
               />
               <button
                 onClick={handleSavePresse}
@@ -289,9 +289,9 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
 
               <div className="space-y-2 mb-3">
                 {internalNotes.map((note) => (
-                  <div key={note.id} className="bg-[#1a1a1a] rounded-lg p-2">
-                    <span className="text-xs text-gray-500">{formatTime(note.tidspunkt)}</span>
-                    <p className="text-xs text-white">{note.notat}</p>
+                  <div key={note.id} className="bg-theme-card rounded-lg p-2">
+                    <span className="text-xs text-theme-muted">{formatTime(note.tidspunkt)}</span>
+                    <p className="text-xs text-theme">{note.notat}</p>
                   </div>
                 ))}
               </div>
@@ -302,7 +302,7 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
                   value={newNote}
                   onChange={(e) => setNewNote(e.target.value)}
                   placeholder="Nytt internt notat..."
-                  className="flex-1 px-3 py-2.5 bg-[#1a1a1a] border border-yellow-500/20 rounded-lg text-xs text-white focus:outline-none focus:border-yellow-500/50"
+                  className="flex-1 px-3 py-2.5 bg-theme-card border border-yellow-500/20 rounded-lg text-xs text-theme focus:outline-none focus:border-yellow-500/50"
                   onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
                 />
                 <button
@@ -315,29 +315,29 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
             </div>
 
             {/* Info card */}
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-              <h2 className="text-sm font-semibold text-gray-400 mb-3">Detaljer</h2>
+            <div className="bg-theme-card rounded-xl border border-theme p-4">
+              <h2 className="text-sm font-semibold text-theme-secondary mb-3">Detaljer</h2>
               <dl className="space-y-2 text-xs">
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Brannvesen</dt>
-                  <dd className="text-white">{bv?.kort_navn}</dd>
+                  <dt className="text-theme-muted">Brannvesen</dt>
+                  <dd className="text-theme">{bv?.kort_navn}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Kommune</dt>
-                  <dd className="text-white">{kommune?.navn}</dd>
+                  <dt className="text-theme-muted">Kommune</dt>
+                  <dd className="text-theme">{kommune?.navn}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Opprettet</dt>
-                  <dd className="text-white">{formatDateTime(hendelse.opprettet_tidspunkt)}</dd>
+                  <dt className="text-theme-muted">Opprettet</dt>
+                  <dd className="text-theme">{formatDateTime(hendelse.opprettet_tidspunkt)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-gray-500">Sist oppdatert</dt>
-                  <dd className="text-white">{formatDateTime(hendelse.oppdatert_tidspunkt)}</dd>
+                  <dt className="text-theme-muted">Sist oppdatert</dt>
+                  <dd className="text-theme">{formatDateTime(hendelse.oppdatert_tidspunkt)}</dd>
                 </div>
                 {hendelse.latitude && (
                   <div className="flex justify-between">
-                    <dt className="text-gray-500">Koordinater</dt>
-                    <dd className="text-white">{hendelse.latitude}, {hendelse.longitude}</dd>
+                    <dt className="text-theme-muted">Koordinater</dt>
+                    <dd className="text-theme">{hendelse.latitude}, {hendelse.longitude}</dd>
                   </div>
                 )}
               </dl>
