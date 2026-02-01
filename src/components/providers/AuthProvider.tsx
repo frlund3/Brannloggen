@@ -26,23 +26,9 @@ const ROLLE_KEY = 'brannloggen_user_rolle'
 const SENTRAL_IDS_KEY = 'brannloggen_user_sentral_ids'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // Read cached rolle synchronously on first render
   const [user, setUser] = useState<User | null>(null)
-  const [rolle, setRolle] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(ROLLE_KEY)
-    }
-    return null
-  })
-  const [sentralIds, setSentralIds] = useState<string[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem(SENTRAL_IDS_KEY)
-        if (saved) return JSON.parse(saved)
-      } catch {}
-    }
-    return []
-  })
+  const [rolle, setRolle] = useState<string | null>(null)
+  const [sentralIds, setSentralIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

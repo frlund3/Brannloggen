@@ -16,13 +16,11 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const pathname = usePathname()
   const { user, rolle, loading } = useAuth()
 
-  // If rolle is cached in localStorage, show dashboard immediately
-  // Don't wait for the potentially hanging getSession()
-  const hasCachedRole = typeof window !== 'undefined' && !!localStorage.getItem('brannloggen_user_rolle')
-
   // Redirect to login if not authenticated (only after loading is done)
-  if (!loading && !user && !hasCachedRole) {
-    window.location.href = '/login'
+  if (!loading && !user && !rolle) {
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    }
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <p className="text-gray-400 text-sm">Omdirigerer til innlogging...</p>
@@ -30,8 +28,8 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     )
   }
 
-  // Show loading only if we have no cached role
-  if (loading && !hasCachedRole) {
+  // Show loading state
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
         <p className="text-gray-400 text-sm">Laster...</p>
