@@ -107,7 +107,10 @@ Deno.serve(async (req: Request) => {
     }
 
     // Create auth user and send invitation email
-    const { data: newAuthUser, error: authError } = await adminClient.auth.admin.inviteUserByEmail(epost)
+    const siteUrl = Deno.env.get('SITE_URL') || 'https://brannloggen.no'
+    const { data: newAuthUser, error: authError } = await adminClient.auth.admin.inviteUserByEmail(epost, {
+      redirectTo: `${siteUrl}/oppdater-passord`,
+    })
 
     if (authError) {
       return new Response(JSON.stringify({ error: authError.message }), {

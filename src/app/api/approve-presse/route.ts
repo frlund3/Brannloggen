@@ -107,7 +107,10 @@ export async function POST(req: NextRequest) {
     }
 
     // 9. Create auth user and send invitation email
-    const { data: newAuthUser, error: authError } = await adminClient.auth.admin.inviteUserByEmail(soknad.epost)
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://brannloggen.no'
+    const { data: newAuthUser, error: authError } = await adminClient.auth.admin.inviteUserByEmail(soknad.epost, {
+      redirectTo: `${siteUrl}/oppdater-passord`,
+    })
 
     if (authError) {
       return NextResponse.json({ error: authError.message }, { status: 400 })
