@@ -79,7 +79,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={handleSkip} />
 
       {/* Dialog */}
-      <div className="relative w-full max-w-md bg-[#141414] rounded-t-2xl sm:rounded-2xl border border-[#2a2a2a] max-h-[85vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom">
+      <div className="relative w-full max-w-md bg-[#141414] rounded-t-2xl sm:rounded-2xl border border-[#2a2a2a] h-[85vh] sm:h-auto sm:max-h-[85vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom">
 
         {/* STEP: Intro */}
         {step === 'intro' && (
@@ -110,7 +110,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
 
         {/* STEP: Sentraler */}
         {step === 'sentraler' && (
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col flex-1 min-h-0">
             <div className="p-4 border-b border-[#2a2a2a]">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold">110-sentraler</h2>
@@ -118,7 +118,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
               </div>
               <p className="text-xs text-gray-400 mt-1">Velg sentraler du er interessert i. Ingen valgt = alle.</p>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-1">
+            <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-1">
               {sentraler.map(s => (
                 <button
                   key={s.id}
@@ -156,7 +156,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
 
         {/* STEP: Fylker */}
         {step === 'fylker' && (
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col flex-1 min-h-0">
             <div className="p-4 border-b border-[#2a2a2a]">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold">Fylker</h2>
@@ -164,7 +164,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
               </div>
               <p className="text-xs text-gray-400 mt-1">Velg fylker du vil ha varsler fra. Ingen valgt = alle.</p>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-1">
+            <div className="flex-1 overflow-y-auto min-h-0 p-4 space-y-1">
               {fylker.map(f => (
                 <button
                   key={f.id}
@@ -197,7 +197,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
 
         {/* STEP: Kategorier */}
         {step === 'kategorier' && (
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col flex-1 min-h-0">
             <div className="p-4 border-b border-[#2a2a2a]">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold">Hendelsestyper</h2>
@@ -205,7 +205,7 @@ export function PushOnboarding({ onComplete }: PushOnboardingProps) {
               </div>
               <p className="text-xs text-gray-400 mt-1">Velg typer hendelser. Ingen valgt = alle typer.</p>
             </div>
-            <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex-1 overflow-y-auto min-h-0 p-4">
               {/* Popular categories */}
               <p className="text-xs text-gray-500 mb-2 font-medium uppercase tracking-wide">Vanlige</p>
               <div className="space-y-1 mb-4">
