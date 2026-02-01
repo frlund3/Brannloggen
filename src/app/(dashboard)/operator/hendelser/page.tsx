@@ -4,11 +4,14 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
 import { useHendelser, useBrannvesen, useKategorier, useFylker, useKommuner, useSentraler } from '@/hooks/useSupabaseData'
+import { invalidateCache } from '@/hooks/useSupabaseData'
 import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
 import { formatDateTime } from '@/lib/utils'
 import { useSentralScope } from '@/hooks/useSentralScope'
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
+import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 
 export default function OperatorHendelserPage() {
   const { data: allHendelser, loading: hendelserLoading, refetch } = useHendelser({ excludeDeactivated: true })
@@ -78,9 +81,56 @@ export default function OperatorHendelserPage() {
     setFilterAlvor('')
   }
 
-  const handleDeactivate = (id: string) => {
-    setDeactivatedIds([...deactivatedIds, id])
-    setDeactivateConfirm(null)
+  const handleDeactivate = async (id: string) => {
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('hendelser') as any).update({ status: 'deaktivert' }).eq('id', id)
+      if (error) throw error
+      setDeactivatedIds([...deactivatedIds, id])
+      setDeactivateConfirm(null)
+      invalidateCache()
+      toast.success('Hendelse deaktivert')
+    } catch (err) {
+      toast.error('Kunne ikke deaktivere hendelse: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+      setDeactivateConfirm(null)
+    }
+  }
+
+  const handleSaveChanges = async () => {
+    if (!selectedH) return
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { toast.error('Du må være innlogget'); return }
+
+      // Update status if changed
+      if (editStatus !== selectedH.status) {
+        const updateData: Record<string, unknown> = { status: editStatus }
+        if (editStatus === 'avsluttet') updateData.avsluttet_tidspunkt = new Date().toISOString()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase.from('hendelser') as any).update(updateData).eq('id', selectedH.id)
+        if (error) throw error
+      }
+
+      // Add update if provided
+      if (newUpdate.trim()) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error } = await (supabase.from('hendelsesoppdateringer') as any).insert({
+          hendelse_id: selectedH.id,
+          tekst: newUpdate,
+          opprettet_av: user.id,
+        })
+        if (error) throw error
+      }
+
+      invalidateCache()
+      refetch()
+      toast.success('Endringer lagret')
+      setSelectedHendelse(null)
+    } catch (err) {
+      toast.error('Kunne ikke lagre: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
   const selectedH = selectedHendelse ? allHendelser.find(h => h.id === selectedHendelse) : null
@@ -306,7 +356,7 @@ export default function OperatorHendelserPage() {
             )}
 
             <div className="flex flex-col sm:flex-row gap-3">
-              <button onClick={() => setSelectedHendelse(null)} className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">Lagre endringer</button>
+              <button onClick={handleSaveChanges} className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors touch-manipulation">Lagre endringer</button>
               <button onClick={() => setSelectedHendelse(null)} className="py-3 sm:px-4 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors touch-manipulation">Lukk</button>
             </div>
           </div>

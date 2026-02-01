@@ -1,9 +1,11 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { useSentraler, useBrukerprofiler } from '@/hooks/useSupabaseData'
+import { useSentraler, useBrukerprofiler, invalidateCache } from '@/hooks/useSupabaseData'
 import { useSentralScope } from '@/hooks/useSentralScope'
 import { useState } from 'react'
+import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 
 interface UserItem {
   id: string
@@ -81,23 +83,26 @@ export default function AdminBrukerePage() {
     : sentraler
 
   const handleAdd = () => {
-    if (!newUser.fullt_navn || !newUser.epost) return
-    const user: UserItem = {
-      id: String(Date.now()),
-      fullt_navn: newUser.fullt_navn,
-      epost: newUser.epost,
-      rolle: newUser.rolle,
-      sentral_ids: (newUser.rolle === 'operator' || newUser.rolle === '110-admin') ? newUser.sentral_ids : [],
-      aktiv: true,
-      created_at: new Date().toISOString().split('T')[0],
-    }
-    setBrukere([...brukere, user])
-    setNewUser({ fullt_navn: '', epost: '', rolle: 'operator', sentral_ids: [] })
+    toast.info('Nye brukere opprettes via invitasjonslenke. Denne funksjonen kommer snart.')
     setShowAddModal(false)
   }
 
-  const handleToggleActive = (id: string) => {
+  const handleToggleActive = async (id: string) => {
+    const user = brukere.find(u => u.id === id)
+    if (!user) return
+    const prev = [...brukere]
     setBrukere(brukere.map(u => u.id === id ? { ...u, aktiv: !u.aktiv } : u))
+    try {
+      const supabase = createClient()
+      // @ts-expect-error supabase types not generated
+      const { error } = await supabase.from('brukerprofiler').update({ aktiv: !user.aktiv } as any).eq('id', id)
+      if (error) throw error
+      invalidateCache()
+      toast.success(user.aktiv ? 'Bruker deaktivert' : 'Bruker aktivert')
+    } catch (err) {
+      setBrukere(prev)
+      toast.error('Kunne ikke endre status: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
   const handleEdit = (user: UserItem) => {
@@ -105,18 +110,45 @@ export default function AdminBrukerePage() {
     setEditForm({ fullt_navn: user.fullt_navn, epost: user.epost, rolle: user.rolle, sentral_ids: [...user.sentral_ids] })
   }
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editUser || !editForm.fullt_navn || !editForm.epost) return
-    setBrukere(brukere.map(u => u.id === editUser.id ? {
-      ...u, fullt_navn: editForm.fullt_navn, epost: editForm.epost, rolle: editForm.rolle,
+    const prev = [...brukere]
+    const updated = {
+      fullt_navn: editForm.fullt_navn,
+      epost: editForm.epost,
+      rolle: editForm.rolle,
       sentral_ids: (editForm.rolle === 'operator' || editForm.rolle === '110-admin') ? editForm.sentral_ids : [],
-    } : u))
+    }
+    setBrukere(brukere.map(u => u.id === editUser.id ? { ...u, ...updated } : u))
     setEditUser(null)
+    try {
+      const supabase = createClient()
+      // @ts-expect-error supabase types not generated
+      const { error } = await supabase.from('brukerprofiler').update(updated as any).eq('id', editUser.id)
+      if (error) throw error
+      invalidateCache()
+      toast.success('Bruker oppdatert')
+    } catch (err) {
+      setBrukere(prev)
+      toast.error('Kunne ikke oppdatere bruker: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    const prev = [...brukere]
     setBrukere(brukere.filter(u => u.id !== id))
     setDeleteConfirm(null)
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('brukerprofiler') as any).delete().eq('id', id)
+      if (error) throw error
+      invalidateCache()
+      toast.success('Bruker slettet')
+    } catch (err) {
+      setBrukere(prev)
+      toast.error('Kunne ikke slette bruker: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
   const toggleSentral = (form: UserForm, setForm: (v: UserForm) => void, sId: string) => {

@@ -1,10 +1,12 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { useBrannvesen, useFylker, useKommuner, useSentraler } from '@/hooks/useSupabaseData'
+import { useBrannvesen, useFylker, useKommuner, useSentraler, invalidateCache } from '@/hooks/useSupabaseData'
 import type { Brannvesen } from '@/hooks/useSupabaseData'
 import { useSentralScope } from '@/hooks/useSentralScope'
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 
 export default function AdminBrannvesenPage() {
   const { isAdmin, is110Admin, isScoped, filterBrannvesen } = useSentralScope()
@@ -42,12 +44,23 @@ export default function AdminBrannvesenPage() {
 
   const resetForm = () => setForm({ navn: '', kort_navn: '', fylke_id: '', kommune_ids: [] })
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.navn || !form.kort_navn || !form.fylke_id) return
     const id = 'bv-' + form.kort_navn.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-    setItems([...items, { id, navn: form.navn, kort_navn: form.kort_navn, fylke_id: form.fylke_id, kommune_ids: form.kommune_ids, aktiv: true }])
+    const newItem = { id, navn: form.navn, kort_navn: form.kort_navn, fylke_id: form.fylke_id, kommune_ids: form.kommune_ids, aktiv: true }
+    setItems([...items, newItem])
     resetForm()
     setShowAdd(false)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.from('brannvesen').insert(newItem as any)
+      if (error) throw error
+      invalidateCache()
+      toast.success('Brannvesen opprettet')
+    } catch (err) {
+      setItems(items.filter(b => b.id !== id))
+      toast.error('Kunne ikke opprette: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
   const handleEdit = (item: Brannvesen) => {
@@ -55,16 +68,40 @@ export default function AdminBrannvesenPage() {
     setForm({ navn: item.navn, kort_navn: item.kort_navn, fylke_id: item.fylke_id, kommune_ids: [...item.kommune_ids] })
   }
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editItem || !form.navn || !form.kort_navn || !form.fylke_id) return
+    const prev = [...items]
     setItems(items.map(b => b.id === editItem.id ? { ...b, ...form } : b))
     setEditItem(null)
     resetForm()
+    try {
+      const supabase = createClient()
+      // @ts-expect-error supabase types not generated
+      const { error } = await supabase.from('brannvesen').update({ navn: form.navn, kort_navn: form.kort_navn, fylke_id: form.fylke_id, kommune_ids: form.kommune_ids } as any).eq('id', editItem.id)
+      if (error) throw error
+      invalidateCache()
+      toast.success('Brannvesen oppdatert')
+    } catch (err) {
+      setItems(prev)
+      toast.error('Kunne ikke oppdatere: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    const prev = [...items]
     setItems(items.filter(b => b.id !== id))
     setDeleteConfirm(null)
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('brannvesen') as any).delete().eq('id', id)
+      if (error) throw error
+      invalidateCache()
+      toast.success('Brannvesen slettet')
+    } catch (err) {
+      setItems(prev)
+      toast.error('Kunne ikke slette: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
   const toggleKommune = (kid: string) => {

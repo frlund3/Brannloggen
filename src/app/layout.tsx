@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { AuthProvider } from '@/components/providers/AuthProvider'
+import { Toaster } from 'sonner'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default function RootLayout({
     <html lang="no" className="dark">
       <body className="min-h-screen bg-[#0a0a0a] text-white">
         <AuthProvider>{children}</AuthProvider>
+        <Toaster theme="dark" position="top-right" richColors closeButton />
       </body>
     </html>
   )

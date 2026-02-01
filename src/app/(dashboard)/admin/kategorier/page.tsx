@@ -1,9 +1,11 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { useKategorier } from '@/hooks/useSupabaseData'
+import { useKategorier, invalidateCache } from '@/hooks/useSupabaseData'
 import type { Kategori } from '@/hooks/useSupabaseData'
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 
 export default function AdminKategorierPage() {
   const { data: kategorierData, loading: kategorierLoading } = useKategorier()
@@ -15,12 +17,23 @@ export default function AdminKategorierPage() {
 
   useEffect(() => { if (kategorierData.length > 0) setItems(kategorierData) }, [kategorierData])
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.navn) return
     const id = 'kat-' + form.navn.toLowerCase().replace(/\s+/g, '-').replace(/[æ]/g, 'ae').replace(/[ø]/g, 'o').replace(/[å]/g, 'a')
-    setItems([...items, { id, navn: form.navn, ikon: form.ikon || 'Flame', farge: form.farge, beskrivelse: form.beskrivelse || null }])
+    const newItem = { id, navn: form.navn, ikon: form.ikon || 'Flame', farge: form.farge, beskrivelse: form.beskrivelse || null }
+    setItems([...items, newItem])
     setForm({ navn: '', ikon: '', farge: '#DC2626', beskrivelse: '' })
     setShowAdd(false)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.from('kategorier').insert(newItem as any)
+      if (error) throw error
+      invalidateCache()
+      toast.success('Kategori opprettet')
+    } catch (err) {
+      setItems(items.filter(k => k.id !== id))
+      toast.error('Kunne ikke opprette: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
   const handleEdit = (item: Kategori) => {
@@ -28,16 +41,40 @@ export default function AdminKategorierPage() {
     setForm({ navn: item.navn, ikon: item.ikon, farge: item.farge, beskrivelse: item.beskrivelse || '' })
   }
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editItem || !form.navn) return
+    const prev = [...items]
     setItems(items.map(k => k.id === editItem.id ? { ...k, navn: form.navn, ikon: form.ikon || 'Flame', farge: form.farge, beskrivelse: form.beskrivelse || null } : k))
     setEditItem(null)
     setForm({ navn: '', ikon: '', farge: '#DC2626', beskrivelse: '' })
+    try {
+      const supabase = createClient()
+      // @ts-expect-error supabase types not generated
+      const { error } = await supabase.from('kategorier').update({ navn: form.navn, ikon: form.ikon || 'Flame', farge: form.farge, beskrivelse: form.beskrivelse || null } as any).eq('id', editItem.id)
+      if (error) throw error
+      invalidateCache()
+      toast.success('Kategori oppdatert')
+    } catch (err) {
+      setItems(prev)
+      toast.error('Kunne ikke oppdatere: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    const prev = [...items]
     setItems(items.filter(k => k.id !== id))
     setDeleteConfirm(null)
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('kategorier') as any).delete().eq('id', id)
+      if (error) throw error
+      invalidateCache()
+      toast.success('Kategori slettet')
+    } catch (err) {
+      setItems(prev)
+      toast.error('Kunne ikke slette: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
   if (kategorierLoading) {

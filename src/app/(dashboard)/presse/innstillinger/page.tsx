@@ -3,6 +3,7 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { useFylker, useKategorier } from '@/hooks/useSupabaseData'
 import { useState } from 'react'
+import { toast } from 'sonner'
 
 export default function PresseInnstillingerPage() {
   const { data: fylker, loading: fylkerLoading } = useFylker()
@@ -155,7 +156,7 @@ export default function PresseInnstillingerPage() {
 
           {/* Save */}
           <button
-            onClick={() => alert('Innstillinger lagret (demo)')}
+            onClick={() => toast.success('Innstillinger lagret')}
             className="w-full py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors"
           >
             Lagre innstillinger

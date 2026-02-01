@@ -1,9 +1,11 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { useFylker, useKommuner } from '@/hooks/useSupabaseData'
+import { useFylker, useKommuner, invalidateCache } from '@/hooks/useSupabaseData'
 import type { Fylke } from '@/hooks/useSupabaseData'
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 
 export default function AdminFylkerPage() {
   const { data: fylkerData, loading: fylkerLoading } = useFylker()
@@ -21,11 +23,23 @@ export default function AdminFylkerPage() {
     !search || f.navn.toLowerCase().includes(search.toLowerCase()) || f.nummer.includes(search)
   ).sort((a, b) => a.navn.localeCompare(b.navn, 'no'))
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.navn || !form.nummer) return
-    setItems([...items, { id: `f-${form.nummer}`, navn: form.navn, nummer: form.nummer }])
+    const id = `f-${form.nummer}`
+    const newItem = { id, navn: form.navn, nummer: form.nummer }
+    setItems([...items, newItem])
     setForm({ navn: '', nummer: '' })
     setShowAdd(false)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.from('fylker').insert(newItem as any)
+      if (error) throw error
+      invalidateCache()
+      toast.success('Fylke opprettet')
+    } catch (err) {
+      setItems(items.filter(f => f.id !== id))
+      toast.error('Kunne ikke opprette: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
   const handleEdit = (item: Fylke) => {
@@ -33,16 +47,40 @@ export default function AdminFylkerPage() {
     setForm({ navn: item.navn, nummer: item.nummer })
   }
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editItem || !form.navn || !form.nummer) return
+    const prev = [...items]
     setItems(items.map(f => f.id === editItem.id ? { ...f, navn: form.navn, nummer: form.nummer } : f))
     setEditItem(null)
     setForm({ navn: '', nummer: '' })
+    try {
+      const supabase = createClient()
+      // @ts-expect-error supabase types not generated
+      const { error } = await supabase.from('fylker').update({ navn: form.navn, nummer: form.nummer } as any).eq('id', editItem.id)
+      if (error) throw error
+      invalidateCache()
+      toast.success('Fylke oppdatert')
+    } catch (err) {
+      setItems(prev)
+      toast.error('Kunne ikke oppdatere: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    const prev = [...items]
     setItems(items.filter(f => f.id !== id))
     setDeleteConfirm(null)
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('fylker') as any).delete().eq('id', id)
+      if (error) throw error
+      invalidateCache()
+      toast.success('Fylke slettet')
+    } catch (err) {
+      setItems(prev)
+      toast.error('Kunne ikke slette: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
   if (fylkerLoading || kommunerLoading) {

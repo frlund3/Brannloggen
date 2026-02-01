@@ -1,9 +1,12 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { useFylker, useBrannvesen, useKategorier, useSentraler } from '@/hooks/useSupabaseData'
+import { useFylker, useBrannvesen, useKategorier, useSentraler, useKommuner } from '@/hooks/useSupabaseData'
+import { invalidateCache } from '@/hooks/useSupabaseData'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 
 export default function NyHendelsePage() {
   const router = useRouter()
@@ -11,6 +14,7 @@ export default function NyHendelsePage() {
   const { data: brannvesen, loading: brannvesenLoading } = useBrannvesen()
   const { data: kategorier, loading: kategorierLoading } = useKategorier()
   const { data: sentraler, loading: sentralerLoading } = useSentraler()
+  const { data: kommuner, loading: kommunerLoading } = useKommuner()
   const [selectedSentral, setSelectedSentral] = useState('')
   const [selectedFylke, setSelectedFylke] = useState('')
   const [formData, setFormData] = useState({
@@ -19,6 +23,7 @@ export default function NyHendelsePage() {
     sted: '',
     sentral_id: '',
     brannvesen_id: '',
+    kommune_id: '',
     fylke_id: '',
     kategori_id: '',
     alvorlighetsgrad: 'middels',
@@ -32,7 +37,7 @@ export default function NyHendelsePage() {
   const [bilderSynligPublikum, setBilderSynligPublikum] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  const isLoading = fylkerLoading || brannvesenLoading || kategorierLoading || sentralerLoading
+  const isLoading = fylkerLoading || brannvesenLoading || kategorierLoading || sentralerLoading || kommunerLoading
   if (isLoading) return <div className="p-8 text-center text-gray-400">Laster...</div>
 
   const sentral = selectedSentral ? sentraler.find(s => s.id === selectedSentral) : null
@@ -52,16 +57,79 @@ export default function NyHendelsePage() {
     return list.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no'))
   })()
 
+  const filteredKommuner = selectedFylke ? kommuner.filter(k => k.fylke_id === selectedFylke) : kommuner
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!formData.tittel || !formData.beskrivelse || !formData.sted || !formData.sentral_id || !formData.fylke_id || !formData.brannvesen_id || !formData.kategori_id || !formData.kommune_id) {
+      toast.error('Fyll ut alle påkrevde felter')
+      return
+    }
     setSaving(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { toast.error('Du må være innlogget'); setSaving(false); return }
 
-    // In production, this would call the Supabase API
-    // For now, simulate save
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: hendelse, error } = await (supabase.from('hendelser') as any).insert({
+        tittel: formData.tittel,
+        beskrivelse: formData.beskrivelse,
+        sted: formData.sted,
+        brannvesen_id: formData.brannvesen_id,
+        kommune_id: formData.kommune_id,
+        fylke_id: formData.fylke_id,
+        kategori_id: formData.kategori_id,
+        alvorlighetsgrad: formData.alvorlighetsgrad,
+        opprettet_av: user.id,
+        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+      }).select().single()
 
-    alert('Hendelse opprettet! (Demo - ingen data lagret)')
-    router.push('/operator/hendelser')
+      if (error) throw error
+
+      // Save press info if provided
+      if (presseInfo && hendelse) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from('hendelser') as any).update({ presse_tekst: presseInfo }).eq('id', hendelse.id)
+      }
+
+      // Save internal note if provided
+      if (internNotat && hendelse) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from('interne_notater') as any).insert({
+          hendelse_id: hendelse.id,
+          notat: internNotat,
+          opprettet_av: user.id,
+        })
+      }
+
+      // Upload images if any
+      if (bilder.length > 0 && hendelse) {
+        for (const file of bilder) {
+          const ext = file.name.split('.').pop()
+          const path = `${hendelse.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+          const { error: uploadErr } = await supabase.storage.from('hendelsesbilder').upload(path, file)
+          if (!uploadErr) {
+            const { data: urlData } = supabase.storage.from('hendelsesbilder').getPublicUrl(path)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase.from('hendelsesbilder') as any).insert({
+              hendelse_id: hendelse.id,
+              bilde_url: urlData.publicUrl,
+              lastet_opp_av: user.id,
+            })
+          }
+        }
+      }
+
+      invalidateCache()
+      toast.success('Hendelse opprettet!')
+      router.push('/operator/hendelser')
+    } catch (err) {
+      toast.error('Kunne ikke opprette hendelse: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -206,6 +274,21 @@ export default function NyHendelsePage() {
               className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Kommune *</label>
+            <select
+              value={formData.kommune_id}
+              onChange={(e) => setFormData({ ...formData, kommune_id: e.target.value })}
+              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-blue-500"
+              required
+            >
+              <option value="">Velg kommune</option>
+              {filteredKommuner.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map((k) => (
+                <option key={k.id} value={k.id}>{k.navn}</option>
+              ))}
+            </select>
           </div>
 
           {/* Coordinates */}

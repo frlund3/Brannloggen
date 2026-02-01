@@ -4,9 +4,13 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
 import { useHendelser, useBrannvesen, useKommuner, useKategorier } from '@/hooks/useSupabaseData'
+import { invalidateCache } from '@/hooks/useSupabaseData'
 import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
 import { formatDateTime, formatTime } from '@/lib/utils'
-import { useState, use } from 'react'
+import { useState, useEffect, use } from 'react'
+import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 export default function HendelseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -21,9 +25,27 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
   const [presseInitialized, setPresseInitialized] = useState(false)
   const [presseSaved, setPresseSaved] = useState(false)
   const [localUpdates, setLocalUpdates] = useState<{ id: string; hendelse_id: string; tekst: string; opprettet_tidspunkt: string }[]>([])
-  const [internalNotes, setInternalNotes] = useState<{ id: string; notat: string; tidspunkt: string }[]>([
-    { id: 'n-1', notat: 'Kontaktet eier av bygget. Forsikringsselskap varslet.', tidspunkt: new Date(Date.now() - 30 * 60000).toISOString() },
-  ])
+  const [internalNotes, setInternalNotes] = useState<{ id: string; notat: string; tidspunkt: string }[]>([])
+  const [notesLoaded, setNotesLoaded] = useState(false)
+
+  useEffect(() => {
+    if (notesLoaded) return
+    const loadNotes = async () => {
+      try {
+        const supabase = createClient()
+        const { data } = await supabase
+          .from('interne_notater')
+          .select('id, notat, opprettet_tidspunkt')
+          .eq('hendelse_id', id)
+          .order('opprettet_tidspunkt', { ascending: true }) as { data: { id: string; notat: string; opprettet_tidspunkt: string }[] | null }
+        if (data) {
+          setInternalNotes(data.map(n => ({ id: n.id, notat: n.notat, tidspunkt: n.opprettet_tidspunkt })))
+        }
+      } catch {}
+      setNotesLoaded(true)
+    }
+    loadNotes()
+  }, [id, notesLoaded])
 
   const isLoading = hendelserLoading || brannvesenLoading || kommunerLoading || kategorierLoading
   if (isLoading) return <div className="p-8 text-center text-gray-400">Laster...</div>
@@ -51,47 +73,94 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
 
   const handleSavePresse = async () => {
     try {
-      const { createClient } = await import('@/lib/supabase/client')
       const supabase = createClient()
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase.from('hendelser') as any).update({ presse_tekst: presseTekst || null }).eq('id', hendelse.id)
+      invalidateCache()
+      toast.success('Pressemelding lagret')
       setPresseSaved(true)
       setTimeout(() => setPresseSaved(false), 2000)
     } catch {
-      // Silently fail for demo
+      toast.error('Kunne ikke lagre pressemelding')
     }
   }
 
-  const handleAddUpdate = () => {
+  const handleAddUpdate = async () => {
     if (!newUpdate.trim()) return
-    setLocalUpdates([
-      ...localUpdates,
-      {
-        id: `u-new-${Date.now()}`,
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { toast.error('Du må være innlogget'); return }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.from('hendelsesoppdateringer') as any).insert({
         hendelse_id: hendelse.id,
         tekst: newUpdate,
-        opprettet_tidspunkt: new Date().toISOString(),
-      },
-    ])
-    setNewUpdate('')
+        opprettet_av: user.id,
+      }).select().single()
+      if (error) throw error
+      setLocalUpdates([...localUpdates, {
+        id: data.id,
+        hendelse_id: hendelse.id,
+        tekst: newUpdate,
+        opprettet_tidspunkt: data.opprettet_tidspunkt,
+      }])
+      setNewUpdate('')
+      invalidateCache()
+      toast.success('Oppdatering publisert')
+    } catch (err) {
+      toast.error('Kunne ikke lagre oppdatering: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
-  const handleAddNote = () => {
+  const handleAddNote = async () => {
     if (!newNote.trim()) return
-    setInternalNotes([
-      ...internalNotes,
-      {
-        id: `n-new-${Date.now()}`,
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { toast.error('Du må være innlogget'); return }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase.from('interne_notater') as any).insert({
+        hendelse_id: hendelse.id,
         notat: newNote,
-        tidspunkt: new Date().toISOString(),
-      },
-    ])
-    setNewNote('')
+        opprettet_av: user.id,
+      }).select().single()
+      if (error) throw error
+      setInternalNotes([...internalNotes, {
+        id: data.id,
+        notat: newNote,
+        tidspunkt: data.opprettet_tidspunkt,
+      }])
+      setNewNote('')
+      toast.success('Notat lagret')
+    } catch (err) {
+      toast.error('Kunne ikke lagre notat: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
+  }
+
+  const handleAvsluttHendelse = async () => {
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('hendelser') as any).update({
+        status: 'avsluttet',
+        avsluttet_tidspunkt: new Date().toISOString(),
+      }).eq('id', hendelse.id)
+      if (error) throw error
+      invalidateCache()
+      refetch()
+      toast.success('Hendelse avsluttet')
+    } catch (err) {
+      toast.error('Kunne ikke avslutte hendelse: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
   return (
     <DashboardLayout role="operator">
       <div className="p-4 lg:p-8 max-w-4xl">
+        <Link href="/operator/hendelser" className="text-sm text-blue-400 hover:text-blue-300 mb-4 inline-flex items-center gap-1">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+          Tilbake til hendelser
+        </Link>
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-2 flex-wrap mb-2">
@@ -111,7 +180,7 @@ export default function HendelseDetailPage({ params }: { params: Promise<{ id: s
             {bv?.kort_navn} &middot; {kommune?.navn} &middot; {formatDateTime(hendelse.opprettet_tidspunkt)}
           </p>
           {hendelse.status === 'pågår' && (
-            <button className="mt-3 px-4 py-2.5 bg-green-600/20 text-green-400 border border-green-600/30 rounded-lg text-sm hover:bg-green-600/30 transition-colors touch-manipulation">
+            <button onClick={handleAvsluttHendelse} className="mt-3 px-4 py-2.5 bg-green-600/20 text-green-400 border border-green-600/30 rounded-lg text-sm hover:bg-green-600/30 transition-colors touch-manipulation">
               Avslutt hendelse
             </button>
           )}

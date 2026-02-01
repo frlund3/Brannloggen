@@ -1,9 +1,11 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { useKommuner, useFylker } from '@/hooks/useSupabaseData'
+import { useKommuner, useFylker, invalidateCache } from '@/hooks/useSupabaseData'
 import type { Kommune } from '@/hooks/useSupabaseData'
 import { useState, useEffect } from 'react'
+import { toast } from 'sonner'
+import { createClient } from '@/lib/supabase/client'
 
 export default function AdminKommunerPage() {
   const { data: kommunerData, loading: kommunerLoading } = useKommuner()
@@ -26,11 +28,23 @@ export default function AdminKommunerPage() {
     })
     .sort((a, b) => a.navn.localeCompare(b.navn, 'no'))
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!form.navn || !form.nummer || !form.fylke_id) return
-    setItems([...items, { id: `k-${form.nummer}`, navn: form.navn, nummer: form.nummer, fylke_id: form.fylke_id }])
+    const id = `k-${form.nummer}`
+    const newItem = { id, navn: form.navn, nummer: form.nummer, fylke_id: form.fylke_id }
+    setItems([...items, newItem])
     setForm({ navn: '', nummer: '', fylke_id: '' })
     setShowAdd(false)
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.from('kommuner').insert(newItem as any)
+      if (error) throw error
+      invalidateCache()
+      toast.success('Kommune opprettet')
+    } catch (err) {
+      setItems(items.filter(k => k.id !== id))
+      toast.error('Kunne ikke opprette: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
   const handleEdit = (item: Kommune) => {
@@ -38,16 +52,40 @@ export default function AdminKommunerPage() {
     setForm({ navn: item.navn, nummer: item.nummer, fylke_id: item.fylke_id })
   }
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editItem || !form.navn || !form.nummer || !form.fylke_id) return
+    const prev = [...items]
     setItems(items.map(k => k.id === editItem.id ? { ...k, navn: form.navn, nummer: form.nummer, fylke_id: form.fylke_id } : k))
     setEditItem(null)
     setForm({ navn: '', nummer: '', fylke_id: '' })
+    try {
+      const supabase = createClient()
+      // @ts-expect-error supabase types not generated
+      const { error } = await supabase.from('kommuner').update({ navn: form.navn, nummer: form.nummer, fylke_id: form.fylke_id } as any).eq('id', editItem.id)
+      if (error) throw error
+      invalidateCache()
+      toast.success('Kommune oppdatert')
+    } catch (err) {
+      setItems(prev)
+      toast.error('Kunne ikke oppdatere: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    const prev = [...items]
     setItems(items.filter(k => k.id !== id))
     setDeleteConfirm(null)
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('kommuner') as any).delete().eq('id', id)
+      if (error) throw error
+      invalidateCache()
+      toast.success('Kommune slettet')
+    } catch (err) {
+      setItems(prev)
+      toast.error('Kunne ikke slette: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
   }
 
   if (kommunerLoading || fylkerLoading) {
