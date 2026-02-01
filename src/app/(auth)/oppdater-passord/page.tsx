@@ -33,37 +33,33 @@ export default function OppdaterPassordPage() {
       return
     }
 
-    let resolved = false
+    // 2. Extract tokens from hash and set session manually
+    //    @supabase/ssr (createBrowserClient) does NOT auto-detect hash fragments —
+    //    it uses cookies, so we must parse and call setSession() ourselves.
+    const accessToken = params.get('access_token')
+    const refreshToken = params.get('refresh_token')
 
-    // 2. Listen for ANY auth event that includes a session
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session && !resolved) {
-        resolved = true
-        setHasSession(true)
+    if (accessToken && refreshToken) {
+      supabase.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      }).then(({ data: { session }, error: sessionError }) => {
+        if (session && !sessionError) {
+          setHasSession(true)
+        }
         setChecking(false)
-      }
-    })
-
-    // 3. Fallback: always check getSession() after a short delay
-    //    Handles case where Supabase processed hash tokens before listener was registered
-    const timeout = setTimeout(() => {
-      if (!resolved) {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (!resolved) {
-            resolved = true
-            if (session) {
-              setHasSession(true)
-            }
-            setChecking(false)
-          }
-        })
-      }
-    }, 1500)
-
-    return () => {
-      subscription.unsubscribe()
-      clearTimeout(timeout)
+      })
+    } else {
+      // No hash tokens — check if user already has a session (e.g. from cookie)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setHasSession(true)
+        }
+        setChecking(false)
+      })
     }
+
+    return () => {}
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
