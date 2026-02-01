@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { ThemeToaster } from '@/components/providers/ThemeToaster'
+import { PushInit } from '@/components/providers/PushInit'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
           <ThemeToaster />
+          <PushInit />
         </ThemeProvider>
       </body>
     </html>
