@@ -116,22 +116,12 @@ export default function AdminInnstillingerPage() {
           <h2 className="text-lg font-semibold text-white mb-4">Sikkerhetslogg</h2>
           <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
             <p className="text-sm text-gray-400">
-              Alle handlinger logges automatisk med bruker-ID, tidspunkt og detaljer.
+              Alle handlinger logges automatisk med bruker-ID, tidspunkt og detaljer via Supabase.
               Inkluderer opprettelse, endring og sletting av hendelser, oppdateringer, interne notater og brukerprofiler.
             </p>
-            <div className="mt-3 space-y-2">
-              {[
-                { tid: '20:24', bruker: 'Kari Operatør', handling: 'Opprettet hendelse: Brann: Bergen, Sandviken' },
-                { tid: '20:15', bruker: 'Ole Vansen', handling: 'La til oppdatering på hendelse h-003' },
-                { tid: '19:58', bruker: 'Frank Lunde', handling: 'Opprettet bruker: Per Hansen' },
-              ].map((log, i) => (
-                <div key={i} className="flex items-start gap-2 text-xs">
-                  <span className="text-gray-500 shrink-0">{log.tid}</span>
-                  <span className="text-blue-400 shrink-0">{log.bruker}</span>
-                  <span className="text-gray-400">{log.handling}</span>
-                </div>
-              ))}
-            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Loggene er tilgjengelig i Supabase Dashboard under Authentication &gt; Logs og Database &gt; Logs.
+            </p>
           </div>
         </section>
       </div>

@@ -82,9 +82,51 @@ export default function AdminBrukerePage() {
     ? sentraler.filter(s => scope.sentralIds.includes(s.id))
     : sentraler
 
-  const handleAdd = () => {
-    toast.info('Nye brukere opprettes via invitasjonslenke. Denne funksjonen kommer snart.')
-    setShowAddModal(false)
+  const [adding, setAdding] = useState(false)
+
+  const handleAdd = async () => {
+    if (!newUser.fullt_navn || !newUser.epost || !newUser.rolle) return
+    setAdding(true)
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { toast.error('Du må være innlogget'); return }
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          fullt_navn: newUser.fullt_navn,
+          epost: newUser.epost,
+          rolle: newUser.rolle,
+          sentral_ids: (newUser.rolle === 'operator' || newUser.rolle === '110-admin') ? newUser.sentral_ids : [],
+        }),
+      })
+
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error || 'Ukjent feil')
+
+      setBrukere([...brukere, {
+        id: result.user.id,
+        fullt_navn: result.user.fullt_navn,
+        epost: result.user.epost,
+        rolle: result.user.rolle,
+        sentral_ids: result.user.sentral_ids,
+        aktiv: true,
+        created_at: result.user.created_at,
+      }])
+      setShowAddModal(false)
+      setNewUser({ fullt_navn: '', epost: '', rolle: 'operator', sentral_ids: [] })
+      invalidateCache()
+      toast.success(`Bruker ${newUser.fullt_navn} opprettet. E-post med passordlenke sendt til ${newUser.epost}.`)
+    } catch (err) {
+      toast.error('Kunne ikke opprette bruker: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    } finally {
+      setAdding(false)
+    }
   }
 
   const handleToggleActive = async (id: string) => {
@@ -367,7 +409,7 @@ export default function AdminBrukerePage() {
               <h2 className="text-lg font-bold text-white mb-4">Ny bruker</h2>
               {userFormFields(newUser, setNewUser)}
               <div className="flex gap-3 mt-6">
-                <button onClick={handleAdd} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors">Opprett bruker</button>
+                <button onClick={handleAdd} disabled={adding} className="flex-1 py-2.5 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-800 text-white rounded-lg text-sm font-medium transition-colors">{adding ? 'Oppretter...' : 'Opprett bruker'}</button>
                 <button onClick={() => setShowAddModal(false)} className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white transition-colors">Avbryt</button>
               </div>
             </div>
