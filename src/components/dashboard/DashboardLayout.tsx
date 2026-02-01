@@ -54,6 +54,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
     { href: '/admin/fylker', label: 'Fylker', icon: 'map' },
     { href: '/admin/kommuner', label: 'Kommuner', icon: 'map' },
     { href: '/admin/kategorier', label: 'Kategorier', icon: 'tag' },
+    { href: '/admin/medier', label: 'Mediehus', icon: 'press' },
     { href: '/admin/statistikk', label: 'Statistikk Varslinger', icon: 'chart' },
     { href: '/admin/innstillinger', label: 'Innstillinger', icon: 'settings' },
   ]

@@ -207,6 +207,9 @@ export default function NyVisningPage() {
               {/* Description */}
               <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4 mb-6">
                 <p className="text-sm text-white leading-relaxed">{selected.beskrivelse}</p>
+                {selected.bilde_url && (
+                  <img src={selected.bilde_url} alt="" className="mt-3 rounded-lg max-h-64 object-cover" />
+                )}
               </div>
 
               {/* Two columns: PRESSE and PUBLIKUM */}
@@ -232,6 +235,9 @@ export default function NyVisningPage() {
                           <span>{formatTime(p.opprettet_tidspunkt)} &middot; {new Date(p.opprettet_tidspunkt).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                         </div>
                         <p className="text-sm text-white mt-0.5">{p.tekst}</p>
+                        {p.bilde_url && (
+                          <img src={p.bilde_url} alt="" className="mt-2 rounded-lg max-h-48 object-cover" />
+                        )}
                         {getUserName(p.opprettet_av) && (
                           <p className="text-xs text-gray-600 mt-0.5">Av: {getUserName(p.opprettet_av)}</p>
                         )}
@@ -258,6 +264,9 @@ export default function NyVisningPage() {
                           <span>{formatTime(o.opprettet_tidspunkt)} &middot; {new Date(o.opprettet_tidspunkt).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                         </div>
                         <p className="text-sm text-white mt-0.5">{o.tekst}</p>
+                        {o.bilde_url && (
+                          <img src={o.bilde_url} alt="" className="mt-2 rounded-lg max-h-48 object-cover" />
+                        )}
                         {getUserName(o.opprettet_av) && (
                           <p className="text-xs text-gray-600 mt-0.5">Av: {getUserName(o.opprettet_av)}</p>
                         )}
@@ -283,6 +292,9 @@ export default function NyVisningPage() {
                           <span>{formatTime(n.opprettet_tidspunkt)} &middot; {new Date(n.opprettet_tidspunkt).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                         </div>
                         <p className="text-sm text-white mt-0.5">{n.notat}</p>
+                        {n.bilde_url && (
+                          <img src={n.bilde_url} alt="" className="mt-2 rounded-lg max-h-48 object-cover" />
+                        )}
                         {getUserName(n.opprettet_av) && (
                           <p className="text-xs text-gray-600 mt-0.5">Av: {getUserName(n.opprettet_av)}</p>
                         )}
