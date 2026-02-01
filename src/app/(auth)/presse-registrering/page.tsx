@@ -108,6 +108,14 @@ export default function PresseRegistreringPage() {
           <p className="text-gray-400 text-sm mt-1">Søk om tilgang til presseinformasjon fra Brannloggen</p>
         </div>
 
+        <div className="bg-cyan-500/5 border border-cyan-500/20 rounded-lg p-3 mb-2">
+          <p className="text-xs text-gray-400 leading-relaxed">
+            Pressetilgang gir deg tilgang til pressemeldinger og utvidet informasjon om hendelser.
+            Du må være tilknyttet en redaksjon eller et mediehus. Bruk gjerne din jobb-e-post.
+            Søknaden behandles manuelt, og du vil motta en e-post med innloggingsinformasjon når den er godkjent.
+          </p>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">

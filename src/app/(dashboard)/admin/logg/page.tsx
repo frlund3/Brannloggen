@@ -1,38 +1,58 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { useHendelser, useBrukerprofiler, useBrannvesen, useKategorier } from '@/hooks/useSupabaseData'
-import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
+import { useBrukerprofiler } from '@/hooks/useSupabaseData'
 import { useSentralScope } from '@/hooks/useSentralScope'
 import { formatDateTime } from '@/lib/utils'
-import { useState, useMemo } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 
-interface LogEntry {
+interface AktivitetsloggEntry {
   id: string
   tidspunkt: string
-  type: 'hendelse' | 'publikum' | 'presse' | 'intern' | 'status'
-  hendelse_id: string
-  hendelse_tittel: string
-  tekst: string
   bruker_id: string | null
-  bruker_navn: string | null
+  handling: string
+  tabell: string
+  rad_id: string | null
+  hendelse_id: string | null
+  hendelse_tittel: string | null
+  detaljer: Record<string, unknown> | null
 }
 
-type TypeFilter = 'alle' | 'hendelse' | 'publikum' | 'presse' | 'intern'
+type HandlingFilter = 'alle' | 'opprettet' | 'redigert' | 'deaktivert' | 'avsluttet' | 'bilde' | 'oppdatering' | 'presse' | 'notat'
 
 export default function AdminLoggPage() {
-  const { data: hendelser, loading: hendelserLoading, refetch } = useHendelser()
-  useRealtimeHendelser(refetch)
   const { data: brukerprofiler, loading: brukereLoading } = useBrukerprofiler()
-  const { data: brannvesen } = useBrannvesen()
-  const { data: kategorier } = useKategorier()
   const { is110Admin } = useSentralScope()
 
+  const [entries, setEntries] = useState<AktivitetsloggEntry[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>('alle')
+  const [handlingFilter, setHandlingFilter] = useState<HandlingFilter>('alle')
   const [brukerFilter, setBrukerFilter] = useState('')
 
-  const loading = hendelserLoading || brukereLoading
+  const fetchEntries = useCallback(async () => {
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('aktivitetslogg')
+        .select('*')
+        .order('tidspunkt', { ascending: false })
+        .limit(500)
+      if (error) throw error
+      setEntries(data || [])
+    } catch {
+      // silently fail
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchEntries()
+    const interval = setInterval(fetchEntries, 30000)
+    return () => clearInterval(interval)
+  }, [fetchEntries])
 
   const getUserName = (userId: string | null) => {
     if (!userId) return null
@@ -40,93 +60,59 @@ export default function AdminLoggPage() {
     return profil?.fullt_navn || null
   }
 
-  // Build a unified log from all hendelser + their oppdateringer
-  const logEntries = useMemo(() => {
-    const entries: LogEntry[] = []
-
-    for (const h of hendelser) {
-      if (h.status === 'deaktivert') continue
-
-      // Hendelse creation
-      entries.push({
-        id: `h-${h.id}`,
-        tidspunkt: h.opprettet_tidspunkt,
-        type: 'hendelse',
-        hendelse_id: h.id,
-        hendelse_tittel: h.tittel,
-        tekst: `Ny hendelse opprettet: ${h.tittel}`,
-        bruker_id: h.opprettet_av || null,
-        bruker_navn: getUserName(h.opprettet_av),
-      })
-
-      // Status change (avsluttet)
-      if (h.avsluttet_tidspunkt) {
-        entries.push({
-          id: `s-${h.id}`,
-          tidspunkt: h.avsluttet_tidspunkt,
-          type: 'status',
-          hendelse_id: h.id,
-          hendelse_tittel: h.tittel,
-          tekst: `Hendelse avsluttet: ${h.tittel}`,
-          bruker_id: h.opprettet_av || null,
-          bruker_navn: getUserName(h.opprettet_av),
-        })
-      }
-
-      // Public updates
-      for (const o of h.oppdateringer || []) {
-        entries.push({
-          id: `o-${o.id}`,
-          tidspunkt: o.opprettet_tidspunkt,
-          type: 'publikum',
-          hendelse_id: h.id,
-          hendelse_tittel: h.tittel,
-          tekst: o.tekst,
-          bruker_id: o.opprettet_av || null,
-          bruker_navn: getUserName(o.opprettet_av),
-        })
-      }
-
-      // Press updates
-      for (const p of h.presseoppdateringer || []) {
-        entries.push({
-          id: `p-${p.id}`,
-          tidspunkt: p.opprettet_tidspunkt,
-          type: 'presse',
-          hendelse_id: h.id,
-          hendelse_tittel: h.tittel,
-          tekst: p.tekst,
-          bruker_id: p.opprettet_av || null,
-          bruker_navn: getUserName(p.opprettet_av),
-        })
-      }
-
-      // Internal notes
-      for (const n of h.interne_notater || []) {
-        entries.push({
-          id: `n-${n.id}`,
-          tidspunkt: n.opprettet_tidspunkt,
-          type: 'intern',
-          hendelse_id: h.id,
-          hendelse_tittel: h.tittel,
-          tekst: n.notat,
-          bruker_id: n.opprettet_av || null,
-          bruker_navn: getUserName(n.opprettet_av),
-        })
-      }
+  const handlingLabel = (h: string) => {
+    switch (h) {
+      case 'opprettet': return 'Opprettet'
+      case 'redigert': return 'Redigert'
+      case 'deaktivert': return 'Deaktivert'
+      case 'avsluttet': return 'Avsluttet'
+      case 'gjenåpnet': return 'Gjenåpnet'
+      case 'bilde_lastet_opp': return 'Bilde lastet opp'
+      case 'bilde_fjernet': return 'Bilde fjernet'
+      case 'ny_oppdatering': return 'Ny oppdatering'
+      case 'redigert_oppdatering': return 'Redigert oppdatering'
+      case 'deaktivert_oppdatering': return 'Deaktivert oppdatering'
+      case 'ny_pressemelding': return 'Ny pressemelding'
+      case 'redigert_pressemelding': return 'Redigert pressemelding'
+      case 'deaktivert_pressemelding': return 'Deaktivert pressemelding'
+      case 'ny_notat': return 'Nytt notat'
+      case 'redigert_notat': return 'Redigert notat'
+      case 'deaktivert_notat': return 'Deaktivert notat'
+      default: return h
     }
+  }
 
-    // Sort newest first
-    entries.sort((a, b) => new Date(b.tidspunkt).getTime() - new Date(a.tidspunkt).getTime())
-    return entries
-  }, [hendelser, brukerprofiler])
+  const handlingColor = (h: string) => {
+    if (h === 'opprettet') return 'bg-red-500/20 text-red-400'
+    if (h === 'redigert' || h.startsWith('redigert_')) return 'bg-blue-500/20 text-blue-400'
+    if (h === 'deaktivert' || h.startsWith('deaktivert_')) return 'bg-orange-500/20 text-orange-400'
+    if (h === 'avsluttet') return 'bg-green-500/20 text-green-400'
+    if (h === 'gjenåpnet') return 'bg-purple-500/20 text-purple-400'
+    if (h.startsWith('bilde')) return 'bg-pink-500/20 text-pink-400'
+    if (h.includes('oppdatering')) return 'bg-blue-500/20 text-blue-400'
+    if (h.includes('presse')) return 'bg-cyan-500/20 text-cyan-400'
+    if (h.includes('notat')) return 'bg-yellow-500/20 text-yellow-400'
+    return 'bg-gray-500/20 text-gray-400'
+  }
 
-  // Filter
+  const matchesFilter = (h: string, filter: HandlingFilter) => {
+    if (filter === 'alle') return true
+    if (filter === 'opprettet') return h === 'opprettet'
+    if (filter === 'redigert') return h === 'redigert' || h.startsWith('redigert_')
+    if (filter === 'deaktivert') return h === 'deaktivert' || h.startsWith('deaktivert_')
+    if (filter === 'avsluttet') return h === 'avsluttet' || h === 'gjenåpnet'
+    if (filter === 'bilde') return h.startsWith('bilde')
+    if (filter === 'oppdatering') return h.includes('oppdatering')
+    if (filter === 'presse') return h.includes('presse')
+    if (filter === 'notat') return h.includes('notat')
+    return true
+  }
+
   const filtered = useMemo(() => {
-    let result = logEntries
+    let result = entries
 
-    if (typeFilter !== 'alle') {
-      result = result.filter(e => e.type === typeFilter)
+    if (handlingFilter !== 'alle') {
+      result = result.filter(e => matchesFilter(e.handling, handlingFilter))
     }
 
     if (brukerFilter) {
@@ -136,49 +122,37 @@ export default function AdminLoggPage() {
     if (search) {
       const q = search.toLowerCase()
       result = result.filter(e =>
-        e.tekst.toLowerCase().includes(q) ||
-        e.hendelse_tittel.toLowerCase().includes(q) ||
-        (e.bruker_navn || '').toLowerCase().includes(q)
+        (e.hendelse_tittel || '').toLowerCase().includes(q) ||
+        handlingLabel(e.handling).toLowerCase().includes(q) ||
+        (getUserName(e.bruker_id) || '').toLowerCase().includes(q) ||
+        e.tabell.toLowerCase().includes(q)
       )
     }
 
     return result
-  }, [logEntries, typeFilter, brukerFilter, search])
+  }, [entries, handlingFilter, brukerFilter, search, brukerprofiler])
 
-  // Get unique users for filter dropdown
   const uniqueUsers = useMemo(() => {
     const map = new Map<string, string>()
-    for (const e of logEntries) {
-      if (e.bruker_navn && e.bruker_id && !map.has(e.bruker_id)) {
-        map.set(e.bruker_id, e.bruker_navn)
+    for (const e of entries) {
+      if (e.bruker_id && !map.has(e.bruker_id)) {
+        const name = getUserName(e.bruker_id)
+        if (name) map.set(e.bruker_id, name)
       }
     }
     return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]))
-  }, [logEntries])
+  }, [entries, brukerprofiler])
 
-  const typeLabel = (t: string) => {
-    switch (t) {
-      case 'hendelse': return 'Hendelse'
-      case 'publikum': return 'Publikum'
-      case 'presse': return 'Presse'
-      case 'intern': return 'Internt'
-      case 'status': return 'Status'
-      default: return t
-    }
-  }
+  // Stat counts
+  const statCounts = useMemo(() => ({
+    opprettet: entries.filter(e => e.handling === 'opprettet').length,
+    redigert: entries.filter(e => e.handling === 'redigert' || e.handling.startsWith('redigert_')).length,
+    deaktivert: entries.filter(e => e.handling === 'deaktivert' || e.handling.startsWith('deaktivert_')).length,
+    presse: entries.filter(e => e.handling.includes('presse')).length,
+    bilde: entries.filter(e => e.handling.startsWith('bilde')).length,
+  }), [entries])
 
-  const typeColor = (t: string) => {
-    switch (t) {
-      case 'hendelse': return 'bg-red-500/20 text-red-400'
-      case 'publikum': return 'bg-blue-500/20 text-blue-400'
-      case 'presse': return 'bg-amber-500/20 text-amber-400'
-      case 'intern': return 'bg-yellow-500/20 text-yellow-400'
-      case 'status': return 'bg-green-500/20 text-green-400'
-      default: return 'bg-gray-500/20 text-gray-400'
-    }
-  }
-
-  if (loading) {
+  if (loading || brukereLoading) {
     return (
       <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
         <div className="p-8 text-center text-gray-400">Laster...</div>
@@ -191,7 +165,7 @@ export default function AdminLoggPage() {
       <div className="p-4 lg:p-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-white">Aktivitetslogg</h1>
-          <p className="text-sm text-gray-400">All aktivitet fra hendelser, oppdateringer, pressemeldinger og interne notater</p>
+          <p className="text-sm text-gray-400">All aktivitet fra hendelser, oppdateringer, pressemeldinger, bilder og interne notater</p>
         </div>
 
         {/* Filters */}
@@ -210,15 +184,19 @@ export default function AdminLoggPage() {
           </div>
 
           <select
-            value={typeFilter}
-            onChange={e => setTypeFilter(e.target.value as TypeFilter)}
+            value={handlingFilter}
+            onChange={e => setHandlingFilter(e.target.value as HandlingFilter)}
             className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-blue-500"
           >
-            <option value="alle">Alle typer</option>
-            <option value="hendelse">Hendelser</option>
-            <option value="publikum">Publikum</option>
+            <option value="alle">Alle handlinger</option>
+            <option value="opprettet">Opprettet</option>
+            <option value="redigert">Redigert</option>
+            <option value="deaktivert">Deaktivert</option>
+            <option value="avsluttet">Avsluttet/Gjenåpnet</option>
+            <option value="bilde">Bilder</option>
+            <option value="oppdatering">Oppdateringer</option>
             <option value="presse">Presse</option>
-            <option value="intern">Interne notater</option>
+            <option value="notat">Notater</option>
           </select>
 
           <select
@@ -231,67 +209,105 @@ export default function AdminLoggPage() {
               <option key={id} value={id}>{name}</option>
             ))}
           </select>
+
+          <button
+            onClick={fetchEntries}
+            className="px-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-gray-400 hover:text-white transition-colors"
+            title="Oppdater"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
-          {(['hendelse', 'publikum', 'presse', 'intern', 'status'] as const).map(t => (
-            <div key={t} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 text-center">
-              <span className="text-lg font-bold text-white">{logEntries.filter(e => e.type === t).length}</span>
-              <span className="block text-xs text-gray-500">{typeLabel(t)}</span>
+          {[
+            { key: 'opprettet', label: 'Opprettet', count: statCounts.opprettet },
+            { key: 'redigert', label: 'Redigert', count: statCounts.redigert },
+            { key: 'deaktivert', label: 'Deaktivert', count: statCounts.deaktivert },
+            { key: 'presse', label: 'Presse', count: statCounts.presse },
+            { key: 'bilde', label: 'Bilder', count: statCounts.bilde },
+          ].map(s => (
+            <div key={s.key} className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-3 text-center">
+              <span className="text-lg font-bold text-white">{s.count}</span>
+              <span className="block text-xs text-gray-500">{s.label}</span>
             </div>
           ))}
         </div>
 
-        {/* Log entries */}
-        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[#2a2a2a]">
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium w-[140px]">Tidspunkt</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium w-[90px]">Type</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Hendelse</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Innhold</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell w-[150px]">Bruker</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.slice(0, 200).map(entry => (
-                  <tr key={entry.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
-                    <td className="px-4 py-3">
-                      <span className="text-xs text-gray-500 whitespace-nowrap">{formatDateTime(entry.tidspunkt)}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`text-[10px] px-2 py-0.5 rounded ${typeColor(entry.type)}`}>
-                        {typeLabel(entry.type)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <a href={`/admin/ny-visning`} className="text-sm text-blue-400 hover:text-blue-300 truncate block max-w-[200px]">
-                        {entry.hendelse_tittel}
-                      </a>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="text-sm text-white truncate max-w-[400px]">{entry.tekst}</p>
-                    </td>
-                    <td className="px-4 py-3 hidden md:table-cell">
-                      <span className="text-xs text-gray-400">{entry.bruker_navn || entry.bruker_id?.slice(0, 8) || 'Ukjent'}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {entries.length === 0 && !loading && (
+          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl p-8 text-center mb-6">
+            <svg className="w-12 h-12 text-gray-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <p className="text-gray-400 mb-1">Ingen loggoppføringer ennå</p>
+            <p className="text-xs text-gray-600">Aktiviteter logges automatisk når hendelser opprettes, redigeres eller oppdateres.</p>
           </div>
-          {filtered.length === 0 && (
-            <div className="p-8 text-center text-gray-500 text-sm">Ingen loggoppføringer funnet</div>
-          )}
-          {filtered.length > 200 && (
-            <div className="p-3 text-center text-gray-500 text-xs border-t border-[#2a2a2a]">
-              Viser 200 av {filtered.length} oppføringer. Bruk filtre for å begrense.
+        )}
+
+        {/* Log entries */}
+        {entries.length > 0 && (
+          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#2a2a2a]">
+                    <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium w-[140px]">Tidspunkt</th>
+                    <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium w-[160px]">Handling</th>
+                    <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Hendelse</th>
+                    <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Detaljer</th>
+                    <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell w-[150px]">Bruker</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.slice(0, 200).map(entry => (
+                    <tr key={entry.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
+                      <td className="px-4 py-3">
+                        <span className="text-xs text-gray-500 whitespace-nowrap">{formatDateTime(entry.tidspunkt)}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`text-[10px] px-2 py-0.5 rounded ${handlingColor(entry.handling)}`}>
+                          {handlingLabel(entry.handling)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {entry.hendelse_tittel ? (
+                          <span className="text-sm text-white truncate block max-w-[250px]">{entry.hendelse_tittel}</span>
+                        ) : (
+                          <span className="text-xs text-gray-600">{entry.tabell}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 hidden lg:table-cell">
+                        {entry.detaljer && Object.keys(entry.detaljer).length > 0 ? (
+                          <span className="text-xs text-gray-500 truncate block max-w-[300px]">
+                            {entry.detaljer.tekst ? String(entry.detaljer.tekst) :
+                             entry.detaljer.endrede_felt ? `Felt: ${(entry.detaljer.endrede_felt as string[]).join(', ')}` :
+                             JSON.stringify(entry.detaljer)}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-600">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 hidden md:table-cell">
+                        <span className="text-xs text-gray-400">{getUserName(entry.bruker_id) || entry.bruker_id?.slice(0, 8) || 'Ukjent'}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-        </div>
+            {filtered.length === 0 && entries.length > 0 && (
+              <div className="p-8 text-center text-gray-500 text-sm">Ingen loggoppføringer matcher filteret</div>
+            )}
+            {filtered.length > 200 && (
+              <div className="p-3 text-center text-gray-500 text-xs border-t border-[#2a2a2a]">
+                Viser 200 av {filtered.length} oppføringer. Bruk filtre for å begrense.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </DashboardLayout>
   )

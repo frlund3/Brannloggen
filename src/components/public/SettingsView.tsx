@@ -315,6 +315,7 @@ export function SettingsView() {
       {/* Version info + login/logout */}
       <section className="mb-24">
         <div className="text-center space-y-2">
+          <a href="/presse-info" className="text-xs text-gray-500 hover:text-gray-400 block mb-2">Pressetilgang</a>
           <a href="/personvern" className="text-xs text-gray-500 hover:text-gray-400 block mb-2">Personvern</a>
           <p className="text-xs text-gray-600">Brannloggen v0.1.0</p>
           {user ? (
