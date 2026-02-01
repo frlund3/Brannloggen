@@ -12,8 +12,10 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+const allowedOrigin = Deno.env.get('ALLOWED_ORIGIN') || 'https://brannloggen.no'
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': allowedOrigin,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
@@ -44,6 +46,24 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // Verify caller is authenticated (admin/service role or triggered by cron)
+    const authHeader = req.headers.get('Authorization')
+    if (authHeader && !authHeader.includes(Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)) {
+      // Verify the JWT belongs to an admin
+      const callerClient = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+        { global: { headers: { Authorization: authHeader } } },
+      )
+      const { data: { user: caller } } = await callerClient.auth.getUser()
+      if (!caller) {
+        return new Response(JSON.stringify({ error: 'Ikke autorisert' }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+    }
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
