@@ -83,7 +83,7 @@ export function IncidentCard({
       <h3 className="text-base font-bold text-theme mb-0.5 leading-tight">{tittel}</h3>
 
       <div className="flex items-center gap-2 mb-2">
-        <span className="text-xs font-semibold text-gray-300">{formatTime(opprettet_tidspunkt)}</span>
+        <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{formatTime(opprettet_tidspunkt)}</span>
         {kat && (
           <span
             className="text-xs px-1.5 py-0.5 rounded inline-flex items-center gap-1"
@@ -96,7 +96,7 @@ export function IncidentCard({
         <SeverityDot severity={alvorlighetsgrad} showLabel />
       </div>
 
-      <p className="text-sm text-gray-300 leading-relaxed">{beskrivelse}</p>
+      <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{beskrivelse}</p>
 
       {/* Hendelsebilde */}
       {bilde_url && (
@@ -148,14 +148,14 @@ export function IncidentCard({
                 <div key={update.id} className="relative pl-5 pb-4 last:pb-0">
                   {/* Vertical line connecting nodes */}
                   {i < activeUpdates.length - 1 && (
-                    <div className="absolute left-[5px] top-[10px] bottom-0 w-px bg-blue-500/30" />
+                    <div className="absolute left-[5px] top-[10px] bottom-0 w-[2px] bg-blue-400/50 dark:bg-blue-500/30" />
                   )}
                   {/* Timeline node */}
-                  <div className="absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 border-blue-500 bg-theme-card" />
+                  <div className="absolute left-0 top-[6px] w-[12px] h-[12px] rounded-full border-2 border-blue-500 bg-white dark:bg-theme-card" />
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-theme-muted font-medium">{formatTime(update.opprettet_tidspunkt)}</span>
                   </div>
-                  <p className="text-sm text-gray-300 mt-0.5">{update.tekst}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5">{update.tekst}</p>
                   {update.bilde_url && (
                     <img src={update.bilde_url} alt="" className="mt-1.5 rounded-lg max-h-48 object-cover" />
                   )}

@@ -99,10 +99,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 8. Check if email already exists
-    const { data: existingUsers } = await adminClient.auth.admin.listUsers()
-    const emailExists = existingUsers?.users?.some((u: { email?: string }) => u.email === soknad.epost)
-    if (emailExists) {
+    // 8. Check if email already exists via brukerprofiler (avoids loading all auth users)
+    const { data: existingProfile } = await adminClient
+      .from('brukerprofiler')
+      .select('id')
+      .eq('epost', soknad.epost)
+      .maybeSingle()
+
+    if (existingProfile) {
       return NextResponse.json({ error: 'En bruker med denne e-postadressen finnes allerede' }, { status: 400 })
     }
 

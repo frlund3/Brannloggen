@@ -288,9 +288,9 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             <div className="px-3 pb-3">
               <a
                 href="/presse/hendelser"
-                className="group flex items-center gap-3 px-4 py-3 bg-cyan-50 border border-cyan-200 hover:bg-cyan-100 dark:bg-gradient-to-r dark:from-cyan-600/20 dark:to-teal-600/20 dark:hover:from-cyan-600/30 dark:hover:to-teal-600/30 dark:border-cyan-500/30 dark:hover:border-cyan-400/50 rounded-xl transition-all"
+                className="group flex items-center gap-3 px-4 py-3 bg-cyan-50 dark:bg-transparent border border-cyan-200 hover:bg-cyan-100 dark:bg-gradient-to-r dark:from-cyan-600/20 dark:to-teal-600/20 dark:hover:from-cyan-600/30 dark:hover:to-teal-600/30 dark:border-cyan-500/30 dark:hover:border-cyan-400/50 rounded-xl transition-all"
               >
-                <div className="w-9 h-9 bg-cyan-100 text-cyan-600 dark:bg-gradient-to-br dark:from-cyan-500 dark:to-teal-500 dark:text-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm dark:shadow-lg dark:shadow-cyan-500/20 dark:group-hover:shadow-cyan-500/40 transition-shadow">
+                <div className="w-9 h-9 bg-cyan-100 dark:bg-transparent text-cyan-600 dark:bg-gradient-to-br dark:from-cyan-500 dark:to-teal-500 dark:text-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm dark:shadow-lg dark:shadow-cyan-500/20 dark:group-hover:shadow-cyan-500/40 transition-shadow">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
                   </svg>

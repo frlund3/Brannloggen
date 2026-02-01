@@ -39,22 +39,21 @@ export interface NotificationItem {
   tidspunkt: string
 }
 
+// Pre-load notification sound for instant playback
+let notificationAudio: HTMLAudioElement | null = null
+
+if (typeof window !== 'undefined') {
+  notificationAudio = new Audio('/notification.wav')
+  notificationAudio.volume = 0.8
+  notificationAudio.load()
+}
+
 function playNotificationSound() {
   try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
-    if (!AudioCtx) return
-    const ctx = new AudioCtx()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
-    osc.connect(gain)
-    gain.connect(ctx.destination)
-    osc.frequency.value = 880
-    osc.type = 'sine'
-    gain.gain.setValueAtTime(0.3, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
-    osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + 0.15)
-    setTimeout(() => ctx.close(), 300)
+    if (notificationAudio) {
+      notificationAudio.currentTime = 0
+      notificationAudio.play().catch(() => { /* autoplay blocked */ })
+    }
   } catch {
     // Audio not available
   }
@@ -189,12 +188,7 @@ export function useNotificationBell() {
     try { localStorage.setItem(LAST_SEEN_KEY, now) } catch {}
   }, [])
 
-  // When dropdown opens, refresh prefs and mark as read
-  useEffect(() => {
-    if (isOpen) {
-      markAllRead()
-    }
-  }, [isOpen, markAllRead])
+  // No longer auto-marking as read when opening — user must press "Merk alle lest"
 
   return {
     items,
