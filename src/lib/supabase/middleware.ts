@@ -2,18 +2,15 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-  // If a `code` query param arrives on a page that isn't /auth/callback,
-  // redirect to /auth/callback so it can be exchanged for a session.
-  // This handles Supabase stripping the redirect path (e.g. recovery/invite emails).
+  // If a Supabase auth `code` arrives on the root page (Supabase sometimes strips
+  // the redirect path for recovery/invite emails), forward it to auth/callback.
+  // Only match the root page to avoid interfering with other routes.
   const code = request.nextUrl.searchParams.get('code')
-  if (code && !request.nextUrl.pathname.startsWith('/auth/callback')) {
+  if (code && request.nextUrl.pathname === '/') {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/callback'
     url.searchParams.set('code', code)
-    // Default to /oppdater-passord for recovery/invite flows
-    if (!url.searchParams.has('next')) {
-      url.searchParams.set('next', '/oppdater-passord')
-    }
+    url.searchParams.set('next', '/oppdater-passord')
     return NextResponse.redirect(url)
   }
 
