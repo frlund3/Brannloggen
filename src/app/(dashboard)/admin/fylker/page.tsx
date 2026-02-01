@@ -55,7 +55,6 @@ export default function AdminFylkerPage() {
     setForm({ navn: '', nummer: '' })
     try {
       const supabase = createClient()
-      // @ts-expect-error supabase types not generated
       const { error } = await supabase.from('fylker').update({ navn: form.navn, nummer: form.nummer } as any).eq('id', editItem.id)
       if (error) throw error
       invalidateCache()
