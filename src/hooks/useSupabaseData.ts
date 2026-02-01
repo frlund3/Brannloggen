@@ -40,6 +40,7 @@ export interface Sentral {
   kort_navn: string
   fylke_ids: string[]
   brannvesen_ids: string[]
+  kontakt_epost: string | null
 }
 
 export interface Hendelse {
@@ -274,4 +275,21 @@ export interface PushAbonnent {
 
 export function usePushAbonnenter() {
   return useSupabaseFetch<PushAbonnent>('push_abonnenter', { order: 'sist_aktiv' })
+}
+
+export interface PresseSoknad {
+  id: string
+  fullt_navn: string
+  epost: string
+  mediehus: string
+  telefon: string | null
+  status: string
+  opprettet: string
+}
+
+export function usePresseSoknader() {
+  return useSupabaseFetch<PresseSoknad>('presse_soknader', {
+    order: 'opprettet',
+    filter: { column: 'status', value: 'venter' },
+  })
 }

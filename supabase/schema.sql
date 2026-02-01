@@ -226,10 +226,17 @@ CREATE POLICY "Anyone can read hendelser" ON hendelser FOR SELECT USING (true);
 
 CREATE POLICY "Operators can insert hendelser" ON hendelser FOR INSERT WITH CHECK (
   EXISTS (
-    SELECT 1 FROM brukerprofiler
-    WHERE brukerprofiler.user_id = auth.uid()
-    AND brukerprofiler.rolle IN ('operator', 'admin', '110-admin')
-    AND brukerprofiler.aktiv = true
+    SELECT 1 FROM brukerprofiler bp
+    WHERE bp.user_id = auth.uid()
+    AND bp.aktiv = true
+    AND (
+      bp.rolle = 'admin'
+      OR bp.rolle IN ('operator', '110-admin') AND EXISTS (
+        SELECT 1 FROM sentraler s
+        WHERE s.id = ANY(bp.sentral_ids)
+        AND hendelser.brannvesen_id = ANY(s.brannvesen_ids)
+      )
+    )
   )
 );
 
@@ -249,38 +256,111 @@ CREATE POLICY "Operators can update own brannvesen hendelser" ON hendelser FOR U
   )
 );
 
--- Oppdateringer: Public read, operator write
+-- Oppdateringer: Public read, operator/admin write (scoped to sentraler)
 CREATE POLICY "Anyone can read oppdateringer" ON hendelsesoppdateringer FOR SELECT USING (true);
+
 CREATE POLICY "Operators can insert oppdateringer" ON hendelsesoppdateringer FOR INSERT WITH CHECK (
   EXISTS (
-    SELECT 1 FROM brukerprofiler
-    WHERE brukerprofiler.user_id = auth.uid()
-    AND brukerprofiler.rolle IN ('operator', 'admin', '110-admin')
-    AND brukerprofiler.aktiv = true
-  )
-);
-
--- Bilder: Public read, operator write
-CREATE POLICY "Anyone can read bilder" ON hendelsesbilder FOR SELECT USING (true);
-CREATE POLICY "Operators can insert bilder" ON hendelsesbilder FOR INSERT WITH CHECK (
-  EXISTS (
-    SELECT 1 FROM brukerprofiler
-    WHERE brukerprofiler.user_id = auth.uid()
-    AND brukerprofiler.rolle IN ('operator', 'admin', '110-admin')
-    AND brukerprofiler.aktiv = true
-  )
-);
-
--- Interne notater: ONLY operators from same brannvesen or admins
-CREATE POLICY "Operators can read own brannvesen notater" ON interne_notater FOR SELECT USING (
-  EXISTS (
     SELECT 1 FROM brukerprofiler bp
-    JOIN hendelser h ON h.id = interne_notater.hendelse_id
     WHERE bp.user_id = auth.uid()
     AND bp.aktiv = true
     AND (
       bp.rolle = 'admin'
-      OR (bp.rolle = 'operator' AND bp.brannvesen_id = h.brannvesen_id)
+      OR bp.rolle IN ('operator', '110-admin') AND EXISTS (
+        SELECT 1 FROM hendelser h
+        JOIN sentraler s ON s.id = ANY(bp.sentral_ids)
+        WHERE h.id = hendelsesoppdateringer.hendelse_id
+        AND h.brannvesen_id = ANY(s.brannvesen_ids)
+      )
+    )
+  )
+);
+
+CREATE POLICY "Operators can update oppdateringer" ON hendelsesoppdateringer FOR UPDATE USING (
+  EXISTS (
+    SELECT 1 FROM brukerprofiler bp
+    WHERE bp.user_id = auth.uid()
+    AND bp.aktiv = true
+    AND (
+      bp.rolle = 'admin'
+      OR bp.rolle IN ('operator', '110-admin') AND EXISTS (
+        SELECT 1 FROM hendelser h
+        JOIN sentraler s ON s.id = ANY(bp.sentral_ids)
+        WHERE h.id = hendelsesoppdateringer.hendelse_id
+        AND h.brannvesen_id = ANY(s.brannvesen_ids)
+      )
+    )
+  )
+);
+
+CREATE POLICY "Operators can delete oppdateringer" ON hendelsesoppdateringer FOR DELETE USING (
+  EXISTS (
+    SELECT 1 FROM brukerprofiler bp
+    WHERE bp.user_id = auth.uid()
+    AND bp.aktiv = true
+    AND (
+      bp.rolle = 'admin'
+      OR bp.rolle IN ('operator', '110-admin') AND EXISTS (
+        SELECT 1 FROM hendelser h
+        JOIN sentraler s ON s.id = ANY(bp.sentral_ids)
+        WHERE h.id = hendelsesoppdateringer.hendelse_id
+        AND h.brannvesen_id = ANY(s.brannvesen_ids)
+      )
+    )
+  )
+);
+
+-- Bilder: Public read, operator/admin write (scoped to sentraler)
+CREATE POLICY "Anyone can read bilder" ON hendelsesbilder FOR SELECT USING (true);
+
+CREATE POLICY "Operators can insert bilder" ON hendelsesbilder FOR INSERT WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM brukerprofiler bp
+    WHERE bp.user_id = auth.uid()
+    AND bp.aktiv = true
+    AND (
+      bp.rolle = 'admin'
+      OR bp.rolle IN ('operator', '110-admin') AND EXISTS (
+        SELECT 1 FROM hendelser h
+        JOIN sentraler s ON s.id = ANY(bp.sentral_ids)
+        WHERE h.id = hendelsesbilder.hendelse_id
+        AND h.brannvesen_id = ANY(s.brannvesen_ids)
+      )
+    )
+  )
+);
+
+CREATE POLICY "Operators can delete bilder" ON hendelsesbilder FOR DELETE USING (
+  EXISTS (
+    SELECT 1 FROM brukerprofiler bp
+    WHERE bp.user_id = auth.uid()
+    AND bp.aktiv = true
+    AND (
+      bp.rolle = 'admin'
+      OR bp.rolle IN ('operator', '110-admin') AND EXISTS (
+        SELECT 1 FROM hendelser h
+        JOIN sentraler s ON s.id = ANY(bp.sentral_ids)
+        WHERE h.id = hendelsesbilder.hendelse_id
+        AND h.brannvesen_id = ANY(s.brannvesen_ids)
+      )
+    )
+  )
+);
+
+-- Interne notater: ONLY operators/110-admins from same sentraler or admins
+CREATE POLICY "Operators can read own brannvesen notater" ON interne_notater FOR SELECT USING (
+  EXISTS (
+    SELECT 1 FROM brukerprofiler bp
+    WHERE bp.user_id = auth.uid()
+    AND bp.aktiv = true
+    AND (
+      bp.rolle = 'admin'
+      OR bp.rolle IN ('operator', '110-admin') AND EXISTS (
+        SELECT 1 FROM hendelser h
+        JOIN sentraler s ON s.id = ANY(bp.sentral_ids)
+        WHERE h.id = interne_notater.hendelse_id
+        AND h.brannvesen_id = ANY(s.brannvesen_ids)
+      )
     )
   )
 );
@@ -288,13 +368,16 @@ CREATE POLICY "Operators can read own brannvesen notater" ON interne_notater FOR
 CREATE POLICY "Operators can insert notater" ON interne_notater FOR INSERT WITH CHECK (
   EXISTS (
     SELECT 1 FROM brukerprofiler bp
-    JOIN hendelser h ON h.id = interne_notater.hendelse_id
     WHERE bp.user_id = auth.uid()
-    AND bp.rolle IN ('operator', 'admin')
     AND bp.aktiv = true
     AND (
       bp.rolle = 'admin'
-      OR bp.brannvesen_id = h.brannvesen_id
+      OR bp.rolle IN ('operator', '110-admin') AND EXISTS (
+        SELECT 1 FROM hendelser h
+        JOIN sentraler s ON s.id = ANY(bp.sentral_ids)
+        WHERE h.id = interne_notater.hendelse_id
+        AND h.brannvesen_id = ANY(s.brannvesen_ids)
+      )
     )
   )
 );

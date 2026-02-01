@@ -104,7 +104,7 @@ export default function AdminStatistikkPage() {
     <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
       <div className="p-4 lg:p-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Statistikk</h1>
+          <h1 className="text-2xl font-bold text-white">Statistikk Varslinger</h1>
           <p className="text-sm text-gray-400">
             {isScoped ? 'Push-abonnementer for dine sentraler' : 'Oversikt over push-abonnementer og enheter'}
           </p>

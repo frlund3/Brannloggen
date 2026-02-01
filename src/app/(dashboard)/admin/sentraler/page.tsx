@@ -17,12 +17,12 @@ export default function AdminSentralerPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [editItem, setEditItem] = useState<Sentral | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
-  const [form, setForm] = useState({ navn: '', kort_navn: '', fylke_ids: [] as string[], brannvesen_ids: [] as string[] })
+  const [form, setForm] = useState({ navn: '', kort_navn: '', kontakt_epost: '', fylke_ids: [] as string[], brannvesen_ids: [] as string[] })
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   useEffect(() => { if (sentralerData.length > 0) setItems(sentralerData) }, [sentralerData])
 
-  const resetForm = () => setForm({ navn: '', kort_navn: '', fylke_ids: [], brannvesen_ids: [] })
+  const resetForm = () => setForm({ navn: '', kort_navn: '', kontakt_epost: '', fylke_ids: [], brannvesen_ids: [] })
 
   const handleAdd = async () => {
     if (!form.navn || !form.kort_navn) return
@@ -45,7 +45,7 @@ export default function AdminSentralerPage() {
 
   const handleEdit = (item: Sentral) => {
     setEditItem(item)
-    setForm({ navn: item.navn, kort_navn: item.kort_navn, fylke_ids: [...item.fylke_ids], brannvesen_ids: [...item.brannvesen_ids] })
+    setForm({ navn: item.navn, kort_navn: item.kort_navn, kontakt_epost: item.kontakt_epost || '', fylke_ids: [...item.fylke_ids], brannvesen_ids: [...item.brannvesen_ids] })
   }
 
   const handleSaveEdit = async () => {
@@ -57,7 +57,7 @@ export default function AdminSentralerPage() {
     try {
       const supabase = createClient()
       // @ts-expect-error supabase types not generated
-      const { error } = await supabase.from('sentraler').update({ navn: form.navn, kort_navn: form.kort_navn, fylke_ids: form.fylke_ids, brannvesen_ids: form.brannvesen_ids } as any).eq('id', editItem.id)
+      const { error } = await supabase.from('sentraler').update({ navn: form.navn, kort_navn: form.kort_navn, kontakt_epost: form.kontakt_epost || null, fylke_ids: form.fylke_ids, brannvesen_ids: form.brannvesen_ids } as any).eq('id', editItem.id)
       if (error) throw error
       invalidateCache()
       toast.success('110-sentral oppdatert')
@@ -126,6 +126,10 @@ export default function AdminSentralerPage() {
         <input type="text" value={form.kort_navn} onChange={(e) => setForm({ ...form, kort_navn: e.target.value })} placeholder="Rogaland 110" className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
       </div>
       <div>
+        <label className="block text-sm text-gray-400 mb-1">Kontakt e-post</label>
+        <input type="email" value={form.kontakt_epost} onChange={(e) => setForm({ ...form, kontakt_epost: e.target.value })} placeholder="post@110sentral.no" className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+      </div>
+      <div>
         <label className="block text-sm text-gray-400 mb-2">Fylker</label>
         <div className="max-h-40 overflow-y-auto bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg p-2 space-y-1">
           {fylkerData.map(f => (
@@ -182,7 +186,10 @@ export default function AdminSentralerPage() {
                     </svg>
                     <div>
                       <p className="text-sm text-white font-medium">{s.navn}</p>
-                      <p className="text-xs text-gray-500">{sFylker.map(f => f.navn).join(', ')} &middot; {sBrannvesen.length} brannvesen</p>
+                      <p className="text-xs text-gray-500">
+                        {sFylker.map(f => f.navn).join(', ')} &middot; {sBrannvesen.length} brannvesen
+                        {s.kontakt_epost && <> &middot; {s.kontakt_epost}</>}
+                      </p>
                     </div>
                   </button>
                   {isAdmin ? (

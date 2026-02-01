@@ -65,14 +65,15 @@ export default function AdminBrukerePage() {
     )
   }
 
-  // 110-admin can only see users within their sentraler
+  // Hide presse users (managed in /admin/pressebrukere), then scope for 110-admin
+  const nonPresseBrukere = brukere.filter(u => u.rolle !== 'presse')
   const scopedBrukere = isScoped
-    ? brukere.filter(u => {
+    ? nonPresseBrukere.filter(u => {
         // 110-admin can see users that share at least one sentral
         if (u.rolle === 'admin') return false // hide full admins from 110-admin
         return u.sentral_ids.some(sId => scope.sentralIds.includes(sId)) || u.sentral_ids.length === 0
       })
-    : brukere
+    : nonPresseBrukere
 
   const filtered = scopedBrukere.filter(u => {
     if (search && !u.fullt_navn.toLowerCase().includes(search.toLowerCase()) && !u.epost.toLowerCase().includes(search.toLowerCase())) return false
@@ -209,7 +210,6 @@ export default function AdminBrukerePage() {
     ? [
         { value: 'operator', label: 'Operatør' },
         { value: '110-admin', label: '110-sentral Admin' },
-        { value: 'presse', label: 'Presse' },
         { value: 'admin', label: 'Administrator' },
       ]
     : [
@@ -343,7 +343,6 @@ export default function AdminBrukerePage() {
             {isAdmin && <option value="admin">Administrator</option>}
             <option value="110-admin">110-sentral Admin</option>
             <option value="operator">Operatør</option>
-            {isAdmin && <option value="presse">Presse</option>}
           </select>
           <select value={filterSentral} onChange={(e) => setFilterSentral(e.target.value)} className="px-4 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
             <option value="">Alle 110-sentraler</option>

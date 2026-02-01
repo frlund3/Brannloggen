@@ -1,7 +1,7 @@
 'use client'
 
-import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { useFylker, useKategorier } from '@/hooks/useSupabaseData'
+import { PresseLayout } from '@/components/presse/PresseLayout'
+import { useFylker, useKategorier, useSentraler } from '@/hooks/useSupabaseData'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
@@ -10,7 +10,9 @@ import { createClient } from '@/lib/supabase/client'
 export default function PresseInnstillingerPage() {
   const { data: fylker, loading: fylkerLoading } = useFylker()
   const { data: kategorier, loading: kategorierLoading } = useKategorier()
+  const { data: sentraler, loading: sentralerLoading } = useSentraler()
   const { user } = useAuth()
+  const [selectedSentral, setSelectedSentral] = useState('')
   const [selectedFylker, setSelectedFylker] = useState<string[]>([])
   const [selectedKategorier, setSelectedKategorier] = useState<string[]>([])
   const [minAlvorlighet, setMinAlvorlighet] = useState('middels')
@@ -18,7 +20,6 @@ export default function PresseInnstillingerPage() {
   const [saving, setSaving] = useState(false)
   const [loaded, setLoaded] = useState(false)
 
-  // Load existing preferences from push_abonnenter
   useEffect(() => {
     if (!user) return
     const load = async () => {
@@ -34,14 +35,13 @@ export default function PresseInnstillingerPage() {
           setSelectedKategorier(data.kategori_ids || [])
           setKunPågående(data.kun_pågående || false)
         }
-        // Also check localStorage for minAlvorlighet (not in push_abonnenter schema)
         const stored = localStorage.getItem(`brannloggen_presse_prefs_${user.id}`)
         if (stored) {
           const parsed = JSON.parse(stored)
           if (parsed.minAlvorlighet) setMinAlvorlighet(parsed.minAlvorlighet)
         }
       } catch {
-        // No existing preferences, that's fine
+        // No existing preferences
       }
       setLoaded(true)
     }
@@ -67,10 +67,7 @@ export default function PresseInnstillingerPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { error } = await (supabase.from('push_abonnenter') as any).upsert(record, { onConflict: 'device_id' })
       if (error) throw error
-
-      // Store minAlvorlighet in localStorage (not in push_abonnenter schema)
       localStorage.setItem(`brannloggen_presse_prefs_${user.id}`, JSON.stringify({ minAlvorlighet }))
-
       toast.success('Innstillinger lagret')
     } catch (err) {
       toast.error('Kunne ikke lagre: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
@@ -81,9 +78,9 @@ export default function PresseInnstillingerPage() {
 
   if (fylkerLoading || kategorierLoading || !loaded) {
     return (
-      <DashboardLayout role="presse">
+      <PresseLayout>
         <div className="p-8 text-center text-gray-400">Laster...</div>
-      </DashboardLayout>
+      </PresseLayout>
     )
   }
 
@@ -100,8 +97,8 @@ export default function PresseInnstillingerPage() {
   }
 
   return (
-    <DashboardLayout role="presse">
-      <div className="p-4 lg:p-8 max-w-2xl">
+    <PresseLayout>
+      <div className="py-4 max-w-2xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-white">Varselinnstillinger</h1>
           <p className="text-sm text-gray-400">Velg hva du ønsker push-varsler om</p>
@@ -230,6 +227,6 @@ export default function PresseInnstillingerPage() {
           </button>
         </div>
       </div>
-    </DashboardLayout>
+    </PresseLayout>
   )
 }

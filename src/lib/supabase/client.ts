@@ -1,6 +1,6 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 
-let client: ReturnType<typeof createSupabaseClient> | null = null
+let client: ReturnType<typeof createBrowserClient> | null = null
 
 export function createClient() {
   if (client) return client
@@ -12,6 +12,6 @@ export function createClient() {
     throw new Error('Supabase-konfigurasjon mangler. Sjekk NEXT_PUBLIC_SUPABASE_URL og NEXT_PUBLIC_SUPABASE_ANON_KEY.')
   }
 
-  client = createSupabaseClient(url, key)
+  client = createBrowserClient(url, key)
   return client
 }

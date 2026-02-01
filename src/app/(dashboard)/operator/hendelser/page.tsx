@@ -40,6 +40,7 @@ export default function OperatorHendelserPage() {
   const [editKategoriId, setEditKategoriId] = useState('')
   const [editAlvor, setEditAlvor] = useState('')
   const [editBrannvesenId, setEditBrannvesenId] = useState('')
+  const [editSentralId, setEditSentralId] = useState('')
   const [editPressetekst, setEditPressetekst] = useState('')
   const [editingUpdateId, setEditingUpdateId] = useState<string | null>(null)
   const [editUpdateText, setEditUpdateText] = useState('')
@@ -118,6 +119,9 @@ export default function OperatorHendelserPage() {
     setEditKategoriId(h.kategori_id)
     setEditAlvor(h.alvorlighetsgrad)
     setEditBrannvesenId(h.brannvesen_id)
+    // Find the sentral that contains this brannvesen
+    const matchedSentral = sentraler.find(s => s.brannvesen_ids.includes(h.brannvesen_id))
+    setEditSentralId(matchedSentral?.id || '')
     setEditPressetekst(h.presse_tekst || '')
     setNewUpdate('')
     setEditingUpdateId(null)
@@ -424,10 +428,21 @@ export default function OperatorHendelserPage() {
                     <option value="kritisk">Kritisk</option>
                   </select>
                 </div>
-                <div className="sm:col-span-2">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">110-sentral</label>
+                  <select value={editSentralId} onChange={(e) => { setEditSentralId(e.target.value); setEditBrannvesenId('') }} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
+                    <option value="">Velg 110-sentral</option>
+                    {sentraler.map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
+                  </select>
+                </div>
+                <div>
                   <label className="block text-xs text-gray-500 mb-1">Brannvesen</label>
                   <select value={editBrannvesenId} onChange={(e) => setEditBrannvesenId(e.target.value)} className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500">
-                    {brannvesen.sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(b => <option key={b.id} value={b.id}>{b.kort_navn}</option>)}
+                    <option value="">Velg brannvesen</option>
+                    {(editSentralId
+                      ? brannvesen.filter(b => sentraler.find(s => s.id === editSentralId)?.brannvesen_ids.includes(b.id))
+                      : brannvesen
+                    ).sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(b => <option key={b.id} value={b.id}>{b.kort_navn}</option>)}
                   </select>
                 </div>
               </div>
