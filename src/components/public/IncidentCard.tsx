@@ -61,20 +61,20 @@ export function IncidentCard({
 
   return (
     <div
-      className="rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] hover:bg-[#222] transition-colors cursor-pointer flex overflow-hidden"
+      className="rounded-xl bg-theme-card border border-theme hover:bg-theme-card-hover transition-colors cursor-pointer flex overflow-hidden"
       onClick={onClick}
     >
       {/* Status color stripe */}
       <div className={`w-1 shrink-0 ${stripeColor}`} />
       <div className="p-4 flex-1 min-w-0">
       <div className="flex items-start justify-between gap-2 mb-1">
-        <span className="text-xs text-gray-400">{sentral?.kort_navn || bv?.kort_navn || bv?.navn}</span>
+        <span className="text-xs text-theme-secondary">{sentral?.kort_navn || bv?.kort_navn || bv?.navn}</span>
         <div className="flex items-center gap-2 shrink-0">
           <StatusBadge status={status} />
         </div>
       </div>
 
-      <h3 className="text-base font-bold text-white mb-0.5 leading-tight">{tittel}</h3>
+      <h3 className="text-base font-bold text-theme mb-0.5 leading-tight">{tittel}</h3>
 
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xs font-semibold text-gray-300">{formatTime(opprettet_tidspunkt)}</span>
@@ -107,7 +107,7 @@ export function IncidentCard({
         const latestChange = Math.max(updated, lastUpdate)
         if (latestChange - created > 60_000) {
           return (
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-theme-muted mt-2">
               Sist redigert {formatTimeAgo(new Date(latestChange).toISOString())}
             </p>
           )
@@ -145,9 +145,9 @@ export function IncidentCard({
                     <div className="absolute left-[5px] top-[10px] bottom-0 w-px bg-blue-500/30" />
                   )}
                   {/* Timeline node */}
-                  <div className="absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 border-blue-500 bg-[#1a1a1a]" />
+                  <div className="absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 border-blue-500 bg-theme-card" />
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-gray-500 font-medium">{formatTime(update.opprettet_tidspunkt)}</span>
+                    <span className="text-xs text-theme-muted font-medium">{formatTime(update.opprettet_tidspunkt)}</span>
                   </div>
                   <p className="text-sm text-gray-300 mt-0.5">{update.tekst}</p>
                   {update.bilde_url && (

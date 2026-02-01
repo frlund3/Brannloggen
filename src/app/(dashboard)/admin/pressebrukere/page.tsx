@@ -130,7 +130,7 @@ export default function AdminPressebrukerePage() {
   if (loading) {
     return (
       <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
-        <div className="p-8 text-center text-gray-400">Laster...</div>
+        <div className="p-8 text-center text-theme-secondary">Laster...</div>
       </DashboardLayout>
     )
   }
@@ -139,13 +139,13 @@ export default function AdminPressebrukerePage() {
     <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
       <div className="p-4 lg:p-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Pressebrukere</h1>
-          <p className="text-sm text-gray-400">Behandle søknader og administrer pressekontoer</p>
+          <h1 className="text-2xl font-bold text-theme">Pressebrukere</h1>
+          <p className="text-sm text-theme-secondary">Behandle søknader og administrer pressekontoer</p>
         </div>
 
         {/* Pending requests */}
         <div className="mb-8">
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-theme mb-4 flex items-center gap-2">
             Ventende søknader
             {soknader.length > 0 && (
               <span className="bg-orange-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">{soknader.length}</span>
@@ -153,21 +153,21 @@ export default function AdminPressebrukerePage() {
           </h2>
 
           {soknader.length === 0 ? (
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 text-center text-gray-500 text-sm">
+            <div className="bg-theme-card rounded-xl border border-theme p-6 text-center text-theme-muted text-sm">
               Ingen ventende søknader
             </div>
           ) : (
             <div className="space-y-3">
               {soknader.map((s) => (
-                <div key={s.id} className="bg-[#1a1a1a] rounded-xl border border-orange-500/30 p-4">
+                <div key={s.id} className="bg-theme-card rounded-xl border border-orange-500/30 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="text-sm text-white font-medium">{s.fullt_navn}</p>
-                      <p className="text-xs text-gray-400 mt-0.5">{s.epost}</p>
+                      <p className="text-sm text-theme font-medium">{s.fullt_navn}</p>
+                      <p className="text-xs text-theme-secondary mt-0.5">{s.epost}</p>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
                         <span className="text-xs bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded">{getMediumNavn(s.medium_id) || s.mediehus}</span>
-                        {s.telefon && <span className="text-xs text-gray-500">{s.telefon}</span>}
-                        <span className="text-xs text-gray-600">{new Date(s.opprettet).toLocaleDateString('nb-NO')}</span>
+                        {s.telefon && <span className="text-xs text-theme-muted">{s.telefon}</span>}
+                        <span className="text-xs text-theme-dim">{new Date(s.opprettet).toLocaleDateString('nb-NO')}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
@@ -187,25 +187,25 @@ export default function AdminPressebrukerePage() {
 
         {/* Active press users */}
         <div>
-          <h2 className="text-lg font-semibold text-white mb-4">
+          <h2 className="text-lg font-semibold text-theme mb-4">
             Aktive pressebrukere ({presseBrukere.length})
           </h2>
 
           {presseBrukere.length === 0 ? (
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 text-center text-gray-500 text-sm">
+            <div className="bg-theme-card rounded-xl border border-theme p-6 text-center text-theme-muted text-sm">
               Ingen pressebrukere registrert
             </div>
           ) : (
             <div className="space-y-3">
               {presseBrukere.map((u) => (
-                <div key={u.id} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
+                <div key={u.id} className="bg-theme-card rounded-xl border border-theme p-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center shrink-0">
                       <span className="text-xs text-white font-bold">{u.fullt_navn.split(' ').map(n => n[0]).join('')}</span>
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm text-white font-medium">{u.fullt_navn}</p>
-                      <p className="text-xs text-gray-400">{u.epost}</p>
+                      <p className="text-sm text-theme font-medium">{u.fullt_navn}</p>
+                      <p className="text-xs text-theme-secondary">{u.epost}</p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <span className="text-xs text-cyan-400 hidden sm:inline">{getMediumNavn(u.medium_id) || '-'}</span>
@@ -227,11 +227,11 @@ export default function AdminPressebrukerePage() {
         {/* Registration link info */}
         <div className="mt-8 bg-cyan-500/5 border border-cyan-500/20 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-cyan-400 mb-2">Presseregistrering</h3>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-theme-secondary">
             Journalister kan søke om pressetilgang via registreringssiden. Del denne lenken:
           </p>
           <div className="mt-2 flex items-center gap-2">
-            <code className="text-xs bg-[#0a0a0a] text-cyan-400 px-3 py-1.5 rounded border border-[#2a2a2a] flex-1 truncate">
+            <code className="text-xs bg-theme-card-inner text-cyan-400 px-3 py-1.5 rounded border border-theme flex-1 truncate">
               {typeof window !== 'undefined' ? window.location.origin : ''}/presse-registrering
             </code>
             <button
@@ -250,17 +250,17 @@ export default function AdminPressebrukerePage() {
       {/* Avvis modal */}
       {avvisModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/60" onClick={() => { setAvvisModal(null); setAvvisningsgrunn('') }} />
-          <div className="relative bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-6 w-full max-w-sm mx-4">
-            <h2 className="text-lg font-bold text-white mb-2">Avvis søknad</h2>
-            <p className="text-sm text-gray-400 mb-4">
+          <div className="absolute inset-0 bg-theme-overlay" onClick={() => { setAvvisModal(null); setAvvisningsgrunn('') }} />
+          <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-sm mx-4">
+            <h2 className="text-lg font-bold text-theme mb-2">Avvis søknad</h2>
+            <p className="text-sm text-theme-secondary mb-4">
               Søkeren vil ikke bli varslet, men grunnen lagres for referanse.
             </p>
             <textarea
               value={avvisningsgrunn}
               onChange={(e) => setAvvisningsgrunn(e.target.value)}
               placeholder="Valgfri grunn for avvisning..."
-              className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-red-500 resize-none h-20 mb-4"
+              className="w-full px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-theme text-sm focus:outline-none focus:border-red-500 resize-none h-20 mb-4"
             />
             <div className="flex gap-3">
               <button
@@ -272,7 +272,7 @@ export default function AdminPressebrukerePage() {
               </button>
               <button
                 onClick={() => { setAvvisModal(null); setAvvisningsgrunn('') }}
-                className="px-4 py-2.5 bg-[#0a0a0a] border border-[#2a2a2a] text-gray-400 rounded-lg text-sm hover:text-white"
+                className="px-4 py-2.5 bg-theme-card-inner border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme"
               >
                 Avbryt
               </button>

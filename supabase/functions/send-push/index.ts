@@ -267,6 +267,8 @@ async function sendAPNs(token: string, title: string, body: string, hendelseId: 
       aps: {
         alert: { title, body },
         sound: 'default',
+        badge: 1,
+        'mutable-content': 1,
       },
       hendelse_id: hendelseId,
     }),
@@ -339,6 +341,7 @@ async function sendWebPush(subscriptionJson: string, title: string, body: string
   const payload = JSON.stringify({
     title,
     body,
+    tag: `hendelse-${hendelseId}`,
     url: `/hendelse/${hendelseId}`,
   })
 

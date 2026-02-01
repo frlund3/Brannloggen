@@ -41,10 +41,10 @@ function formaterVarighet(minutter: number): string {
   return `${dager}d ${timer % 24}t`
 }
 
-function KpiCard({ label, value, color = 'text-white' }: { label: string; value: string | number; color?: string }) {
+function KpiCard({ label, value, color = 'text-theme' }: { label: string; value: string | number; color?: string }) {
   return (
-    <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
-      <p className="text-xs text-gray-400">{label}</p>
+    <div className="bg-theme-card rounded-xl border border-theme p-4">
+      <p className="text-xs text-theme-secondary">{label}</p>
       <p className={cn('text-2xl font-bold', color)}>{value}</p>
     </div>
   )
@@ -53,8 +53,8 @@ function KpiCard({ label, value, color = 'text-white' }: { label: string; value:
 function ReportCard({ title, children, fullWidth }: { title: string; children: React.ReactNode; fullWidth?: boolean }) {
   return (
     <section className={fullWidth ? 'col-span-1 lg:col-span-2' : ''}>
-      <h2 className="text-lg font-semibold text-white mb-3">{title}</h2>
-      <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4 space-y-2">
+      <h2 className="text-lg font-semibold text-theme mb-3">{title}</h2>
+      <div className="bg-theme-card rounded-xl border border-theme p-4 space-y-2">
         {children}
       </div>
     </section>
@@ -66,14 +66,14 @@ function HorizontalBar({ label, count, max, color, suffix }: {
 }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm text-white truncate w-[35%] shrink-0">{label}</span>
-      <div className="flex-1 bg-[#0a0a0a] rounded-full h-2">
+      <span className="text-sm text-theme truncate w-[35%] shrink-0">{label}</span>
+      <div className="flex-1 bg-theme-card-inner rounded-full h-2">
         <div
           className="h-2 rounded-full transition-all"
           style={{ width: `${max > 0 ? (count / max) * 100 : 0}%`, backgroundColor: color }}
         />
       </div>
-      <span className="text-xs text-gray-400 w-16 text-right shrink-0">{count}{suffix || ''}</span>
+      <span className="text-xs text-theme-secondary w-16 text-right shrink-0">{count}{suffix || ''}</span>
     </div>
   )
 }
@@ -112,7 +112,7 @@ export default function AdminRapporterPage() {
   if (loading) {
     return (
       <DashboardLayout role={effectiveRole}>
-        <div className="p-8 text-center text-gray-400">Laster rapporter...</div>
+        <div className="p-8 text-center text-theme-secondary">Laster rapporter...</div>
       </DashboardLayout>
     )
   }
@@ -417,15 +417,15 @@ export default function AdminRapporterPage() {
       setKategoriFilter([])
     }
 
-    const selectStyle = 'px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-blue-500'
+    const selectStyle = 'px-3 py-2 bg-theme-input border border-theme-input rounded-lg text-sm text-theme focus:outline-none focus:border-blue-500'
 
     return (
       <DashboardLayout role={effectiveRole}>
         <div className="p-4 lg:p-8">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-white">Hendelsesrapporter</h1>
-            <p className="text-sm text-gray-400">
+            <h1 className="text-2xl font-bold text-theme">Hendelsesrapporter</h1>
+            <p className="text-sm text-theme-secondary">
               {isScoped ? 'Statistikk for dine 110-sentraler' : 'Statistikk og rapporter for alle hendelser'}
             </p>
           </div>
@@ -442,7 +442,7 @@ export default function AdminRapporterPage() {
               <button
                 key={preset.label}
                 onClick={preset.fn}
-                className="px-3 py-1.5 text-xs bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-gray-400 hover:text-white hover:border-blue-500 transition-colors"
+                className="px-3 py-1.5 text-xs bg-theme-card border border-theme rounded-lg text-theme-secondary hover:text-theme hover:border-blue-500 transition-colors"
               >
                 {preset.label}
               </button>
@@ -453,7 +453,7 @@ export default function AdminRapporterPage() {
           <div className="flex items-center gap-3 mb-4">
             <button
               onClick={() => setFiltersOpen(!filtersOpen)}
-              className="flex items-center gap-2 px-3 py-2 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-gray-400 hover:text-white transition-colors"
+              className="flex items-center gap-2 px-3 py-2 bg-theme-card border border-theme rounded-lg text-sm text-theme-secondary hover:text-theme transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -472,21 +472,21 @@ export default function AdminRapporterPage() {
 
           {/* Filter panel */}
           {filtersOpen && (
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4 mb-6">
+            <div className="bg-theme-card rounded-xl border border-theme p-4 mb-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Dato fra/til */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Fra dato</label>
+                  <label className="block text-xs text-theme-secondary mb-1">Fra dato</label>
                   <input type="date" value={datoFra} onChange={e => setDatoFra(e.target.value)} className={selectStyle + ' w-full'} />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Til dato</label>
+                  <label className="block text-xs text-theme-secondary mb-1">Til dato</label>
                   <input type="date" value={datoTil} onChange={e => setDatoTil(e.target.value)} className={selectStyle + ' w-full'} />
                 </div>
 
                 {/* Status */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Status</label>
+                  <label className="block text-xs text-theme-secondary mb-1">Status</label>
                   <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className={selectStyle + ' w-full'}>
                     <option value="">Alle</option>
                     <option value="pågår">Pågår</option>
@@ -497,7 +497,7 @@ export default function AdminRapporterPage() {
 
                 {/* 110-sentral */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">110-sentral</label>
+                  <label className="block text-xs text-theme-secondary mb-1">110-sentral</label>
                   <select value={sentralFilter} onChange={e => { setSentralFilter(e.target.value); setBrannvesenFilter('') }} className={selectStyle + ' w-full'}>
                     <option value="">Alle sentraler</option>
                     {availableSentraler.map(s => <option key={s.id} value={s.id}>{s.kort_navn}</option>)}
@@ -506,7 +506,7 @@ export default function AdminRapporterPage() {
 
                 {/* Brannvesen */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Brannvesen</label>
+                  <label className="block text-xs text-theme-secondary mb-1">Brannvesen</label>
                   <select value={brannvesenFilter} onChange={e => setBrannvesenFilter(e.target.value)} className={selectStyle + ' w-full'}>
                     <option value="">Alle brannvesen</option>
                     {brannvesenOptions.map(b => <option key={b.id} value={b.id}>{b.kort_navn}</option>)}
@@ -515,7 +515,7 @@ export default function AdminRapporterPage() {
 
                 {/* Fylke */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Fylke</label>
+                  <label className="block text-xs text-theme-secondary mb-1">Fylke</label>
                   <select value={fylkeFilter} onChange={e => { setFylkeFilter(e.target.value); setKommuneFilter('') }} className={selectStyle + ' w-full'}>
                     <option value="">Alle fylker</option>
                     {availableFylker.map(f => <option key={f.id} value={f.id}>{f.navn}</option>)}
@@ -524,7 +524,7 @@ export default function AdminRapporterPage() {
 
                 {/* Kommune */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Kommune</label>
+                  <label className="block text-xs text-theme-secondary mb-1">Kommune</label>
                   <select value={kommuneFilter} onChange={e => setKommuneFilter(e.target.value)} className={selectStyle + ' w-full'}>
                     <option value="">Alle kommuner</option>
                     {kommuneOptions.map(k => <option key={k.id} value={k.id}>{k.navn}</option>)}
@@ -533,7 +533,7 @@ export default function AdminRapporterPage() {
 
                 {/* Alvorlighetsgrad */}
                 <div>
-                  <label className="block text-xs text-gray-400 mb-1">Alvorlighetsgrad</label>
+                  <label className="block text-xs text-theme-secondary mb-1">Alvorlighetsgrad</label>
                   <div className="flex flex-wrap gap-2">
                     {(['lav', 'middels', 'høy', 'kritisk'] as const).map(a => (
                       <label key={a} className="flex items-center gap-1.5 cursor-pointer">
@@ -556,7 +556,7 @@ export default function AdminRapporterPage() {
               <div className="mt-4">
                 <button
                   onClick={() => setKategoriPanelOpen(!kategoriPanelOpen)}
-                  className="flex items-center gap-2 text-xs text-gray-400 hover:text-white"
+                  className="flex items-center gap-2 text-xs text-theme-secondary hover:text-theme"
                 >
                   Kategorier {kategoriFilter.length > 0 && <span className="bg-blue-500 text-white px-1.5 py-0.5 rounded-full">{kategoriFilter.length}</span>}
                   <svg className={cn('w-3 h-3 transition-transform', kategoriPanelOpen && 'rotate-180')} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -564,9 +564,9 @@ export default function AdminRapporterPage() {
                   </svg>
                 </button>
                 {kategoriPanelOpen && (
-                  <div className="mt-2 max-h-48 overflow-y-auto bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg p-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
+                  <div className="mt-2 max-h-48 overflow-y-auto bg-theme-card-inner border border-theme rounded-lg p-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1">
                     {kategorier.map(k => (
-                      <label key={k.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-[#1a1a1a] cursor-pointer">
+                      <label key={k.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-theme-card cursor-pointer">
                         <input
                           type="checkbox"
                           checked={kategoriFilter.includes(k.id)}
@@ -589,7 +589,7 @@ export default function AdminRapporterPage() {
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
             <KpiCard label="Totalt hendelser" value={kpis.total} />
             <KpiCard label="Pågår nå" value={kpis.pågående} color="text-red-400" />
-            <KpiCard label="Avsluttet" value={kpis.avsluttet} color="text-gray-400" />
+            <KpiCard label="Avsluttet" value={kpis.avsluttet} color="text-theme-secondary" />
             <KpiCard label="Kritiske" value={kpis.kritisk} color="text-red-400" />
             <KpiCard label="Snittvarighet" value={kpis.gjennomsnittMin > 0 ? formaterVarighet(kpis.gjennomsnittMin) : '-'} color="text-yellow-400" />
             <KpiCard label="Oppdateringer" value={kpis.totalOppdateringer} color="text-blue-400" />
@@ -601,7 +601,7 @@ export default function AdminRapporterPage() {
               <KpiCard label="Median varighet" value={formaterVarighet(varighetStats.median)} color="text-amber-400" />
               <KpiCard label="Lengste varighet" value={formaterVarighet(varighetStats.longest)} color="text-red-400" />
               <KpiCard label="Korteste varighet" value={formaterVarighet(varighetStats.shortest)} color="text-green-400" />
-              <KpiCard label="Avsluttede hendelser" value={varighetStats.count} color="text-gray-400" />
+              <KpiCard label="Avsluttede hendelser" value={varighetStats.count} color="text-theme-secondary" />
             </div>
           )}
 
@@ -609,7 +609,7 @@ export default function AdminRapporterPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             {/* 1. Per kategori */}
             <ReportCard title="Hendelser per kategori">
-              {perKategori.length === 0 && <p className="text-sm text-gray-500">Ingen data</p>}
+              {perKategori.length === 0 && <p className="text-sm text-theme-muted">Ingen data</p>}
               {perKategori.map(k => (
                 <HorizontalBar key={k.id} label={k.navn} count={k.count} max={perKategori[0]?.count || 1} color={k.farge} />
               ))}
@@ -617,7 +617,7 @@ export default function AdminRapporterPage() {
 
             {/* 2. Per sentral */}
             <ReportCard title="Hendelser per 110-sentral">
-              {perSentral.length === 0 && <p className="text-sm text-gray-500">Ingen data</p>}
+              {perSentral.length === 0 && <p className="text-sm text-theme-muted">Ingen data</p>}
               {perSentral.map(s => (
                 <HorizontalBar key={s.id} label={s.kort_navn} count={s.count} max={perSentral[0]?.count || 1} color="#f97316" />
               ))}
@@ -625,7 +625,7 @@ export default function AdminRapporterPage() {
 
             {/* 3. Per brannvesen */}
             <ReportCard title="Hendelser per brannvesen (topp 20)">
-              {perBrannvesen.length === 0 && <p className="text-sm text-gray-500">Ingen data</p>}
+              {perBrannvesen.length === 0 && <p className="text-sm text-theme-muted">Ingen data</p>}
               {perBrannvesen.map(b => (
                 <HorizontalBar key={b.id} label={b.kort_navn} count={b.count} max={perBrannvesen[0]?.count || 1} color="#3b82f6" />
               ))}
@@ -633,7 +633,7 @@ export default function AdminRapporterPage() {
 
             {/* 4. Per fylke */}
             <ReportCard title="Hendelser per fylke">
-              {perFylke.length === 0 && <p className="text-sm text-gray-500">Ingen data</p>}
+              {perFylke.length === 0 && <p className="text-sm text-theme-muted">Ingen data</p>}
               {perFylke.map(f => (
                 <HorizontalBar key={f.id} label={f.navn} count={f.count} max={perFylke[0]?.count || 1} color="#8b5cf6" />
               ))}
@@ -649,7 +649,7 @@ export default function AdminRapporterPage() {
             {/* 6. Statusfordeling */}
             <ReportCard title="Statusfordeling">
               {filteredHendelser.length === 0 ? (
-                <p className="text-sm text-gray-500">Ingen data</p>
+                <p className="text-sm text-theme-muted">Ingen data</p>
               ) : (
                 <>
                   <div className="flex h-6 rounded-full overflow-hidden">
@@ -666,7 +666,7 @@ export default function AdminRapporterPage() {
                     {statusFordeling.map(s => (
                       <div key={s.label} className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} />
-                        <span className="text-xs text-gray-400">{s.label}: {s.count} ({s.pct.toFixed(1)}%)</span>
+                        <span className="text-xs text-theme-secondary">{s.label}: {s.count} ({s.pct.toFixed(1)}%)</span>
                       </div>
                     ))}
                   </div>
@@ -676,7 +676,7 @@ export default function AdminRapporterPage() {
 
             {/* 7. Varighet per kategori */}
             <ReportCard title="Gjennomsnittlig varighet per kategori">
-              {varighetPerKategori.length === 0 && <p className="text-sm text-gray-500">Ingen avsluttede hendelser</p>}
+              {varighetPerKategori.length === 0 && <p className="text-sm text-theme-muted">Ingen avsluttede hendelser</p>}
               {varighetPerKategori.map(k => (
                 <HorizontalBar
                   key={k.id}
@@ -691,7 +691,7 @@ export default function AdminRapporterPage() {
 
             {/* 8. Varighet per brannvesen */}
             <ReportCard title="Gj.snittlig varighet per brannvesen (topp 20)">
-              {varighetPerBrannvesen.length === 0 && <p className="text-sm text-gray-500">Ingen avsluttede hendelser</p>}
+              {varighetPerBrannvesen.length === 0 && <p className="text-sm text-theme-muted">Ingen avsluttede hendelser</p>}
               {varighetPerBrannvesen.map(b => (
                 <HorizontalBar
                   key={b.id}
@@ -706,7 +706,7 @@ export default function AdminRapporterPage() {
 
             {/* 9. Varighet per sentral */}
             <ReportCard title="Gj.snittlig varighet per 110-sentral">
-              {varighetPerSentral.length === 0 && <p className="text-sm text-gray-500">Ingen avsluttede hendelser</p>}
+              {varighetPerSentral.length === 0 && <p className="text-sm text-theme-muted">Ingen avsluttede hendelser</p>}
               {varighetPerSentral.map(s => (
                 <HorizontalBar
                   key={s.id}
@@ -721,7 +721,7 @@ export default function AdminRapporterPage() {
 
             {/* 10. Varighet per alvorlighetsgrad */}
             <ReportCard title="Gj.snittlig varighet per alvorlighetsgrad">
-              {varighetPerAlvor.length === 0 && <p className="text-sm text-gray-500">Ingen avsluttede hendelser</p>}
+              {varighetPerAlvor.length === 0 && <p className="text-sm text-theme-muted">Ingen avsluttede hendelser</p>}
               {varighetPerAlvor.map(a => (
                 <HorizontalBar
                   key={a.key}
@@ -736,7 +736,7 @@ export default function AdminRapporterPage() {
 
             {/* 11. Per bruker */}
             <ReportCard title="Aktivitet per operatør">
-              {perBruker.length === 0 && <p className="text-sm text-gray-500">Ingen data</p>}
+              {perBruker.length === 0 && <p className="text-sm text-theme-muted">Ingen data</p>}
               {perBruker.slice(0, 15).map(b => (
                 <HorizontalBar key={b.userId} label={b.navn} count={b.count} max={perBruker[0]?.count || 1} color="#06b6d4" />
               ))}
@@ -746,7 +746,7 @@ export default function AdminRapporterPage() {
           {/* 9. Hendelser over tid (full width) */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold text-white">Hendelser over tid</h2>
+              <h2 className="text-lg font-semibold text-theme">Hendelser over tid</h2>
               <div className="flex gap-1">
                 {(['dag', 'uke', 'måned'] as const).map(p => (
                   <button
@@ -754,7 +754,7 @@ export default function AdminRapporterPage() {
                     onClick={() => setTidsperiode(p)}
                     className={cn(
                       'px-3 py-1 text-xs rounded-lg transition-colors',
-                      tidsperiode === p ? 'bg-blue-500 text-white' : 'bg-[#1a1a1a] text-gray-400 hover:text-white'
+                      tidsperiode === p ? 'bg-blue-500 text-white' : 'bg-theme-card text-theme-secondary hover:text-theme'
                     )}
                   >
                     {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -762,9 +762,9 @@ export default function AdminRapporterPage() {
                 ))}
               </div>
             </div>
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
+            <div className="bg-theme-card rounded-xl border border-theme p-4">
               {overTid.length === 0 ? (
-                <p className="text-sm text-gray-500">Ingen data</p>
+                <p className="text-sm text-theme-muted">Ingen data</p>
               ) : (
                 <div className="overflow-x-auto">
                   <div className="flex items-end gap-1 h-48" style={{ minWidth: `${overTid.length * 28}px` }}>
@@ -774,7 +774,7 @@ export default function AdminRapporterPage() {
                         const height = (bucket.count / maxCount) * 100
                         return (
                           <div key={bucket.key} className="flex flex-col items-center flex-1" style={{ minWidth: '24px' }}>
-                            <span className="text-xs text-gray-500 mb-1">{bucket.count > 0 ? bucket.count : ''}</span>
+                            <span className="text-xs text-theme-muted mb-1">{bucket.count > 0 ? bucket.count : ''}</span>
                             <div
                               className="w-4 bg-blue-500 rounded-t transition-all"
                               style={{ height: `${height}%`, minHeight: bucket.count > 0 ? '4px' : '0' }}
@@ -789,7 +789,7 @@ export default function AdminRapporterPage() {
                       <div key={bucket.key} className="flex-1 text-center" style={{ minWidth: '24px' }}>
                         {/* Show labels at intervals to avoid crowding */}
                         {(i % Math.max(1, Math.floor(overTid.length / 12)) === 0 || i === overTid.length - 1) && (
-                          <span className="text-xs text-gray-600">{bucket.label}</span>
+                          <span className="text-xs text-theme-dim">{bucket.label}</span>
                         )}
                       </div>
                     ))}
@@ -801,23 +801,23 @@ export default function AdminRapporterPage() {
 
           {/* 10. Pågående hendelser (full width) */}
           <div className="mb-8">
-            <h2 className="text-lg font-semibold text-white mb-3">
+            <h2 className="text-lg font-semibold text-theme mb-3">
               Pågående hendelser <span className="text-sm font-normal text-red-400">({pågåendeHendelser.length})</span>
             </h2>
-            <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
+            <div className="bg-theme-card rounded-xl border border-theme overflow-hidden">
               {pågåendeHendelser.length === 0 ? (
-                <p className="text-sm text-gray-500 p-4">Ingen pågående hendelser</p>
+                <p className="text-sm text-theme-muted p-4">Ingen pågående hendelser</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-[#2a2a2a]">
-                        <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Hendelse</th>
-                        <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden sm:table-cell">Kategori</th>
-                        <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Alvorlighet</th>
-                        <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">Brannvesen</th>
-                        <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Sted</th>
-                        <th className="text-left px-3 sm:px-4 py-3 text-xs text-gray-400 font-medium">Varighet</th>
+                      <tr className="border-b border-theme">
+                        <th className="text-left px-3 sm:px-4 py-3 text-xs text-theme-secondary font-medium">Hendelse</th>
+                        <th className="text-left px-3 sm:px-4 py-3 text-xs text-theme-secondary font-medium hidden sm:table-cell">Kategori</th>
+                        <th className="text-left px-3 sm:px-4 py-3 text-xs text-theme-secondary font-medium">Alvorlighet</th>
+                        <th className="text-left px-3 sm:px-4 py-3 text-xs text-theme-secondary font-medium hidden md:table-cell">Brannvesen</th>
+                        <th className="text-left px-3 sm:px-4 py-3 text-xs text-theme-secondary font-medium hidden lg:table-cell">Sted</th>
+                        <th className="text-left px-3 sm:px-4 py-3 text-xs text-theme-secondary font-medium">Varighet</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -826,9 +826,9 @@ export default function AdminRapporterPage() {
                         const bv = brannvesen.find(b => b.id === h.brannvesen_id)
                         const duration = differenceInMinutes(new Date(), new Date(h.opprettet_tidspunkt))
                         return (
-                          <tr key={h.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
+                          <tr key={h.id} className="border-b border-theme hover:bg-theme-card-hover">
                             <td className="px-3 sm:px-4 py-3">
-                              <span className="text-sm text-white">{h.tittel}</span>
+                              <span className="text-sm text-theme">{h.tittel}</span>
                             </td>
                             <td className="px-3 sm:px-4 py-3 hidden sm:table-cell">
                               {kat && (
@@ -841,10 +841,10 @@ export default function AdminRapporterPage() {
                               <SeverityDot severity={h.alvorlighetsgrad} showLabel />
                             </td>
                             <td className="px-3 sm:px-4 py-3 hidden md:table-cell">
-                              <span className="text-sm text-gray-400">{bv?.kort_navn || '-'}</span>
+                              <span className="text-sm text-theme-secondary">{bv?.kort_navn || '-'}</span>
                             </td>
                             <td className="px-3 sm:px-4 py-3 hidden lg:table-cell">
-                              <span className="text-sm text-gray-400 truncate max-w-[200px] block">{h.sted}</span>
+                              <span className="text-sm text-theme-secondary truncate max-w-[200px] block">{h.sted}</span>
                             </td>
                             <td className="px-3 sm:px-4 py-3">
                               <span className="text-sm text-yellow-400 font-medium">{formaterVarighet(duration)}</span>
@@ -860,7 +860,7 @@ export default function AdminRapporterPage() {
           </div>
 
           {/* Footer info */}
-          <div className="text-xs text-gray-600 text-center">
+          <div className="text-xs text-theme-dim text-center">
             Viser {filteredHendelser.length} av {scopedHendelser.length} hendelser
             {isScoped && ' (begrenset til dine sentraler)'}
           </div>

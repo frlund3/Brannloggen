@@ -68,7 +68,7 @@ export default function NyVisningPage() {
   if (loading) {
     return (
       <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
-        <div className="p-8 text-center text-gray-400">Laster...</div>
+        <div className="p-8 text-center text-theme-secondary">Laster...</div>
       </DashboardLayout>
     )
   }
@@ -77,11 +77,11 @@ export default function NyVisningPage() {
     <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
       <div className="flex h-[calc(100vh-57px)] lg:h-screen overflow-hidden">
         {/* Left panel: incident list */}
-        <div className="w-full lg:w-[380px] xl:w-[420px] border-r border-[#2a2a2a] flex flex-col shrink-0" style={selected ? { display: 'none' } : undefined}>
+        <div className="w-full lg:w-[380px] xl:w-[420px] border-r border-theme flex flex-col shrink-0" style={selected ? { display: 'none' } : undefined}>
           {/* Search */}
-          <div className="p-3 border-b border-[#2a2a2a]">
+          <div className="p-3 border-b border-theme">
             <div className="relative">
-              <svg className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-theme-muted absolute left-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <input
@@ -89,14 +89,14 @@ export default function NyVisningPage() {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Søk..."
-                className="w-full pl-9 pr-3 py-2.5 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-sm text-white focus:outline-none focus:border-blue-500"
+                className="w-full pl-9 pr-3 py-2.5 bg-theme-card border border-theme-input rounded-lg text-sm text-theme focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
 
           {/* Header */}
-          <div className="px-4 py-3 border-b border-[#2a2a2a]">
-            <h1 className="text-lg font-bold text-white">Logg</h1>
+          <div className="px-4 py-3 border-b border-theme">
+            <h1 className="text-lg font-bold text-theme">Logg</h1>
             <div className="flex gap-2 mt-2">
               {(['alle', 'pågår', 'avsluttet'] as StatusFilter[]).map(s => (
                 <button
@@ -105,7 +105,7 @@ export default function NyVisningPage() {
                   className={`text-xs px-3 py-1.5 rounded-lg transition-colors ${
                     statusFilter === s
                       ? 'bg-blue-500/20 text-blue-400'
-                      : 'text-gray-400 hover:text-white hover:bg-[#1a1a1a]'
+                      : 'text-theme-secondary hover:text-theme hover:bg-theme-card'
                   }`}
                 >
                   {s === 'alle' ? `Alle (${hendelser.filter(h => h.status !== 'deaktivert').length})` :
@@ -127,23 +127,23 @@ export default function NyVisningPage() {
                   key={h.id}
                   onClick={() => setSelectedId(h.id)}
                   className={`w-full text-left px-4 py-3 border-b border-[#1a1a1a] transition-colors ${
-                    isSelected ? 'bg-blue-500/10' : 'hover:bg-[#111]'
+                    isSelected ? 'bg-blue-500/10' : 'hover:bg-theme-sidebar'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 text-xs text-gray-500 mb-1">
+                      <div className="flex items-center gap-2 text-xs text-theme-muted mb-1">
                         <span>{formatTime(h.opprettet_tidspunkt)}</span>
                         <span>&middot;</span>
                         <span>{new Date(h.opprettet_tidspunkt).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                         <span>&middot;</span>
-                        <span className={h.status === 'avsluttet' ? 'text-gray-500' : 'text-amber-400'}>{formatDuration(h.opprettet_tidspunkt, h.avsluttet_tidspunkt)}</span>
+                        <span className={h.status === 'avsluttet' ? 'text-theme-muted' : 'text-amber-400'}>{formatDuration(h.opprettet_tidspunkt, h.avsluttet_tidspunkt)}</span>
                         {kat && <span>&middot; {kat.navn}</span>}
                       </div>
-                      <p className="text-sm text-white font-medium truncate">{h.tittel}</p>
-                      <p className="text-xs text-gray-500 truncate">{bv?.kort_navn} &middot; {h.sted}</p>
+                      <p className="text-sm text-theme font-medium truncate">{h.tittel}</p>
+                      <p className="text-xs text-theme-muted truncate">{bv?.kort_navn} &middot; {h.sted}</p>
                       {getUserName(h.opprettet_av) && (
-                        <p className="text-xs text-gray-600 mt-0.5">Av: {getUserName(h.opprettet_av)}</p>
+                        <p className="text-xs text-theme-dim mt-0.5">Av: {getUserName(h.opprettet_av)}</p>
                       )}
                     </div>
                     <span className={`text-[10px] px-2 py-0.5 rounded border shrink-0 ${statusColor(h.status)}`}>
@@ -154,7 +154,7 @@ export default function NyVisningPage() {
               )
             })}
             {filtered.length === 0 && (
-              <div className="p-8 text-center text-gray-500 text-sm">Ingen hendelser funnet</div>
+              <div className="p-8 text-center text-theme-muted text-sm">Ingen hendelser funnet</div>
             )}
           </div>
         </div>
@@ -163,9 +163,9 @@ export default function NyVisningPage() {
         <style>{`@media (min-width: 1024px) { [style*="display: none"] { display: flex !important; } }`}</style>
 
         {/* Right panel: detail */}
-        <div className="flex-1 overflow-y-auto bg-[#0a0a0a]">
+        <div className="flex-1 overflow-y-auto bg-theme">
           {!selected ? (
-            <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+            <div className="flex items-center justify-center h-full text-theme-muted text-sm">
               Velg en hendelse fra listen
             </div>
           ) : (
@@ -182,19 +182,19 @@ export default function NyVisningPage() {
               {/* Header */}
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-1 flex-wrap">
+                  <div className="flex items-center gap-2 text-xs text-theme-muted mb-1 flex-wrap">
                     <span>{formatDateTime(selected.opprettet_tidspunkt)}</span>
                     <span>&middot;</span>
-                    <span className={selected.status === 'avsluttet' ? 'text-gray-500' : 'text-amber-400 font-medium'}>
+                    <span className={selected.status === 'avsluttet' ? 'text-theme-muted' : 'text-amber-400 font-medium'}>
                       Varighet: {formatDuration(selected.opprettet_tidspunkt, selected.avsluttet_tidspunkt)}
                     </span>
                     <span>&middot;</span>
                     <span>{getKat(selected.kategori_id)?.navn}</span>
                   </div>
-                  <h2 className="text-xl font-bold text-white">{selected.tittel}</h2>
-                  <p className="text-sm text-gray-400 mt-1">{getBv(selected.brannvesen_id)?.kort_navn} &middot; {selected.sted}</p>
+                  <h2 className="text-xl font-bold text-theme">{selected.tittel}</h2>
+                  <p className="text-sm text-theme-secondary mt-1">{getBv(selected.brannvesen_id)?.kort_navn} &middot; {selected.sted}</p>
                   {getUserName(selected.opprettet_av) && (
-                    <p className="text-xs text-gray-500 mt-1">Opprettet av: {getUserName(selected.opprettet_av)}</p>
+                    <p className="text-xs text-theme-muted mt-1">Opprettet av: {getUserName(selected.opprettet_av)}</p>
                   )}
                 </div>
                 <div className="flex items-center gap-2">
@@ -211,8 +211,8 @@ export default function NyVisningPage() {
               </div>
 
               {/* Description */}
-              <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4 mb-6">
-                <p className="text-sm text-white leading-relaxed">{selected.beskrivelse}</p>
+              <div className="bg-theme-card rounded-xl border border-theme p-4 mb-6">
+                <p className="text-sm text-theme leading-relaxed">{selected.beskrivelse}</p>
                 {selected.bilde_url && (
                   <img src={selected.bilde_url} alt="" className="mt-3 rounded-lg max-h-64 object-cover" />
                 )}
@@ -232,25 +232,25 @@ export default function NyVisningPage() {
                     {selected.presse_tekst && (
                       <div className="bg-amber-500/5 border border-amber-500/10 rounded-lg p-3">
                         <span className="text-[10px] text-amber-400/60 uppercase tracking-wider">Pressemelding</span>
-                        <p className="text-sm text-white mt-1">{selected.presse_tekst}</p>
+                        <p className="text-sm text-theme mt-1">{selected.presse_tekst}</p>
                       </div>
                     )}
                     {(selected.presseoppdateringer || []).filter(p => !p.deaktivert).map(p => (
                       <div key={p.id} className="border-l-2 border-amber-500/30 pl-3">
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <div className="flex items-center gap-2 text-xs text-theme-muted">
                           <span>{formatTime(p.opprettet_tidspunkt)} &middot; {new Date(p.opprettet_tidspunkt).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                         </div>
-                        <p className="text-sm text-white mt-0.5">{p.tekst}</p>
+                        <p className="text-sm text-theme mt-0.5">{p.tekst}</p>
                         {p.bilde_url && (
                           <img src={p.bilde_url} alt="" className="mt-2 rounded-lg max-h-48 object-cover" />
                         )}
                         {getUserName(p.opprettet_av) && (
-                          <p className="text-xs text-gray-600 mt-0.5">Av: {getUserName(p.opprettet_av)}</p>
+                          <p className="text-xs text-theme-dim mt-0.5">Av: {getUserName(p.opprettet_av)}</p>
                         )}
                       </div>
                     ))}
                     {!selected.presse_tekst && (selected.presseoppdateringer || []).filter(p => !p.deaktivert).length === 0 && (
-                      <p className="text-xs text-gray-500">Ingen presseoppdateringer</p>
+                      <p className="text-xs text-theme-muted">Ingen presseoppdateringer</p>
                     )}
                   </div>
                 </div>
@@ -266,20 +266,20 @@ export default function NyVisningPage() {
                   <div className="p-4 space-y-3">
                     {(selected.oppdateringer || []).filter(o => !o.deaktivert).map(o => (
                       <div key={o.id} className="border-l-2 border-blue-500/30 pl-3">
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <div className="flex items-center gap-2 text-xs text-theme-muted">
                           <span>{formatTime(o.opprettet_tidspunkt)} &middot; {new Date(o.opprettet_tidspunkt).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                         </div>
-                        <p className="text-sm text-white mt-0.5">{o.tekst}</p>
+                        <p className="text-sm text-theme mt-0.5">{o.tekst}</p>
                         {o.bilde_url && (
                           <img src={o.bilde_url} alt="" className="mt-2 rounded-lg max-h-48 object-cover" />
                         )}
                         {getUserName(o.opprettet_av) && (
-                          <p className="text-xs text-gray-600 mt-0.5">Av: {getUserName(o.opprettet_av)}</p>
+                          <p className="text-xs text-theme-dim mt-0.5">Av: {getUserName(o.opprettet_av)}</p>
                         )}
                       </div>
                     ))}
                     {(selected.oppdateringer || []).filter(o => !o.deaktivert).length === 0 && (
-                      <p className="text-xs text-gray-500">Ingen publikumsoppdateringer</p>
+                      <p className="text-xs text-theme-muted">Ingen publikumsoppdateringer</p>
                     )}
                   </div>
                 </div>
@@ -294,15 +294,15 @@ export default function NyVisningPage() {
                   <div className="p-4 space-y-3">
                     {(selected.interne_notater || []).filter(n => !n.deaktivert).map(n => (
                       <div key={n.id} className="border-l-2 border-yellow-500/30 pl-3">
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                        <div className="flex items-center gap-2 text-xs text-theme-muted">
                           <span>{formatTime(n.opprettet_tidspunkt)} &middot; {new Date(n.opprettet_tidspunkt).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                         </div>
-                        <p className="text-sm text-white mt-0.5">{n.notat}</p>
+                        <p className="text-sm text-theme mt-0.5">{n.notat}</p>
                         {n.bilde_url && (
                           <img src={n.bilde_url} alt="" className="mt-2 rounded-lg max-h-48 object-cover" />
                         )}
                         {getUserName(n.opprettet_av) && (
-                          <p className="text-xs text-gray-600 mt-0.5">Av: {getUserName(n.opprettet_av)}</p>
+                          <p className="text-xs text-theme-dim mt-0.5">Av: {getUserName(n.opprettet_av)}</p>
                         )}
                       </div>
                     ))}

@@ -2,17 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* Dark theme (default) */
+:root, .dark {
   --background: #0a0a0a;
   --foreground: #ededed;
   --card: #1a1a1a;
   --card-hover: #222222;
+  --card-inner: #0a0a0a;
   --border: #2a2a2a;
+  --sidebar: #111111;
   --muted: #6b7280;
+  --muted-foreground: #9ca3af;
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --text-dim: #4b5563;
   --accent: #3b82f6;
   --danger: #ef4444;
   --success: #22c55e;
   --warning: #f59e0b;
+  --input-bg: #0a0a0a;
+  --input-border: #2a2a2a;
+  --overlay: rgba(0, 0, 0, 0.6);
+}
+
+/* Light theme */
+.light {
+  --background: #f5f5f5;
+  --foreground: #111111;
+  --card: #ffffff;
+  --card-hover: #f0f0f0;
+  --card-inner: #f5f5f5;
+  --border: #e5e5e5;
+  --sidebar: #ffffff;
+  --muted: #6b7280;
+  --muted-foreground: #4b5563;
+  --text-primary: #111111;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --text-dim: #9ca3af;
+  --accent: #2563eb;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --warning: #d97706;
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --overlay: rgba(0, 0, 0, 0.4);
 }
 
 body {
@@ -32,6 +67,31 @@ body {
   background: var(--border);
   border-radius: 3px;
 }
+
+/* Theme color utility classes */
+.bg-theme { background-color: var(--background); }
+.bg-theme-card { background-color: var(--card); }
+.bg-theme-card-hover { background-color: var(--card-hover); }
+.bg-theme-card-inner { background-color: var(--card-inner); }
+.bg-theme-sidebar { background-color: var(--sidebar); }
+.bg-theme-input { background-color: var(--input-bg); }
+.border-theme { border-color: var(--border); }
+.border-theme-input { border-color: var(--input-border); }
+.text-theme { color: var(--text-primary); }
+.text-theme-secondary { color: var(--text-secondary); }
+.text-theme-muted { color: var(--text-muted); }
+.text-theme-dim { color: var(--text-dim); }
+.bg-theme-overlay { background-color: var(--overlay); }
+
+/* Hover variants */
+.hover\:bg-theme-card-hover:hover { background-color: var(--card-hover); }
+.hover\:text-theme:hover { color: var(--text-primary); }
+
+/* Opacity variant */
+.bg-theme\/95 { background-color: color-mix(in srgb, var(--background) 95%, transparent); }
+
+/* Divide variant */
+.divide-theme > :not([hidden]) ~ :not([hidden]) { border-color: var(--border); }
 
 /* Status badge animations */
 @keyframes pulse-status {

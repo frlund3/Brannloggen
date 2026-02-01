@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/components/providers/AuthProvider'
+import { useTheme } from '@/components/providers/ThemeProvider'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -12,6 +13,7 @@ const tabs = [
 
 export function PresseLayout({ children }: { children: React.ReactNode }) {
   const { user, rolle, loading } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const pathname = usePathname()
   const hasAdminAccess = rolle === 'admin' || rolle === '110-admin' || rolle === 'operator'
 
@@ -20,16 +22,16 @@ export function PresseLayout({ children }: { children: React.ReactNode }) {
       window.location.href = '/login'
     }
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <p className="text-gray-400 text-sm">Omdirigerer til innlogging...</p>
+      <div className="min-h-screen bg-theme flex items-center justify-center">
+        <p className="text-theme-secondary text-sm">Omdirigerer til innlogging...</p>
       </div>
     )
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <p className="text-gray-400 text-sm">Laster...</p>
+      <div className="min-h-screen bg-theme flex items-center justify-center">
+        <p className="text-theme-secondary text-sm">Laster...</p>
       </div>
     )
   }
@@ -53,7 +55,7 @@ export function PresseLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-theme">
       {/* Top banner - PRESSE portal identifier */}
       <div className="bg-gradient-to-r from-cyan-600 via-cyan-500 to-teal-500">
         <div className="max-w-4xl mx-auto px-4 py-2 flex items-center justify-between">
@@ -78,9 +80,20 @@ export function PresseLayout({ children }: { children: React.ReactNode }) {
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <img src="/icon-192.png" alt="Brannloggen" className="w-8 h-8 rounded-lg" />
-            <span className="text-sm font-bold text-white">Brannloggen</span>
+            <span className="text-sm font-bold text-theme">Brannloggen</span>
             <span className="text-[10px] font-bold text-cyan-300 bg-cyan-500/20 border border-cyan-500/30 px-2 py-0.5 rounded uppercase tracking-wider">Presse</span>
           </div>
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 rounded-lg hover:bg-theme-card-hover transition-colors text-theme-secondary"
+            title={theme === 'dark' ? 'Bytt til lyst tema' : 'Bytt til mørkt tema'}
+          >
+            {theme === 'dark' ? (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+            ) : (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+            )}
+          </button>
         </div>
 
         {/* Tab navigation */}
@@ -94,7 +107,7 @@ export function PresseLayout({ children }: { children: React.ReactNode }) {
                   'py-2.5 text-sm border-b-2 -mb-px transition-colors',
                   pathname === tab.href
                     ? 'border-cyan-400 text-cyan-400'
-                    : 'border-transparent text-gray-400 hover:text-white'
+                    : 'border-transparent text-theme-secondary hover:text-theme'
                 )}
               >
                 {tab.label}
