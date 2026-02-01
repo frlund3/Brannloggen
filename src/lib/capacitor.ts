@@ -103,10 +103,6 @@ async function registerWebPush(): Promise<string | null> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null
 
   try {
-    const registration = await navigator.serviceWorker.ready
-    const permission = await Notification.requestPermission()
-    if (permission !== 'granted') return null
-
     // VAPID public key should be set as env var
     const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
     if (!vapidKey) {
@@ -114,7 +110,20 @@ async function registerWebPush(): Promise<string | null> {
       return null
     }
 
-    const subscription = await registration.pushManager.subscribe({
+    // Register service worker if not already registered
+    await navigator.serviceWorker.register('/sw.js')
+
+    // Wait for service worker to be ready, with a timeout
+    const registration = await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 5_000)),
+    ])
+    if (!registration) return null
+
+    const permission = await Notification.requestPermission()
+    if (permission !== 'granted') return null
+
+    const subscription = await (registration as ServiceWorkerRegistration).pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(vapidKey),
     } as PushSubscriptionOptionsInit)

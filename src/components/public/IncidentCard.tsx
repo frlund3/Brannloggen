@@ -35,6 +35,7 @@ export function IncidentCard({
   status,
   alvorlighetsgrad,
   opprettet_tidspunkt,
+  oppdatert_tidspunkt,
   oppdateringer = [],
   onClick,
 }: IncidentCardProps) {
@@ -47,11 +48,16 @@ export function IncidentCard({
   const sentral = sentraler.find((s) => s.brannvesen_ids.includes(brannvesen_id))
   const kat = kategorier.find((k) => k.id === kategori_id)
 
+  const stripeColor = status === 'pågår' ? 'bg-red-500' : 'bg-gray-600'
+
   return (
     <div
-      className="rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] p-4 hover:bg-[#222] transition-colors cursor-pointer"
+      className="rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] hover:bg-[#222] transition-colors cursor-pointer flex overflow-hidden"
       onClick={onClick}
     >
+      {/* Status color stripe */}
+      <div className={`w-1 shrink-0 ${stripeColor}`} />
+      <div className="p-4 flex-1 min-w-0">
       <div className="flex items-start justify-between gap-2 mb-1">
         <span className="text-xs text-gray-400">{sentral?.kort_navn || bv?.kort_navn || bv?.navn}</span>
         <div className="flex items-center gap-2 shrink-0">
@@ -76,6 +82,24 @@ export function IncidentCard({
 
       <p className="text-sm text-gray-300 leading-relaxed">{beskrivelse}</p>
 
+      {/* Last edited indicator */}
+      {oppdatert_tidspunkt && (() => {
+        const created = new Date(opprettet_tidspunkt).getTime()
+        const updated = new Date(oppdatert_tidspunkt).getTime()
+        const lastUpdate = oppdateringer.length > 0
+          ? new Date(oppdateringer[oppdateringer.length - 1].opprettet_tidspunkt).getTime()
+          : 0
+        const latestChange = Math.max(updated, lastUpdate)
+        if (latestChange - created > 60_000) {
+          return (
+            <p className="text-xs text-gray-500 mt-2">
+              Sist redigert {formatTimeAgo(new Date(latestChange).toISOString())}
+            </p>
+          )
+        }
+        return null
+      })()}
+
       {oppdateringer.length > 0 && (
         <div className="mt-3">
           <button
@@ -98,17 +122,24 @@ export function IncidentCard({
           </button>
 
           {showUpdates && (
-            <div className="mt-2 space-y-2 border-l-2 border-blue-500/30 pl-3">
-              {oppdateringer.map((update) => (
-                <div key={update.id}>
-                  <span className="text-xs text-gray-500">{formatTime(update.opprettet_tidspunkt)}</span>
-                  <p className="text-sm text-gray-300">{update.tekst}</p>
+            <div className="mt-3 relative ml-1">
+              {oppdateringer.map((update, i) => (
+                <div key={update.id} className="relative pl-5 pb-4 last:pb-0">
+                  {/* Vertical line connecting nodes */}
+                  {i < oppdateringer.length - 1 && (
+                    <div className="absolute left-[5px] top-[10px] bottom-0 w-px bg-blue-500/30" />
+                  )}
+                  {/* Timeline node */}
+                  <div className="absolute left-0 top-[6px] w-[11px] h-[11px] rounded-full border-2 border-blue-500 bg-[#1a1a1a]" />
+                  <span className="text-xs text-gray-500 font-medium">{formatTime(update.opprettet_tidspunkt)}</span>
+                  <p className="text-sm text-gray-300 mt-0.5">{update.tekst}</p>
                 </div>
               ))}
             </div>
           )}
         </div>
       )}
+      </div>
     </div>
   )
 }
