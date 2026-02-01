@@ -5,7 +5,9 @@ import { IncidentCard } from '@/components/public/IncidentCard'
 import { BottomNav } from '@/components/public/BottomNav'
 import { FilterSheet, FilterState, emptyFilters } from '@/components/public/FilterSheet'
 import { SettingsView } from '@/components/public/SettingsView'
+import { PushOnboarding, useShouldShowPushOnboarding } from '@/components/public/PushOnboarding'
 import { useHendelser, useSentraler } from '@/hooks/useSupabaseData'
+import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
 
 const PREFS_KEY = 'brannloggen_push_prefs'
 
@@ -31,7 +33,8 @@ type Tab = 'følger' | 'alle' | 'innstillinger'
 type SubTab = 'alle' | 'pågår'
 
 export default function HomePage() {
-  const { data: hendelser, loading: hendelserLoading } = useHendelser({ excludeDeactivated: true })
+  const { data: hendelser, loading: hendelserLoading, refetch } = useHendelser({ excludeDeactivated: true })
+  useRealtimeHendelser(refetch)
   const { data: sentraler, loading: sentralerLoading } = useSentraler()
 
   const [activeTab, setActiveTab] = useState<Tab>('alle')
@@ -39,6 +42,8 @@ export default function HomePage() {
   const [filterOpen, setFilterOpen] = useState(false)
   const [filters, setFilters] = useState<FilterState>(emptyFilters)
   const [pushPrefs, setPushPrefs] = useState<PushPrefs>(defaultPrefs)
+  const showOnboarding = useShouldShowPushOnboarding()
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false)
 
   const loading = hendelserLoading || sentralerLoading
 
@@ -136,6 +141,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] pb-20">
+      {/* Push Onboarding Popup */}
+      {showOnboarding && !onboardingDismissed && (
+        <PushOnboarding onComplete={() => setOnboardingDismissed(true)} />
+      )}
+
       {/* FØLGER TAB */}
       {activeTab === 'følger' && (
         <>

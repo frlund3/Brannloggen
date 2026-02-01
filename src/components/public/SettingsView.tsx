@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useFylker, useKategorier, useBrannvesen, useSentraler } from '@/hooks/useSupabaseData'
+import { usePushRegistration } from '@/hooks/usePushRegistration'
 import { useAuth } from '@/components/providers/AuthProvider'
 
 const STORAGE_KEY = 'brannloggen_push_prefs'
@@ -40,6 +41,7 @@ export function SettingsView() {
   const { data: brannvesen, loading: loadingBrannvesen } = useBrannvesen()
   const { data: sentraler, loading: loadingSentraler } = useSentraler()
   const loading = loadingFylker || loadingKategorier || loadingBrannvesen || loadingSentraler
+  const { register: registerPush, unregister: unregisterPush, registering: pushRegistering } = usePushRegistration()
   const [prefs, setPrefs] = useState<PushPrefs>(defaultPrefs)
   const [saved, setSaved] = useState(false)
 
@@ -94,13 +96,27 @@ export function SettingsView() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <span className="text-sm text-white">Aktiver push-varsler</span>
-              <p className="text-xs text-gray-500 mt-0.5">Få varsel om hendelser i nettleseren</p>
+              <p className="text-xs text-gray-500 mt-0.5">Få varsel om hendelser på enheten</p>
             </div>
             <button
-              onClick={() => savePrefs({ ...prefs, pushEnabled: !prefs.pushEnabled })}
+              disabled={pushRegistering}
+              onClick={async () => {
+                const newEnabled = !prefs.pushEnabled
+                if (newEnabled) {
+                  await registerPush({
+                    sentral_ids: prefs.sentraler,
+                    fylke_ids: prefs.fylker,
+                    kategori_ids: prefs.kategorier,
+                    kun_pågående: prefs.onlyOngoing,
+                  })
+                } else {
+                  await unregisterPush()
+                }
+                savePrefs({ ...prefs, pushEnabled: newEnabled })
+              }}
               className={`w-12 h-6 rounded-full transition-colors relative ${
                 prefs.pushEnabled ? 'bg-blue-500' : 'bg-gray-600'
-              }`}
+              } ${pushRegistering ? 'opacity-50' : ''}`}
             >
               <div
                 className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${

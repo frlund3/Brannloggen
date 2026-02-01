@@ -4,11 +4,13 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
 import { useHendelser, useBrannvesen, useKommuner, useKategorier, useFylker } from '@/hooks/useSupabaseData'
+import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
 import { formatDateTime, formatTime, formatTimeAgo } from '@/lib/utils'
 import { useState } from 'react'
 
 export default function PresseHendelserPage() {
-  const { data: hendelser, loading: hendelserLoading } = useHendelser({ excludeDeactivated: true })
+  const { data: hendelser, loading: hendelserLoading, refetch } = useHendelser({ excludeDeactivated: true })
+  useRealtimeHendelser(refetch)
   const { data: brannvesen } = useBrannvesen()
   const { data: kommuner } = useKommuner()
   const { data: kategorier } = useKategorier()

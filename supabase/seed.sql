@@ -108,6 +108,105 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+-- Add unique constraint on device_id for upsert support
+DO $$ BEGIN
+  ALTER TABLE push_abonnenter ADD CONSTRAINT push_abonnenter_device_id_key UNIQUE (device_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- Allow anonymous insert/update on push_abonnenter (devices register themselves)
+DO $$ BEGIN
+  CREATE POLICY "Anyone can insert push_abonnenter" ON push_abonnenter FOR INSERT WITH CHECK (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Anyone can update own push_abonnenter" ON push_abonnenter FOR UPDATE USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ── Supabase Realtime: enable publication for hendelser and oppdateringer ──
+-- This allows clients to subscribe to postgres_changes events
+DO $$ BEGIN
+  -- Create publication if it doesn't exist (Supabase usually has supabase_realtime)
+  IF NOT EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
+    CREATE PUBLICATION supabase_realtime;
+  END IF;
+END $$;
+
+ALTER PUBLICATION supabase_realtime ADD TABLE hendelser;
+ALTER PUBLICATION supabase_realtime ADD TABLE hendelsesoppdateringer;
+
+-- ── Push notification trigger function ──
+-- Called whenever hendelser or hendelsesoppdateringer change.
+-- Inserts a row into push_notification_queue which an Edge Function processes.
+CREATE TABLE IF NOT EXISTS push_notification_queue (
+  id BIGSERIAL PRIMARY KEY,
+  hendelse_id TEXT NOT NULL,
+  event_type TEXT NOT NULL CHECK (event_type IN ('ny_hendelse', 'oppdatering', 'status_endring')),
+  payload JSONB NOT NULL DEFAULT '{}',
+  processed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE push_notification_queue ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  CREATE POLICY "Service role can manage push queue" ON push_notification_queue FOR ALL USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- Function: queue push notification on hendelse insert/update
+CREATE OR REPLACE FUNCTION fn_queue_push_hendelse()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    INSERT INTO push_notification_queue (hendelse_id, event_type, payload)
+    VALUES (NEW.id, 'ny_hendelse', jsonb_build_object(
+      'tittel', NEW.tittel,
+      'sted', NEW.sted,
+      'status', NEW.status,
+      'alvorlighetsgrad', NEW.alvorlighetsgrad,
+      'kategori_id', NEW.kategori_id,
+      'fylke_id', NEW.fylke_id,
+      'brannvesen_id', NEW.brannvesen_id
+    ));
+  ELSIF TG_OP = 'UPDATE' AND OLD.status IS DISTINCT FROM NEW.status THEN
+    INSERT INTO push_notification_queue (hendelse_id, event_type, payload)
+    VALUES (NEW.id, 'status_endring', jsonb_build_object(
+      'tittel', NEW.tittel,
+      'gammel_status', OLD.status,
+      'ny_status', NEW.status
+    ));
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function: queue push on oppdatering insert
+CREATE OR REPLACE FUNCTION fn_queue_push_oppdatering()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO push_notification_queue (hendelse_id, event_type, payload)
+  VALUES (NEW.hendelse_id, 'oppdatering', jsonb_build_object(
+    'tekst', NEW.tekst,
+    'hendelse_id', NEW.hendelse_id
+  ));
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create triggers (drop first to be idempotent)
+DROP TRIGGER IF EXISTS trg_push_hendelse ON hendelser;
+CREATE TRIGGER trg_push_hendelse
+  AFTER INSERT OR UPDATE ON hendelser
+  FOR EACH ROW EXECUTE FUNCTION fn_queue_push_hendelse();
+
+DROP TRIGGER IF EXISTS trg_push_oppdatering ON hendelsesoppdateringer;
+CREATE TRIGGER trg_push_oppdatering
+  AFTER INSERT ON hendelsesoppdateringer
+  FOR EACH ROW EXECUTE FUNCTION fn_queue_push_oppdatering();
+
 -- ============================================================================
 -- 1. Fylker (15 rows)
 -- ============================================================================

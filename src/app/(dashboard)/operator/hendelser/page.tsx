@@ -4,13 +4,15 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
 import { useHendelser, useBrannvesen, useKategorier, useFylker, useKommuner, useSentraler } from '@/hooks/useSupabaseData'
+import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
 import { formatDateTime } from '@/lib/utils'
 import { useSentralScope } from '@/hooks/useSentralScope'
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
 
 export default function OperatorHendelserPage() {
-  const { data: allHendelser, loading: hendelserLoading } = useHendelser({ excludeDeactivated: true })
+  const { data: allHendelser, loading: hendelserLoading, refetch } = useHendelser({ excludeDeactivated: true })
+  useRealtimeHendelser(refetch)
   const { data: brannvesen, loading: brannvesenLoading } = useBrannvesen()
   const { data: kategorier, loading: kategorierLoading } = useKategorier()
   const { data: fylker, loading: fylkerLoading } = useFylker()

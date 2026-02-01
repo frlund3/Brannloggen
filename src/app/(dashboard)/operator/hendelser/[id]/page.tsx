@@ -4,12 +4,14 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
 import { useHendelser, useBrannvesen, useKommuner, useKategorier } from '@/hooks/useSupabaseData'
+import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
 import { formatDateTime, formatTime } from '@/lib/utils'
 import { useState, use } from 'react'
 
 export default function HendelseDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { data: allHendelser, loading: hendelserLoading } = useHendelser()
+  const { data: allHendelser, loading: hendelserLoading, refetch } = useHendelser()
+  useRealtimeHendelser(refetch)
   const { data: brannvesen, loading: brannvesenLoading } = useBrannvesen()
   const { data: kommuner, loading: kommunerLoading } = useKommuner()
   const { data: kategorier, loading: kategorierLoading } = useKategorier()
