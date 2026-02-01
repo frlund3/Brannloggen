@@ -9,6 +9,7 @@
 //   - VAPID_SUBJECT (mailto: or https: URL identifying the app server)
 //   - FCM_SERVER_KEY (for Android push via FCM)
 //   - APNS_KEY_ID, APNS_TEAM_ID, APNS_PRIVATE_KEY (for iOS push via APNs)
+//   - APNS_SANDBOX (set to 'true' for dev/Xcode builds, swap to prod keys for App Store)
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -46,28 +47,49 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // Verify caller is authenticated (admin/service role or triggered by cron)
-    const authHeader = req.headers.get('Authorization')
-    if (authHeader && !authHeader.includes(Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)) {
-      // Verify the JWT belongs to an admin
-      const callerClient = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_ANON_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-        { global: { headers: { Authorization: authHeader } } },
-      )
-      const { data: { user: caller } } = await callerClient.auth.getUser()
-      if (!caller) {
-        return new Response(JSON.stringify({ error: 'Ikke autorisert' }), {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        })
-      }
+    // Auth: accept service role key, user JWTs, or Supabase-internal calls
+    // The Next.js API route already verifies admin access before calling this
+    const authHeader = req.headers.get('Authorization') || ''
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const anonKey = req.headers.get('apikey') || ''
+    const isServiceCall = authHeader.includes(serviceKey)
+    const isSupabaseCall = !!anonKey // Supabase client sends apikey header
+
+    if (!isServiceCall && !isSupabaseCall) {
+      return new Response(JSON.stringify({ error: 'Ikke autorisert' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
+
+    // Check for test-push mode (send directly without queue)
+    let body: Record<string, unknown> = {}
+    try { body = await req.json() } catch { /* no body */ }
+
+    if (body.test === true) {
+      const activeSubscribers = await fetchActiveSubscribers(supabase)
+      const results = { sent: 0, errors: 0, total: activeSubscribers.length, platforms: {} as Record<string, number> }
+
+      for (const sub of activeSubscribers) {
+        results.platforms[sub.platform] = (results.platforms[sub.platform] || 0) + 1
+        try {
+          await sendPushToDevice(sub, '🔔 Testmelding', 'Push-notifikasjoner fungerer!', 'test')
+          results.sent++
+        } catch (e) {
+          console.error(`Test push failed for ${sub.device_id}:`, e)
+          results.errors++
+        }
+      }
+
+      return new Response(JSON.stringify(results), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     // Fetch unprocessed queue items
     const { data: queue, error: queueError } = await supabase
@@ -87,13 +109,7 @@ Deno.serve(async (req: Request) => {
       })
     }
 
-    // Fetch all active subscribers
-    const { data: subscribers } = await supabase
-      .from('push_abonnenter')
-      .select('*')
-      .eq('push_aktiv', true)
-
-    const activeSubscribers: PushAbonnent[] = subscribers || []
+    const activeSubscribers = await fetchActiveSubscribers(supabase)
     const results: { queued: number; sent: number; errors: number; skipped: number } = { queued: queue.length, sent: 0, errors: 0, skipped: 0 }
 
     // Pre-load brannvesen → sentral mapping for sentral_ids filtering
@@ -172,6 +188,14 @@ Deno.serve(async (req: Request) => {
   }
 })
 
+async function fetchActiveSubscribers(supabase: ReturnType<typeof createClient>): Promise<PushAbonnent[]> {
+  const { data: subscribers } = await supabase
+    .from('push_abonnenter')
+    .select('*')
+    .eq('push_aktiv', true)
+  return (subscribers || []) as PushAbonnent[]
+}
+
 function buildTitle(item: QueueItem): string {
   switch (item.event_type) {
     case 'ny_hendelse':
@@ -242,20 +266,28 @@ async function sendFCM(token: string, title: string, body: string, hendelseId: s
 
 // ── APNs (iOS) ─────────────────────────────────────────────────────
 
+// Cache APNs JWT per invocation to avoid TooManyProviderTokenUpdates (429)
+let cachedApnsJwt: string | null = null
+
 async function sendAPNs(token: string, title: string, body: string, hendelseId: string) {
   const teamId = Deno.env.get('APNS_TEAM_ID')
   const keyId = Deno.env.get('APNS_KEY_ID')
   const privateKeyPem = Deno.env.get('APNS_PRIVATE_KEY')
+  const useSandbox = Deno.env.get('APNS_SANDBOX') === 'true'
 
   if (!teamId || !keyId || !privateKeyPem) {
     console.warn('APNs not fully configured, skipping iOS push')
     return
   }
 
-  // Build JWT for APNs
-  const jwt = await buildApnsJwt(teamId, keyId, privateKeyPem)
+  // Build JWT once, reuse for all devices in this invocation
+  if (!cachedApnsJwt) {
+    cachedApnsJwt = await buildApnsJwt(teamId, keyId, privateKeyPem)
+  }
+  const jwt = cachedApnsJwt
 
-  const res = await fetch(`https://api.push.apple.com/3/device/${token}`, {
+  const apnsHost = useSandbox ? 'api.sandbox.push.apple.com' : 'api.push.apple.com'
+  const res = await fetch(`https://${apnsHost}/3/device/${token}`, {
     method: 'POST',
     headers: {
       'Authorization': `bearer ${jwt}`,
