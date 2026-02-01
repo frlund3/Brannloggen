@@ -12,30 +12,53 @@ export default function OppdaterPassordPage() {
   const [checking, setChecking] = useState(true)
   const [hasSession, setHasSession] = useState(false)
 
-  // Supabase redirects with tokens in URL hash fragment (#access_token=...)
-  // The SDK picks these up automatically via onAuthStateChange
+  const [hashError, setHashError] = useState('')
+
   useEffect(() => {
     const supabase = createClient()
+
+    // 1. Check hash for Supabase error (e.g. #error=access_denied&error_code=otp_expired)
+    const hash = window.location.hash.substring(1)
+    const params = new URLSearchParams(hash)
+    const errorCode = params.get('error_code')
+    const errorDesc = params.get('error_description')
+
+    if (errorCode || params.get('error')) {
+      const messages: Record<string, string> = {
+        otp_expired: 'Lenken har utløpt. Be om en ny.',
+        access_denied: 'Tilgang nektet. Lenken kan allerede være brukt.',
+      }
+      setHashError(messages[errorCode || ''] || errorDesc?.replace(/\+/g, ' ') || 'Noe gikk galt med lenken.')
+      setChecking(false)
+      return
+    }
+
     let resolved = false
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+    // 2. Listen for ANY auth event that includes a session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session && !resolved) {
         resolved = true
         setHasSession(true)
         setChecking(false)
       }
     })
 
-    // Fallback: if onAuthStateChange doesn't fire within 3s, check session directly
+    // 3. Fallback: always check getSession() after a short delay
+    //    Handles case where Supabase processed hash tokens before listener was registered
     const timeout = setTimeout(() => {
-      if (resolved) return
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          setHasSession(true)
-        }
-        setChecking(false)
-      })
-    }, 3000)
+      if (!resolved) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!resolved) {
+            resolved = true
+            if (session) {
+              setHasSession(true)
+            }
+            setChecking(false)
+          }
+        })
+      }
+    }, 1500)
 
     return () => {
       subscription.unsubscribe()
@@ -94,11 +117,11 @@ export default function OppdaterPassordPage() {
           <div className="text-center">
             <p className="text-sm text-theme-secondary">Verifiserer lenke...</p>
           </div>
-        ) : !hasSession ? (
+        ) : hashError || !hasSession ? (
           <div className="space-y-4">
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
               <p className="text-sm text-red-400 text-center">
-                Ugyldig eller utløpt lenke. Be om en ny tilbakestillingslenke.
+                {hashError || 'Ugyldig eller utløpt lenke. Be om en ny tilbakestillingslenke.'}
               </p>
             </div>
             <a
