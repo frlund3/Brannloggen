@@ -57,6 +57,9 @@ export default function OperatorHendelserPage() {
   const [editBrannvesenId, setEditBrannvesenId] = useState('')
   const [editSentralId, setEditSentralId] = useState('')
   const [editPressetekst, setEditPressetekst] = useState('')
+  const [editStartTidspunkt, setEditStartTidspunkt] = useState('')
+  const [editAvsluttetTidspunkt, setEditAvsluttetTidspunkt] = useState('')
+  const [showAvsluttetDialog, setShowAvsluttetDialog] = useState(false)
 
   // Editing existing items
   const [editingUpdateId, setEditingUpdateId] = useState<string | null>(null)
@@ -176,6 +179,15 @@ export default function OperatorHendelserPage() {
     const matchedSentral = sentraler.find(s => s.brannvesen_ids.includes(h.brannvesen_id))
     setEditSentralId(matchedSentral?.id || '')
     setEditPressetekst(h.presse_tekst || '')
+    // Set time fields - convert ISO to datetime-local format
+    const toLocal = (iso: string) => {
+      const d = new Date(iso)
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+      return d.toISOString().slice(0, 16)
+    }
+    setEditStartTidspunkt(toLocal(h.opprettet_tidspunkt))
+    setEditAvsluttetTidspunkt(h.avsluttet_tidspunkt ? toLocal(h.avsluttet_tidspunkt) : '')
+    setShowAvsluttetDialog(false)
     setNewUpdate(''); setNewPresse(''); setNewNotat('')
     setNewUpdateImage(null); setNewPresseImage(null); setNewNotatImage(null); setNewHendelseBilde(null)
     setEditingUpdateId(null); setEditingPresseId(null); setEditingNotatId(null)
@@ -211,6 +223,10 @@ export default function OperatorHendelserPage() {
 
   const handleSaveChanges = async () => {
     if (!selectedH) return
+    if (editStatus === 'avsluttet' && !editAvsluttetTidspunkt) {
+      toast.error('Du må fylle inn avslutningstidspunkt')
+      return
+    }
     setSaving(true)
     try {
       const supabase = createClient()
@@ -221,7 +237,25 @@ export default function OperatorHendelserPage() {
       const updateData: Record<string, unknown> = {}
       if (editStatus !== selectedH.status) {
         updateData.status = editStatus
-        if (editStatus === 'avsluttet') updateData.avsluttet_tidspunkt = new Date().toISOString()
+        if (editStatus === 'avsluttet' && editAvsluttetTidspunkt) {
+          updateData.avsluttet_tidspunkt = new Date(editAvsluttetTidspunkt).toISOString()
+        } else if (editStatus === 'pågår') {
+          updateData.avsluttet_tidspunkt = null
+        }
+      }
+      // Check if start time changed
+      if (editStartTidspunkt) {
+        const newStart = new Date(editStartTidspunkt).toISOString()
+        if (newStart !== selectedH.opprettet_tidspunkt) {
+          updateData.opprettet_tidspunkt = newStart
+        }
+      }
+      // Check if end time changed (for already-avsluttet hendelser)
+      if (editStatus === 'avsluttet' && editAvsluttetTidspunkt && selectedH.status === 'avsluttet') {
+        const newEnd = new Date(editAvsluttetTidspunkt).toISOString()
+        if (newEnd !== selectedH.avsluttet_tidspunkt) {
+          updateData.avsluttet_tidspunkt = newEnd
+        }
       }
       if (editTittel !== selectedH.tittel) updateData.tittel = editTittel
       if (editBeskrivelse !== selectedH.beskrivelse) updateData.beskrivelse = editBeskrivelse
@@ -814,12 +848,33 @@ export default function OperatorHendelserPage() {
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Status</label>
                   <div className="flex gap-2">
-                    {['pågår', 'avsluttet'].map(s => (
-                      <button key={s} onClick={() => setEditStatus(s)} className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${editStatus === s ? (s === 'pågår' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30') : 'bg-[#0a0a0a] text-gray-400 border border-[#2a2a2a]'}`}>
-                        {s === 'pågår' ? 'Pågår' : 'Avsluttet'}
-                      </button>
-                    ))}
+                    <button onClick={() => { setEditStatus('pågår'); setEditAvsluttetTidspunkt(''); setShowAvsluttetDialog(false) }} className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${editStatus === 'pågår' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-[#0a0a0a] text-gray-400 border border-[#2a2a2a]'}`}>
+                      Pågår
+                    </button>
+                    <button onClick={() => {
+                      if (editStatus !== 'avsluttet') {
+                        const now = new Date()
+                        now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+                        setEditAvsluttetTidspunkt(now.toISOString().slice(0, 16))
+                        setShowAvsluttetDialog(true)
+                      }
+                      setEditStatus('avsluttet')
+                    }} className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${editStatus === 'avsluttet' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-[#0a0a0a] text-gray-400 border border-[#2a2a2a]'}`}>
+                      Avsluttet
+                    </button>
                   </div>
+                  {showAvsluttetDialog && (
+                    <div className="mt-3 p-3 bg-green-500/5 border border-green-500/20 rounded-lg">
+                      <label className="block text-xs text-green-400 mb-1 font-semibold">Tidspunkt for avslutning *</label>
+                      <p className="text-xs text-gray-500 mb-2">Sett klokkeslett for når hendelsen ble avsluttet.</p>
+                      <input
+                        type="datetime-local"
+                        value={editAvsluttetTidspunkt}
+                        onChange={(e) => setEditAvsluttetTidspunkt(e.target.value)}
+                        className="w-full px-3 py-2 bg-[#0a0a0a] border border-green-500/30 rounded-lg text-white text-sm focus:outline-none focus:border-green-500"
+                      />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">Kategori</label>
@@ -846,6 +901,38 @@ export default function OperatorHendelserPage() {
                     <option value="">Velg brannvesen</option>
                     {(editSentralId ? brannvesen.filter(b => sentraler.find(s => s.id === editSentralId)?.brannvesen_ids.includes(b.id)) : brannvesen).sort((a, b) => a.kort_navn.localeCompare(b.kort_navn, 'no')).map(b => <option key={b.id} value={b.id}>{b.kort_navn}</option>)}
                   </select>
+                </div>
+              </div>
+            </div>
+
+            {/* ══════════ Tidspunkter ══════════ */}
+            <div className="border-t border-[#2a2a2a] pt-4 mb-4">
+              <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Tidspunkter
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Starttidspunkt</label>
+                  <input
+                    type="datetime-local"
+                    value={editStartTidspunkt}
+                    onChange={(e) => setEditStartTidspunkt(e.target.value)}
+                    className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Avslutningstidspunkt</label>
+                  {editStatus === 'avsluttet' ? (
+                    <input
+                      type="datetime-local"
+                      value={editAvsluttetTidspunkt}
+                      onChange={(e) => setEditAvsluttetTidspunkt(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#0a0a0a] border border-green-500/30 rounded-lg text-white text-sm focus:outline-none focus:border-green-500"
+                    />
+                  ) : (
+                    <p className="px-3 py-2 text-sm text-gray-600 italic">Hendelsen pågår fortsatt</p>
+                  )}
                 </div>
               </div>
             </div>

@@ -21,6 +21,7 @@ export default function AdminBrannvesenPage() {
   const [showAdd, setShowAdd] = useState(false)
   const [editItem, setEditItem] = useState<Brannvesen | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
   const [form, setForm] = useState({ navn: '', kort_navn: '', fylke_id: '', kommune_ids: [] as string[] })
 
   useEffect(() => { if (brannvesenData.length > 0) setItems(brannvesenData) }, [brannvesenData])
@@ -183,59 +184,66 @@ export default function AdminBrannvesenPage() {
           </select>
         </div>
 
-        <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[#2a2a2a]">
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Brannvesen</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden md:table-cell">Kort navn</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Fylke</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">110-sentral</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium hidden lg:table-cell">Kommuner</th>
-                  <th className="text-left px-4 py-3 text-xs text-gray-400 font-medium">Handlinger</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((b) => {
-                  const fylke = fylkerData.find(f => f.id === b.fylke_id)
-                  const sentral = getSentral(b.id)
-                  const bKommuner = b.kommune_ids.map(kid => kommunerData.find(k => k.id === kid)).filter(Boolean)
-                  return (
-                    <tr key={b.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
-                      <td className="px-4 py-3"><span className="text-sm text-white font-medium">{b.navn}</span></td>
-                      <td className="px-4 py-3 hidden md:table-cell"><span className="text-sm text-gray-400">{b.kort_navn}</span></td>
-                      <td className="px-4 py-3"><span className="text-sm text-gray-400">{fylke?.navn}</span></td>
-                      <td className="px-4 py-3 hidden lg:table-cell">
-                        <span className={`text-xs px-2 py-0.5 rounded ${sentral ? 'bg-orange-500/10 text-orange-400' : 'text-gray-600'}`}>
-                          {sentral?.kort_navn || 'Ikke tilknyttet'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 hidden lg:table-cell">
-                        <div className="flex flex-wrap gap-1 max-w-xs">
-                          {bKommuner.slice(0, 3).map(k => <span key={k!.id} className="text-xs bg-[#0a0a0a] px-1.5 py-0.5 rounded text-gray-400">{k!.navn}</span>)}
-                          {bKommuner.length > 3 && <span className="text-xs text-gray-500">+{bKommuner.length - 3}</span>}
+        <p className="text-xs text-gray-500 mb-3">Viser {filtered.length} av {scopedItems.length} brannvesen</p>
+
+        <div className="space-y-3">
+          {filtered.map((b) => {
+            const fylke = fylkerData.find(f => f.id === b.fylke_id)
+            const sentral = getSentral(b.id)
+            const bKommuner = b.kommune_ids.map(kid => kommunerData.find(k => k.id === kid)).filter(Boolean)
+            const isExpanded = expandedId === b.id
+
+            return (
+              <div key={b.id} className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] overflow-hidden">
+                <div className="px-4 py-3">
+                  <button onClick={() => setExpandedId(isExpanded ? null : b.id)} className="flex items-center gap-3 text-left w-full touch-manipulation">
+                    <svg className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-white font-medium">{b.navn}</p>
+                      <p className="text-xs text-gray-500">
+                        {fylke?.navn}
+                        {sentral && <> &middot; <span className="text-orange-400">{sentral.kort_navn}</span></>}
+                        {bKommuner.length > 0 && <> &middot; {bKommuner.length} kommuner</>}
+                      </p>
+                    </div>
+                  </button>
+                  {isAdmin ? (
+                    <div className="flex items-center gap-3 mt-2 ml-7">
+                      <button onClick={() => handleEdit(b)} className="text-xs text-blue-400 hover:text-blue-300 py-1 touch-manipulation">Rediger</button>
+                      <button onClick={() => setDeleteConfirm(b.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation">Slett</button>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-500 mt-2 ml-7 block">Kun visning</span>
+                  )}
+                </div>
+                {isExpanded && (
+                  <div className="px-4 pb-3 border-t border-[#2a2a2a] pt-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-xs text-gray-400 mb-2">Kommuner ({bKommuner.length})</p>
+                        <div className="flex flex-wrap gap-1">
+                          {bKommuner.sort((a, b) => a!.navn.localeCompare(b!.navn, 'no')).map(k => (
+                            <span key={k!.id} className="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded">{k!.navn}</span>
+                          ))}
+                          {bKommuner.length === 0 && <span className="text-xs text-gray-500">Ingen kommuner tilknyttet</span>}
                         </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        {isAdmin ? (
-                          <div className="flex items-center gap-2">
-                            <button onClick={() => handleEdit(b)} className="text-xs text-blue-400 hover:text-blue-300">Rediger</button>
-                            <button onClick={() => setDeleteConfirm(b.id)} className="text-xs text-red-400 hover:text-red-300">Slett</button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-500">Kun visning</span>
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className="px-4 py-3 border-t border-[#2a2a2a]">
-            <p className="text-xs text-gray-500">Viser {filtered.length} av {scopedItems.length} brannvesen</p>
-          </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-400 mb-2">Detaljer</p>
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-500">Kort navn: <span className="text-white">{b.kort_navn}</span></p>
+                          <p className="text-xs text-gray-500">Fylke: <span className="text-white">{fylke?.navn || '-'}</span></p>
+                          <p className="text-xs text-gray-500">110-sentral: <span className={sentral ? 'text-orange-400' : 'text-gray-600'}>{sentral?.kort_navn || 'Ikke tilknyttet'}</span></p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
 
         {showAdd && (
