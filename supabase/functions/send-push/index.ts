@@ -47,15 +47,29 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // Auth: accept service role key, user JWTs, or Supabase-internal calls
-    // The Next.js API route already verifies admin access before calling this
+    // Auth: accept service role key or verified Supabase user JWT
     const authHeader = req.headers.get('Authorization') || ''
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const anonKey = req.headers.get('apikey') || ''
-    const isServiceCall = authHeader.includes(serviceKey)
-    const isSupabaseCall = !!anonKey // Supabase client sends apikey header
 
-    if (!isServiceCall && !isSupabaseCall) {
+    // Exact match for service role key (Bearer token)
+    const isServiceCall = authHeader === `Bearer ${serviceKey}`
+
+    // For non-service calls, verify the JWT via Supabase auth
+    let isAuthenticatedUser = false
+    if (!isServiceCall) {
+      const supabaseAuth = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      )
+      // Extract the JWT token and verify it
+      const token = authHeader.replace('Bearer ', '')
+      if (token) {
+        const { data: { user }, error } = await supabaseAuth.auth.getUser(token)
+        isAuthenticatedUser = !!user && !error
+      }
+    }
+
+    if (!isServiceCall && !isAuthenticatedUser) {
       return new Response(JSON.stringify({ error: 'Ikke autorisert' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -132,18 +146,32 @@ Deno.serve(async (req: Request) => {
 
       const matchingSubscribers = activeSubscribers.filter((sub) => {
         // Filter by sentral preference
-        if (sub.sentral_ids.length > 0 && sentralId) {
-          if (!sub.sentral_ids.includes(sentralId)) return false
+        // If user has chosen sentraler, ONLY match if hendelse sentral is in their list
+        // If hendelse has no sentral info, skip this filter (don't block)
+        if (sub.sentral_ids.length > 0) {
+          if (sentralId) {
+            if (!sub.sentral_ids.includes(sentralId)) return false
+          }
+          // If no sentralId available but user has sentral filter,
+          // fall through to fylke check as backup
         }
 
         // Filter by fylke preference
-        if (sub.fylke_ids.length > 0 && payload.fylke_id) {
-          if (!sub.fylke_ids.includes(payload.fylke_id as string)) return false
+        // If user has chosen fylker, ONLY match if hendelse fylke is in their list
+        if (sub.fylke_ids.length > 0) {
+          if (payload.fylke_id) {
+            if (!sub.fylke_ids.includes(payload.fylke_id as string)) return false
+          }
+          // If no fylke_id in payload but user has fylke filter,
+          // don't send (user wants specific areas only)
+          else if (!sentralId) return false
         }
 
         // Filter by kategori preference
-        if (sub.kategori_ids.length > 0 && payload.kategori_id) {
-          if (!sub.kategori_ids.includes(payload.kategori_id as string)) return false
+        if (sub.kategori_ids.length > 0) {
+          if (payload.kategori_id) {
+            if (!sub.kategori_ids.includes(payload.kategori_id as string)) return false
+          }
         }
 
         // Filter for only ongoing
@@ -181,7 +209,7 @@ Deno.serve(async (req: Request) => {
     })
   } catch (error) {
     console.error('Edge function error:', error)
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
+    return new Response(JSON.stringify({ error: 'En intern feil oppstod' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

@@ -42,6 +42,14 @@ export default function OperatorHendelserPage() {
   const [filterAlvor, setFilterAlvor] = useState('')
   const [deactivatedIds, setDeactivatedIds] = useState<string[]>([])
   const [deactivateConfirm, setDeactivateConfirm] = useState<string | null>(null)
+  const [avsluttConfirm, setAvsluttConfirm] = useState<string | null>(null)
+  const [avsluttTidspunkt, setAvsluttTidspunkt] = useState('')
+  const [quickUpdateId, setQuickUpdateId] = useState<string | null>(null)
+  const [quickUpdateText, setQuickUpdateText] = useState('')
+  const [quickUpdateType, setQuickUpdateType] = useState<'publikum' | 'presse' | 'intern'>('publikum')
+  const [quickUpdateImage, setQuickUpdateImage] = useState<File | null>(null)
+  const quickUpdateImageRef = useRef<HTMLInputElement>(null)
+  const [quickUpdateSaving, setQuickUpdateSaving] = useState(false)
 
   // Expand/collapse row
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -162,6 +170,73 @@ export default function OperatorHendelserPage() {
     } catch (err) {
       toast.error('Kunne ikke deaktivere: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
       setDeactivateConfirm(null)
+    }
+  }
+
+  const handleAvslutt = async (id: string) => {
+    if (!avsluttTidspunkt) {
+      toast.error('Du må velge avslutningstidspunkt')
+      return
+    }
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from('hendelser') as any).update({
+        status: 'avsluttet',
+        avsluttet_tidspunkt: new Date(avsluttTidspunkt).toISOString(),
+        oppdatert_tidspunkt: new Date().toISOString(),
+      }).eq('id', id)
+      if (error) throw error
+      const h = allHendelser.find(x => x.id === id)
+      logActivity({ handling: 'avsluttet', tabell: 'hendelser', radId: id, hendelseId: id, hendelseTittel: h?.tittel })
+      setAvsluttConfirm(null)
+      setAvsluttTidspunkt('')
+      invalidateCache()
+      refetch()
+      toast.success('Hendelse avsluttet')
+    } catch (err) {
+      toast.error('Kunne ikke avslutte: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    }
+  }
+
+  const handleQuickUpdate = async (hendelseId: string) => {
+    if (!quickUpdateText.trim()) return
+    setQuickUpdateSaving(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { toast.error('Du må være innlogget'); return }
+
+      let bildeUrl: string | null = null
+      if (quickUpdateImage) {
+        bildeUrl = await uploadImage(quickUpdateImage, hendelseId)
+      }
+
+      const tableMap = { publikum: 'hendelsesoppdateringer', presse: 'presseoppdateringer', intern: 'interne_notater' } as const
+      const table = tableMap[quickUpdateType]
+      const textField = quickUpdateType === 'intern' ? 'notat' : 'tekst'
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase.from(table) as any).insert({
+        hendelse_id: hendelseId, [textField]: quickUpdateText, opprettet_av: user.id, bilde_url: bildeUrl,
+      })
+      if (error) throw error
+      const h = allHendelser.find(x => x.id === hendelseId)
+      const handlingMap = { publikum: 'ny_oppdatering', presse: 'ny_pressemelding', intern: 'ny_notat' } as const
+      const tabellMap = { publikum: 'hendelsesoppdateringer', presse: 'presseoppdateringer', intern: 'interne_notater' } as const
+      logActivity({ handling: handlingMap[quickUpdateType], tabell: tabellMap[quickUpdateType], hendelseId, hendelseTittel: h?.tittel, detaljer: { tekst: quickUpdateText.slice(0, 100) } })
+      setQuickUpdateId(null)
+      setQuickUpdateText('')
+      setQuickUpdateType('publikum')
+      setQuickUpdateImage(null)
+      invalidateCache()
+      refetch()
+      const labelMap = { publikum: 'Oppdatering', presse: 'Pressemelding', intern: 'Notat' }
+      toast.success(`${labelMap[quickUpdateType]} lagt til`)
+    } catch (err) {
+      toast.error('Feil: ' + (err instanceof Error ? err.message : 'Ukjent feil'))
+    } finally {
+      setQuickUpdateSaving(false)
     }
   }
 
@@ -552,9 +627,9 @@ export default function OperatorHendelserPage() {
             const hasPresse = !!h.presse_tekst || presseCount > 0
 
             return (
-              <div key={h.id} className={`bg-theme-card rounded-xl border overflow-hidden transition-colors ${
-                h.status === 'pågår' ? 'border-l-4 border-l-red-500 border-theme' : h.status === 'avsluttet' ? 'border-l-4 border-l-green-500 border-theme' : 'border-theme'
-              }`}>
+              <div key={h.id} className="bg-theme-card rounded-xl border border-theme overflow-hidden transition-all shadow-sm hover:shadow-md" style={
+                h.status === 'pågår' ? { borderLeftWidth: '6px', borderLeftColor: '#f97316' } : h.status === 'avsluttet' ? { borderLeftWidth: '6px', borderLeftColor: '#16a34a' } : undefined
+              }>
                 {/* Card header - clickable */}
                 <div
                   className="p-4 cursor-pointer hover:bg-theme-card-hover transition-colors"
@@ -603,17 +678,94 @@ export default function OperatorHendelserPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-theme" onClick={(e) => e.stopPropagation()}>
-                    <button onClick={() => openHendelse(h.id)} className="text-xs text-blue-400 hover:text-blue-300 font-medium py-1 touch-manipulation flex items-center gap-1">
+                  <div className="flex items-center gap-2 mt-3 pt-3 border-t border-theme flex-wrap" onClick={(e) => e.stopPropagation()}>
+                    <button onClick={() => openHendelse(h.id)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/20 rounded-lg text-xs font-medium transition-colors touch-manipulation">
                       <EditIcon /> Rediger
                     </button>
+                    <button onClick={() => { setQuickUpdateId(quickUpdateId === h.id ? null : h.id); setQuickUpdateText(''); setQuickUpdateType('publikum'); setQuickUpdateImage(null) }} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 rounded-lg text-xs font-medium transition-colors touch-manipulation">
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                      Ny melding
+                    </button>
+                    {h.status === 'pågår' && (
+                      <button onClick={() => {
+                        const now = new Date()
+                        now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
+                        setAvsluttTidspunkt(now.toISOString().slice(0, 16))
+                        setAvsluttConfirm(h.id)
+                      }} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 hover:bg-green-500/20 text-green-600 border border-green-500/20 rounded-lg text-xs font-medium transition-colors touch-manipulation">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        Avslutt
+                      </button>
+                    )}
                     {hasAdminAccess && (
-                      <button onClick={() => setDeactivateConfirm(h.id)} className="text-xs text-red-400 hover:text-red-300 py-1 touch-manipulation flex items-center gap-1">
+                      <button onClick={() => setDeactivateConfirm(h.id)} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg text-xs font-medium transition-colors touch-manipulation">
                         <DeactivateIcon /> Deaktiver
                       </button>
                     )}
                     <span className="text-xs text-theme-dim ml-auto">{formatDateTime(h.opprettet_tidspunkt)}</span>
                   </div>
+
+                  {/* Quick update inline */}
+                  {quickUpdateId === h.id && (
+                    <div className="mt-3 pt-3 border-t border-theme" onClick={(e) => e.stopPropagation()}>
+                      {/* Type selector */}
+                      <div className="flex gap-1.5 mb-3">
+                        {([
+                          { value: 'publikum' as const, label: 'Publikum', desc: 'Synlig for alle', color: 'blue' },
+                          { value: 'presse' as const, label: 'Presse', desc: 'Kun presse', color: 'cyan' },
+                          { value: 'intern' as const, label: 'Internt', desc: 'Kun operatører', color: 'yellow' },
+                        ]).map((t) => (
+                          <button
+                            key={t.value}
+                            onClick={() => setQuickUpdateType(t.value)}
+                            className={`flex-1 py-2 px-2 rounded-lg text-xs font-medium transition-colors border ${
+                              quickUpdateType === t.value
+                                ? t.color === 'blue' ? 'bg-blue-500/15 text-blue-500 border-blue-500/30'
+                                : t.color === 'cyan' ? 'bg-cyan-500/15 text-cyan-500 border-cyan-500/30'
+                                : 'bg-yellow-500/15 text-yellow-500 border-yellow-500/30'
+                                : 'bg-theme text-theme-secondary border-theme hover:text-theme'
+                            }`}
+                          >
+                            <div>{t.label}</div>
+                            <div className="text-[10px] font-normal opacity-70">{t.desc}</div>
+                          </button>
+                        ))}
+                      </div>
+                      <textarea
+                        value={quickUpdateText}
+                        onChange={(e) => setQuickUpdateText(e.target.value)}
+                        placeholder={quickUpdateType === 'publikum' ? 'Skriv en oppdatering (synlig for alle)...' : quickUpdateType === 'presse' ? 'Skriv en pressemelding (kun synlig for presse)...' : 'Skriv et internt notat (kun synlig for operatører)...'}
+                        className={`w-full px-3 py-2 bg-theme-input border rounded-lg text-theme text-sm focus:outline-none h-16 resize-none ${
+                          quickUpdateType === 'publikum' ? 'border-blue-500/30 focus:border-blue-500'
+                          : quickUpdateType === 'presse' ? 'border-cyan-500/30 focus:border-cyan-500'
+                          : 'border-yellow-500/30 focus:border-yellow-500'
+                        }`}
+                        autoFocus
+                      />
+                      <div className="flex items-center gap-3 mt-2">
+                        <input type="file" ref={quickUpdateImageRef} accept="image/*" className="hidden" onChange={(e) => setQuickUpdateImage(e.target.files?.[0] || null)} />
+                        <button onClick={() => quickUpdateImageRef.current?.click()} className="flex items-center gap-1 text-xs text-theme-secondary hover:text-theme">
+                          <ImageIcon />
+                          {quickUpdateImage ? quickUpdateImage.name : 'Legg til bilde'}
+                        </button>
+                        {quickUpdateImage && <button onClick={() => setQuickUpdateImage(null)} className="text-xs text-red-400">Fjern</button>}
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={() => handleQuickUpdate(h.id)}
+                          disabled={quickUpdateSaving || !quickUpdateText.trim()}
+                          className={`px-4 py-1.5 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
+                            quickUpdateType === 'publikum' ? 'bg-blue-500 hover:bg-blue-600'
+                            : quickUpdateType === 'presse' ? 'bg-cyan-600 hover:bg-cyan-700'
+                            : 'bg-yellow-600 hover:bg-yellow-700'
+                          }`}
+                        >
+                          {quickUpdateSaving ? 'Lagrer...' : quickUpdateType === 'publikum' ? 'Publiser oppdatering' : quickUpdateType === 'presse' ? 'Publiser pressemelding' : 'Lagre notat'}
+                        </button>
+                        <button onClick={() => { setQuickUpdateId(null); setQuickUpdateText(''); setQuickUpdateImage(null) }} className="px-3 py-1.5 text-theme-secondary text-xs hover:text-theme">Avbryt</button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Expanded details */}
@@ -663,7 +815,7 @@ export default function OperatorHendelserPage() {
                       )}
                       {/* Beskrivelse */}
                       <div>
-                        <p className="text-sm text-gray-300">{h.beskrivelse}</p>
+                        <p className="text-sm text-theme-secondary">{h.beskrivelse}</p>
                         <p className="text-xs text-theme-muted mt-1">
                           Sted: {h.sted} &middot; Opprettet: {formatDateTime(h.opprettet_tidspunkt)}
                           {getUserName(h.opprettet_av) && <> &middot; Av: {getUserName(h.opprettet_av)}</>}
@@ -677,10 +829,10 @@ export default function OperatorHendelserPage() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <p className="text-[10px] text-cyan-500/60 uppercase font-semibold">Hovedpressemelding</p>
+                                <p className="text-[10px] text-cyan-600 uppercase font-semibold">Hovedpressemelding</p>
                                 <span className="text-[10px] bg-cyan-500/20 text-cyan-400 px-1.5 py-0.5 rounded font-bold">KUN PRESSE</span>
                               </div>
-                              <p className="text-sm text-gray-300 whitespace-pre-line">{h.presse_tekst}</p>
+                              <p className="text-sm text-theme-secondary whitespace-pre-line">{h.presse_tekst}</p>
                             </div>
                             <button onClick={() => openHendelse(h.id)} className="p-1 text-theme-muted hover:text-cyan-400 shrink-0" title="Rediger pressemelding"><EditIcon /></button>
                           </div>
@@ -763,7 +915,7 @@ export default function OperatorHendelserPage() {
                                           ><DeactivateIcon /></button>
                                         </div>
                                       </div>
-                                      <p className={`text-sm mt-0.5 ${item.type === 'presse' ? 'text-cyan-100' : item.type === 'intern' ? 'text-yellow-100' : 'text-gray-300'}`}>{item.tekst}</p>
+                                      <p className={`text-sm mt-0.5 ${item.type === 'presse' ? 'text-cyan-300' : item.type === 'intern' ? 'text-yellow-300' : 'text-theme-secondary'}`}>{item.tekst}</p>
                                       {item.bilde_url && (
                                         <img src={item.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />
                                       )}
@@ -813,6 +965,31 @@ export default function OperatorHendelserPage() {
             <div className="flex gap-3">
               <button onClick={() => handleDeactivate(deactivateConfirm)} className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors">Deaktiver</button>
               <button onClick={() => setDeactivateConfirm(null)} className="px-4 py-2.5 bg-theme border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors">Avbryt</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Avslutt hendelse confirm modal */}
+      {avsluttConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-theme-overlay" onClick={() => { setAvsluttConfirm(null); setAvsluttTidspunkt('') }} />
+          <div className="relative bg-theme-card rounded-xl border border-theme p-6 w-full max-w-sm mx-4 shadow-xl">
+            <h2 className="text-lg font-bold text-theme mb-2">Avslutt hendelse?</h2>
+            <p className="text-sm text-theme-secondary mb-1">{allHendelser.find(h => h.id === avsluttConfirm)?.tittel}</p>
+            <p className="text-xs text-theme-muted mb-4">Hendelsen vil bli markert som avsluttet.</p>
+            <div className="mb-4">
+              <label className="block text-xs text-green-600 mb-1 font-semibold">Avslutningstidspunkt *</label>
+              <input
+                type="datetime-local"
+                value={avsluttTidspunkt}
+                onChange={(e) => setAvsluttTidspunkt(e.target.value)}
+                className="w-full px-3 py-2 bg-theme-input border border-green-500/30 rounded-lg text-theme text-sm focus:outline-none focus:border-green-500"
+              />
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => handleAvslutt(avsluttConfirm)} className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors">Avslutt hendelse</button>
+              <button onClick={() => { setAvsluttConfirm(null); setAvsluttTidspunkt('') }} className="px-4 py-2.5 bg-theme border border-theme text-theme-secondary rounded-lg text-sm hover:text-theme transition-colors">Avbryt</button>
             </div>
           </div>
         </div>
@@ -907,7 +1084,7 @@ export default function OperatorHendelserPage() {
 
             {/* ══════════ Tidspunkter ══════════ */}
             <div className="border-t border-theme pt-4 mb-4">
-              <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-theme-secondary mb-3 flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 Tidspunkter
               </h3>
@@ -939,7 +1116,7 @@ export default function OperatorHendelserPage() {
 
             {/* ══════════ Hendelsebilde ══════════ */}
             <div className="border-t border-theme pt-4 mb-4">
-              <h3 className="text-sm font-semibold text-gray-300 mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-theme-secondary mb-3 flex items-center gap-2">
                 <ImageIcon />
                 Hendelsebilde
                 <span className="text-xs text-theme-muted font-normal">Synlig for alle</span>
@@ -1001,7 +1178,7 @@ export default function OperatorHendelserPage() {
                       ) : (
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-gray-300">{u.tekst}</p>
+                            <p className="text-sm text-theme-secondary">{u.tekst}</p>
                             {u.bilde_url && <img src={u.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />}
                             <p className="text-xs text-theme-muted mt-1">
                               {formatDateTime(u.opprettet_tidspunkt)}
@@ -1043,7 +1220,7 @@ export default function OperatorHendelserPage() {
 
               {/* Main pressemelding */}
               <div className="mb-3">
-                <label className="block text-xs text-cyan-500/60 mb-1 uppercase font-semibold">Hovedpressemelding</label>
+                <label className="block text-xs text-cyan-600 mb-1 uppercase font-semibold">Hovedpressemelding</label>
                 <textarea value={editPressetekst} onChange={(e) => setEditPressetekst(e.target.value)} placeholder="Skriv hovedpressemelding..." className="w-full px-3 py-2 bg-theme-input border border-cyan-500/30 rounded-lg text-theme text-sm focus:outline-none focus:border-cyan-500 h-16 resize-none" />
               </div>
 
@@ -1066,7 +1243,7 @@ export default function OperatorHendelserPage() {
                       ) : (
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-gray-300">{p.tekst}</p>
+                            <p className="text-sm text-theme-secondary">{p.tekst}</p>
                             {p.bilde_url && <img src={p.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />}
                             <p className="text-xs text-theme-muted mt-1">
                               {formatDateTime(p.opprettet_tidspunkt)}
@@ -1125,7 +1302,7 @@ export default function OperatorHendelserPage() {
                       ) : (
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-gray-300">{n.notat}</p>
+                            <p className="text-sm text-theme-secondary">{n.notat}</p>
                             {n.bilde_url && <img src={n.bilde_url} alt="" className="mt-2 rounded-lg max-h-40 object-cover" />}
                             <p className="text-xs text-theme-muted mt-1">
                               {formatDateTime(n.opprettet_tidspunkt)}
