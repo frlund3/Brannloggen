@@ -29,7 +29,6 @@ export default function AdminPressebrukerePage() {
   const fetchSoknader = useCallback(async () => {
     try {
       const supabase = createClient()
-      // @ts-expect-error table not in generated types yet
       const { data, error } = await supabase
         .from('presse_soknader')
         .select('*')
@@ -94,7 +93,6 @@ export default function AdminPressebrukerePage() {
   const handleToggleActive = async (id: string, currentActive: boolean) => {
     try {
       const supabase = createClient()
-      // @ts-expect-error supabase types not generated
       const { error } = await supabase.from('brukerprofiler').update({ aktiv: !currentActive } as any).eq('id', id)
       if (error) throw error
       invalidateCache()

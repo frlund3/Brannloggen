@@ -56,7 +56,6 @@ export default function AdminSentralerPage() {
     resetForm()
     try {
       const supabase = createClient()
-      // @ts-expect-error supabase types not generated
       const { error } = await supabase.from('sentraler').update({ navn: form.navn, kort_navn: form.kort_navn, kontakt_epost: form.kontakt_epost || null, fylke_ids: form.fylke_ids, brannvesen_ids: form.brannvesen_ids } as any).eq('id', editItem.id)
       if (error) throw error
       invalidateCache()

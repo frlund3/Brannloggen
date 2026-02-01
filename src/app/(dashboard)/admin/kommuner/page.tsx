@@ -60,7 +60,6 @@ export default function AdminKommunerPage() {
     setForm({ navn: '', nummer: '', fylke_id: '' })
     try {
       const supabase = createClient()
-      // @ts-expect-error supabase types not generated
       const { error } = await supabase.from('kommuner').update({ navn: form.navn, nummer: form.nummer, fylke_id: form.fylke_id } as any).eq('id', editItem.id)
       if (error) throw error
       invalidateCache()

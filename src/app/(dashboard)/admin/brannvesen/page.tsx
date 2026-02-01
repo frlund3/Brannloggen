@@ -76,7 +76,6 @@ export default function AdminBrannvesenPage() {
     resetForm()
     try {
       const supabase = createClient()
-      // @ts-expect-error supabase types not generated
       const { error } = await supabase.from('brannvesen').update({ navn: form.navn, kort_navn: form.kort_navn, fylke_id: form.fylke_id, kommune_ids: form.kommune_ids } as any).eq('id', editItem.id)
       if (error) throw error
       invalidateCache()

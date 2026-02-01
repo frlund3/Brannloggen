@@ -76,7 +76,7 @@ export default function PresseInnstillingerPage() {
     }
   }
 
-  if (fylkerLoading || kategorierLoading || !loaded) {
+  if (fylkerLoading || kategorierLoading || sentralerLoading || !loaded) {
     return (
       <PresseLayout>
         <div className="p-8 text-center text-gray-400">Laster...</div>
@@ -215,6 +215,36 @@ export default function PresseInnstillingerPage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Kontakt 110-sentral */}
+          <div className="bg-[#1a1a1a] rounded-xl border border-[#2a2a2a] p-4">
+            <h2 className="text-sm font-semibold text-white mb-2">Kontakt 110-sentral</h2>
+            <p className="text-xs text-gray-400 mb-3">Velg en 110-sentral for å se kontaktinformasjon</p>
+            <select
+              value={selectedSentral}
+              onChange={(e) => setSelectedSentral(e.target.value)}
+              className="w-full px-3 py-2 bg-[#0a0a0a] border border-[#2a2a2a] rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 mb-3"
+            >
+              <option value="">Velg 110-sentral</option>
+              {sentraler.sort((a, b) => a.navn.localeCompare(b.navn, 'no')).map(s => (
+                <option key={s.id} value={s.id}>{s.kort_navn}</option>
+              ))}
+            </select>
+            {selectedSentral && (() => {
+              const sentral = sentraler.find(s => s.id === selectedSentral)
+              if (!sentral) return null
+              return sentral.kontakt_epost ? (
+                <div className="bg-[#0a0a0a] rounded-lg p-3">
+                  <p className="text-xs text-gray-400 mb-1">E-post</p>
+                  <a href={`mailto:${sentral.kontakt_epost}`} className="text-sm text-blue-400 hover:text-blue-300">
+                    {sentral.kontakt_epost}
+                  </a>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500">Ingen kontakt-e-post registrert for denne sentralen.</p>
+              )
+            })()}
           </div>
 
           {/* Save */}
