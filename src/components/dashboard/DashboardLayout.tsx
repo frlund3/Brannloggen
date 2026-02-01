@@ -172,7 +172,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             </div>
           </div>
 
-          <nav className="p-2 space-y-1">
+          <nav className="p-2 space-y-1 overflow-y-auto pb-52" style={{ maxHeight: 'calc(100vh - 70px)' }}>
             {links.map((link) => (
               <a
                 key={link.href}
@@ -193,25 +193,26 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
             ))}
           </nav>
 
-          {/* Presse shortcut button */}
-          <div className="px-3 mt-4">
-            <a
-              href="/presse/hendelser"
-              className="group flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-cyan-600/20 to-teal-600/20 hover:from-cyan-600/30 hover:to-teal-600/30 border border-cyan-500/30 hover:border-cyan-400/50 rounded-xl transition-all"
-            >
-              <div className="w-9 h-9 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/40 transition-shadow">
-                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                </svg>
-              </div>
-              <div>
-                <span className="text-sm font-semibold text-cyan-300 group-hover:text-cyan-200 transition-colors">Presseportal</span>
-                <span className="block text-[11px] text-cyan-500/70">Åpne pressesiden →</span>
-              </div>
-            </a>
-          </div>
+          <div className="absolute bottom-0 left-0 right-0 border-t border-[#2a2a2a]">
+            {/* Presse shortcut button */}
+            <div className="px-3 pt-3 pb-2">
+              <a
+                href="/presse/hendelser"
+                className="group flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-cyan-600/20 to-teal-600/20 hover:from-cyan-600/30 hover:to-teal-600/30 border border-cyan-500/30 hover:border-cyan-400/50 rounded-xl transition-all"
+              >
+                <div className="w-9 h-9 bg-gradient-to-br from-cyan-500 to-teal-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/40 transition-shadow">
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                  </svg>
+                </div>
+                <div>
+                  <span className="text-sm font-semibold text-cyan-300 group-hover:text-cyan-200 transition-colors">Presseportal</span>
+                  <span className="block text-[11px] text-cyan-500/70">Åpne pressesiden →</span>
+                </div>
+              </a>
+            </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[#2a2a2a]">
+            <div className="px-4 pb-4">
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
                 <span className="text-xs text-white font-bold">
@@ -246,6 +247,7 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
               >
                 Logg ut
               </button>
+            </div>
             </div>
           </div>
         </aside>
