@@ -201,11 +201,11 @@ function buildTitle(item: QueueItem): string {
     case 'ny_hendelse':
       return `🔥 Ny hendelse: ${item.payload.tittel || 'Ukjent'}`
     case 'oppdatering':
-      return '📋 Ny oppdatering'
+      return `📋 ${item.payload.tittel || 'Ny oppdatering'}`
     case 'status_endring':
       return `⚡ Status endret: ${item.payload.ny_status || ''}`
     case 'presseoppdatering':
-      return '📰 Ny pressemelding'
+      return `📰 ${item.payload.tittel || 'Ny pressemelding'}`
     case 'pressemelding':
       return `📰 Pressemelding: ${item.payload.tittel || 'Ukjent'}`
     default:
