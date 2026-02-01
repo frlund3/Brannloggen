@@ -6,6 +6,12 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Brannloggen - Hendelser fra norske brannvesen',
   description: 'Følg hendelser fra brannvesenet i Norge i sanntid. Brann, ulykker, redningsaksjoner og mer.',
+  manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
+  themeColor: '#d42020',
 }
 
 export default function RootLayout({
