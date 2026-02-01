@@ -255,3 +255,21 @@ export function useBrukerprofiler() {
     order: 'fullt_navn',
   })
 }
+
+export interface PushAbonnent {
+  id: string
+  device_id: string
+  platform: string
+  push_token: string
+  push_aktiv: boolean
+  sentral_ids: string[]
+  fylke_ids: string[]
+  kategori_ids: string[]
+  kun_pågående: boolean
+  registrert: string
+  sist_aktiv: string
+}
+
+export function usePushAbonnenter() {
+  return useSupabaseFetch<PushAbonnent>('push_abonnenter', { order: 'sist_aktiv' })
+}

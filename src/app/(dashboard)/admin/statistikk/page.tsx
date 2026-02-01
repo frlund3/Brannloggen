@@ -1,85 +1,10 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { useSentraler, useFylker, useKategorier } from '@/hooks/useSupabaseData'
+import { useSentraler, useFylker, useKategorier, usePushAbonnenter } from '@/hooks/useSupabaseData'
+import type { PushAbonnent } from '@/hooks/useSupabaseData'
 import { useSentralScope } from '@/hooks/useSentralScope'
 import { useState } from 'react'
-
-// Push subscribers are anonymous devices/browsers - not logged-in users
-// Anyone can subscribe to push notifications without being logged in
-interface PushSubscriber {
-  id: string
-  device_id: string
-  platform: string // 'iOS' | 'Android' | 'Web'
-  push_token: string
-  push_aktiv: boolean
-  prefs: {
-    sentral_ids: string[]
-    fylke_ids: string[]
-    kategori_ids: string[]
-    kun_pågående: boolean
-  }
-  registrert: string
-  sist_aktiv: string
-}
-
-// Mock data representing anonymous push subscribers (devices)
-const mockSubscribers: PushSubscriber[] = [
-  { id: 'ps-1', device_id: 'dev-a1b2c3', platform: 'iOS', push_token: 'ExponentPushToken[abc123]', push_aktiv: true,
-    prefs: { sentral_ids: ['s-vestland'], fylke_ids: ['f-46'], kategori_ids: ['kat-brann-bygning', 'kat-brann-annet'], kun_pågående: false },
-    registrert: '2025-01-10T08:30:00', sist_aktiv: '2025-01-30T23:45:00' },
-  { id: 'ps-2', device_id: 'dev-d4e5f6', platform: 'Android', push_token: 'ExponentPushToken[def456]', push_aktiv: true,
-    prefs: { sentral_ids: ['s-oslo', 's-ost'], fylke_ids: ['f-03', 'f-32'], kategori_ids: [], kun_pågående: true },
-    registrert: '2025-01-12T14:20:00', sist_aktiv: '2025-01-30T22:10:00' },
-  { id: 'ps-3', device_id: 'dev-g7h8i9', platform: 'iOS', push_token: 'ExponentPushToken[ghi789]', push_aktiv: true,
-    prefs: { sentral_ids: ['s-vestland'], fylke_ids: ['f-46'], kategori_ids: [], kun_pågående: false },
-    registrert: '2025-01-14T09:00:00', sist_aktiv: '2025-01-30T20:30:00' },
-  { id: 'ps-4', device_id: 'dev-j0k1l2', platform: 'Web', push_token: 'web-push-token-jkl012', push_aktiv: true,
-    prefs: { sentral_ids: ['s-oslo', 's-ost'], fylke_ids: ['f-03', 'f-32', 'f-31'], kategori_ids: ['kat-brann-bygning', 'kat-trafikkulykke'], kun_pågående: true },
-    registrert: '2025-01-15T11:30:00', sist_aktiv: '2025-01-30T21:15:00' },
-  { id: 'ps-5', device_id: 'dev-m3n4o5', platform: 'iOS', push_token: 'ExponentPushToken[mno345]', push_aktiv: false,
-    prefs: { sentral_ids: ['s-trondelag'], fylke_ids: ['f-50'], kategori_ids: [], kun_pågående: false },
-    registrert: '2025-01-16T16:00:00', sist_aktiv: '2025-01-29T14:00:00' },
-  { id: 'ps-6', device_id: 'dev-p6q7r8', platform: 'Android', push_token: 'ExponentPushToken[pqr678]', push_aktiv: true,
-    prefs: { sentral_ids: [], fylke_ids: [], kategori_ids: ['kat-brann-bygning', 'kat-trafikkulykke', 'kat-cbrne'], kun_pågående: false },
-    registrert: '2025-01-17T08:00:00', sist_aktiv: '2025-01-30T23:50:00' },
-  { id: 'ps-7', device_id: 'dev-s9t0u1', platform: 'Web', push_token: 'web-push-token-stu901', push_aktiv: true,
-    prefs: { sentral_ids: ['s-oslo', 's-vestland', 's-trondelag'], fylke_ids: ['f-03', 'f-46', 'f-50'], kategori_ids: ['kat-brann-bygning'], kun_pågående: true },
-    registrert: '2025-01-18T12:00:00', sist_aktiv: '2025-01-30T19:00:00' },
-  { id: 'ps-8', device_id: 'dev-v2w3x4', platform: 'iOS', push_token: 'ExponentPushToken[vwx234]', push_aktiv: false,
-    prefs: { sentral_ids: ['s-agder'], fylke_ids: ['f-42'], kategori_ids: [], kun_pågående: false },
-    registrert: '2025-01-19T10:30:00', sist_aktiv: '2025-01-20T10:00:00' },
-  { id: 'ps-9', device_id: 'dev-y5z6a7', platform: 'Android', push_token: 'ExponentPushToken[yza567]', push_aktiv: true,
-    prefs: { sentral_ids: ['s-sorost'], fylke_ids: ['f-39', 'f-40', 'f-33'], kategori_ids: ['kat-brann-bygning', 'kat-brann-annet'], kun_pågående: false },
-    registrert: '2025-01-20T09:00:00', sist_aktiv: '2025-01-30T18:30:00' },
-  { id: 'ps-10', device_id: 'dev-b8c9d0', platform: 'iOS', push_token: 'ExponentPushToken[bcd890]', push_aktiv: true,
-    prefs: { sentral_ids: ['s-vestland', 's-rogaland'], fylke_ids: ['f-46', 'f-11'], kategori_ids: [], kun_pågående: false },
-    registrert: '2025-01-21T13:00:00', sist_aktiv: '2025-01-30T22:45:00' },
-  { id: 'ps-11', device_id: 'dev-e1f2g3', platform: 'Web', push_token: 'web-push-token-efg123', push_aktiv: false,
-    prefs: { sentral_ids: [], fylke_ids: [], kategori_ids: [], kun_pågående: false },
-    registrert: '2025-01-22T07:30:00', sist_aktiv: '2025-01-25T12:00:00' },
-  { id: 'ps-12', device_id: 'dev-h4i5j6', platform: 'Android', push_token: 'ExponentPushToken[hij456]', push_aktiv: true,
-    prefs: { sentral_ids: [], fylke_ids: [], kategori_ids: ['kat-brann-bygning', 'kat-trafikkulykke', 'kat-cbrne', 'kat-brann-annet'], kun_pågående: false },
-    registrert: '2025-01-23T15:00:00', sist_aktiv: '2025-01-30T23:30:00' },
-  { id: 'ps-13', device_id: 'dev-k7l8m9', platform: 'iOS', push_token: 'ExponentPushToken[klm789]', push_aktiv: true,
-    prefs: { sentral_ids: ['s-innlandet'], fylke_ids: ['f-34'], kategori_ids: [], kun_pågående: false },
-    registrert: '2025-01-24T11:00:00', sist_aktiv: '2025-01-30T17:00:00' },
-  { id: 'ps-14', device_id: 'dev-n0o1p2', platform: 'Web', push_token: 'web-push-token-nop012', push_aktiv: true,
-    prefs: { sentral_ids: ['s-agder', 's-rogaland'], fylke_ids: ['f-42', 'f-11'], kategori_ids: ['kat-brann-bygning'], kun_pågående: true },
-    registrert: '2025-01-25T08:00:00', sist_aktiv: '2025-01-30T20:00:00' },
-  { id: 'ps-15', device_id: 'dev-q3r4s5', platform: 'Android', push_token: 'ExponentPushToken[qrs345]', push_aktiv: true,
-    prefs: { sentral_ids: ['s-trondelag', 's-more'], fylke_ids: ['f-50', 'f-15'], kategori_ids: [], kun_pågående: false },
-    registrert: '2025-01-26T10:30:00', sist_aktiv: '2025-01-30T21:30:00' },
-  { id: 'ps-16', device_id: 'dev-t6u7v8', platform: 'iOS', push_token: 'ExponentPushToken[tuv678]', push_aktiv: true,
-    prefs: { sentral_ids: [], fylke_ids: [], kategori_ids: [], kun_pågående: false },
-    registrert: '2025-01-27T14:00:00', sist_aktiv: '2025-01-30T23:00:00' },
-  { id: 'ps-17', device_id: 'dev-w9x0y1', platform: 'Android', push_token: 'ExponentPushToken[wxy901]', push_aktiv: false,
-    prefs: { sentral_ids: ['s-nordland'], fylke_ids: ['f-18'], kategori_ids: [], kun_pågående: false },
-    registrert: '2025-01-28T09:00:00', sist_aktiv: '2025-01-28T15:00:00' },
-  { id: 'ps-18', device_id: 'dev-z2a3b4', platform: 'iOS', push_token: 'ExponentPushToken[zab234]', push_aktiv: true,
-    prefs: { sentral_ids: ['s-oslo'], fylke_ids: ['f-03'], kategori_ids: ['kat-brann-bygning', 'kat-trafikkulykke'], kun_pågående: true },
-    registrert: '2025-01-29T12:00:00', sist_aktiv: '2025-01-30T22:00:00' },
-]
 
 function formatDateTime(iso: string) {
   const d = new Date(iso)
@@ -91,11 +16,12 @@ export default function AdminStatistikkPage() {
   const { data: sentraler, loading: sentralerLoading } = useSentraler()
   const { data: fylker, loading: fylkerLoading } = useFylker()
   const { data: kategorier, loading: kategorierLoading } = useKategorier()
-  const [selectedSub, setSelectedSub] = useState<PushSubscriber | null>(null)
+  const { data: abonnenter, loading: abonnenterLoading } = usePushAbonnenter()
+  const [selectedSub, setSelectedSub] = useState<PushAbonnent | null>(null)
   const [filterPush, setFilterPush] = useState<string>('')
   const [filterPlatform, setFilterPlatform] = useState<string>('')
 
-  if (sentralerLoading || fylkerLoading || kategorierLoading) {
+  if (sentralerLoading || fylkerLoading || kategorierLoading || abonnenterLoading) {
     return (
       <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
         <div className="p-8 text-center text-gray-400">Laster...</div>
@@ -105,8 +31,8 @@ export default function AdminStatistikkPage() {
 
   // Scope for 110-admin
   const scopedSubs = isScoped
-    ? mockSubscribers.filter(s => s.prefs.sentral_ids.length === 0 || s.prefs.sentral_ids.some(sId => filterSentraler(sentraler).map(x => x.id).includes(sId)))
-    : mockSubscribers
+    ? abonnenter.filter(s => s.sentral_ids.length === 0 || s.sentral_ids.some(sId => filterSentraler(sentraler).map(x => x.id).includes(sId)))
+    : abonnenter
 
   const filteredSubs = scopedSubs.filter(s => {
     if (filterPush === 'aktiv' && !s.push_aktiv) return false
@@ -119,7 +45,7 @@ export default function AdminStatistikkPage() {
   const total = scopedSubs.length
   const pushAktive = scopedSubs.filter(s => s.push_aktiv).length
   const pushInaktive = scopedSubs.filter(s => !s.push_aktiv).length
-  const kunPågående = scopedSubs.filter(s => s.prefs.kun_pågående).length
+  const kunPågående = scopedSubs.filter(s => s.kun_pågående).length
 
   // Platform stats
   const platformStats = [
@@ -131,11 +57,11 @@ export default function AdminStatistikkPage() {
   // Sentral popularity
   const sentralCounts: Record<string, number> = {}
   scopedSubs.forEach(s => {
-    s.prefs.sentral_ids.forEach(sId => {
+    s.sentral_ids.forEach(sId => {
       sentralCounts[sId] = (sentralCounts[sId] || 0) + 1
     })
   })
-  const noFilterCount = scopedSubs.filter(s => s.prefs.sentral_ids.length === 0).length
+  const noFilterCount = scopedSubs.filter(s => s.sentral_ids.length === 0).length
   const availableSentraler = isScoped ? filterSentraler(sentraler) : sentraler
   const sentralStats = availableSentraler
     .map(s => ({ ...s, count: sentralCounts[s.id] || 0 }))
@@ -144,7 +70,7 @@ export default function AdminStatistikkPage() {
   // Fylke popularity
   const fylkeCounts: Record<string, number> = {}
   scopedSubs.forEach(s => {
-    s.prefs.fylke_ids.forEach(fId => {
+    s.fylke_ids.forEach(fId => {
       fylkeCounts[fId] = (fylkeCounts[fId] || 0) + 1
     })
   })
@@ -156,7 +82,7 @@ export default function AdminStatistikkPage() {
   // Kategori popularity
   const kategoriCounts: Record<string, number> = {}
   scopedSubs.forEach(s => {
-    s.prefs.kategori_ids.forEach(kId => {
+    s.kategori_ids.forEach(kId => {
       kategoriCounts[kId] = (kategoriCounts[kId] || 0) + 1
     })
   })
@@ -345,8 +271,8 @@ export default function AdminStatistikkPage() {
                 </thead>
                 <tbody>
                   {filteredSubs.sort((a, b) => new Date(b.sist_aktiv).getTime() - new Date(a.sist_aktiv).getTime()).map((sub) => {
-                    const subSentraler = sub.prefs.sentral_ids.map(sId => sentraler.find(s => s.id === sId)).filter(Boolean)
-                    const subKategorier = sub.prefs.kategori_ids.map(kId => kategorier.find(k => k.id === kId)).filter(Boolean)
+                    const subSentraler = sub.sentral_ids.map(sId => sentraler.find(s => s.id === sId)).filter(Boolean)
+                    const subKategorier = sub.kategori_ids.map(kId => kategorier.find(k => k.id === kId)).filter(Boolean)
                     return (
                       <tr key={sub.id} className="border-b border-[#2a2a2a] hover:bg-[#222]">
                         <td className="px-4 py-3">
@@ -424,7 +350,7 @@ export default function AdminStatistikkPage() {
                   </div>
                   <div className="bg-[#0a0a0a] rounded-lg p-3">
                     <p className="text-xs text-gray-500">Kun pågående</p>
-                    <p className="text-sm text-white">{selectedSub.prefs.kun_pågående ? 'Ja' : 'Nei'}</p>
+                    <p className="text-sm text-white">{selectedSub.kun_pågående ? 'Ja' : 'Nei'}</p>
                   </div>
                   <div className="bg-[#0a0a0a] rounded-lg p-3">
                     <p className="text-xs text-gray-500">Registrert</p>
@@ -444,8 +370,8 @@ export default function AdminStatistikkPage() {
                 <div>
                   <p className="text-sm text-gray-400 mb-2">110-sentraler</p>
                   <div className="flex flex-wrap gap-1">
-                    {selectedSub.prefs.sentral_ids.length > 0
-                      ? selectedSub.prefs.sentral_ids.map(sId => {
+                    {selectedSub.sentral_ids.length > 0
+                      ? selectedSub.sentral_ids.map(sId => {
                           const s = sentraler.find(x => x.id === sId)
                           return s ? <span key={sId} className="text-xs bg-orange-500/10 text-orange-400 px-2 py-0.5 rounded">{s.kort_navn}</span> : null
                         })
@@ -457,8 +383,8 @@ export default function AdminStatistikkPage() {
                 <div>
                   <p className="text-sm text-gray-400 mb-2">Fylker</p>
                   <div className="flex flex-wrap gap-1">
-                    {selectedSub.prefs.fylke_ids.length > 0
-                      ? selectedSub.prefs.fylke_ids.map(fId => {
+                    {selectedSub.fylke_ids.length > 0
+                      ? selectedSub.fylke_ids.map(fId => {
                           const f = fylker.find(x => x.id === fId)
                           return f ? <span key={fId} className="text-xs bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded">{f.navn}</span> : null
                         })
@@ -470,8 +396,8 @@ export default function AdminStatistikkPage() {
                 <div>
                   <p className="text-sm text-gray-400 mb-2">Kategorier</p>
                   <div className="flex flex-wrap gap-1">
-                    {selectedSub.prefs.kategori_ids.length > 0
-                      ? selectedSub.prefs.kategori_ids.map(kId => {
+                    {selectedSub.kategori_ids.length > 0
+                      ? selectedSub.kategori_ids.map(kId => {
                           const k = kategorier.find(x => x.id === kId)
                           return k ? <span key={kId} className="text-xs px-2 py-0.5 rounded" style={{ backgroundColor: k.farge + '22', color: k.farge }}>{k.navn}</span> : null
                         })

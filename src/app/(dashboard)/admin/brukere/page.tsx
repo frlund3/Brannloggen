@@ -1,7 +1,7 @@
 'use client'
 
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
-import { useSentraler } from '@/hooks/useSupabaseData'
+import { useSentraler, useBrukerprofiler } from '@/hooks/useSupabaseData'
 import { useSentralScope } from '@/hooks/useSentralScope'
 import { useState } from 'react'
 
@@ -15,18 +15,6 @@ interface UserItem {
   created_at: string
 }
 
-const initialBrukere: UserItem[] = [
-  { id: '1', fullt_navn: 'Frank Lunde', epost: 'frank.lunde1981@gmail.com', rolle: 'admin', sentral_ids: [], aktiv: true, created_at: '2024-01-15' },
-  { id: '2', fullt_navn: 'Helge Lunde', epost: 'helge.lunde1981@gmail.com', rolle: 'admin', sentral_ids: [], aktiv: true, created_at: '2024-01-15' },
-  { id: '3', fullt_navn: 'Kari Operatør', epost: 'kari@bergen-brann.no', rolle: 'operator', sentral_ids: ['s-vestland'], aktiv: true, created_at: '2024-02-01' },
-  { id: '4', fullt_navn: 'Ole Vansen', epost: 'ole@oslo-brann.no', rolle: 'operator', sentral_ids: ['s-oslo', 's-ost'], aktiv: true, created_at: '2024-02-15' },
-  { id: '5', fullt_navn: 'Per Hansen', epost: 'per@tbrt.no', rolle: 'operator', sentral_ids: ['s-trondelag'], aktiv: true, created_at: '2024-03-01' },
-  { id: '6', fullt_navn: 'Anna Journalist', epost: 'anna@nrk.no', rolle: 'presse', sentral_ids: [], aktiv: true, created_at: '2024-04-01' },
-  { id: '7', fullt_navn: 'Erik Redaktør', epost: 'erik@vg.no', rolle: 'presse', sentral_ids: [], aktiv: true, created_at: '2024-04-10' },
-  { id: '8', fullt_navn: 'Lisa Eriksen', epost: 'lisa@kbr.no', rolle: 'operator', sentral_ids: ['s-agder'], aktiv: false, created_at: '2024-03-15' },
-  { id: '9', fullt_navn: 'Morten Nilsen', epost: 'morten@sorost110.no', rolle: '110-admin', sentral_ids: ['s-sorost'], aktiv: true, created_at: '2024-05-01' },
-]
-
 interface UserForm {
   fullt_navn: string
   epost: string
@@ -37,7 +25,23 @@ interface UserForm {
 export default function AdminBrukerePage() {
   const { isAdmin, is110Admin, isScoped, scope } = useSentralScope()
   const { data: sentraler, loading: sentralerLoading } = useSentraler()
-  const [brukere, setBrukere] = useState<UserItem[]>(initialBrukere)
+  const { data: dbBrukere, loading: brukereLoading, refetch: refetchBrukere } = useBrukerprofiler()
+  const [brukere, setBrukere] = useState<UserItem[]>([])
+  const [initialized, setInitialized] = useState(false)
+
+  // Sync DB data into local state once loaded
+  if (!brukereLoading && !initialized && dbBrukere.length > 0) {
+    setBrukere(dbBrukere.map(b => ({
+      id: b.id,
+      fullt_navn: b.fullt_navn,
+      epost: b.epost || '',
+      rolle: b.rolle,
+      sentral_ids: b.sentral_ids,
+      aktiv: b.aktiv,
+      created_at: b.created_at,
+    })))
+    setInitialized(true)
+  }
   const [showAddModal, setShowAddModal] = useState(false)
   const [editUser, setEditUser] = useState<UserItem | null>(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
@@ -47,7 +51,7 @@ export default function AdminBrukerePage() {
   const [filterSentral, setFilterSentral] = useState('')
   const [filterRolle, setFilterRolle] = useState('')
 
-  if (sentralerLoading) {
+  if (sentralerLoading || brukereLoading) {
     return (
       <DashboardLayout role={is110Admin ? '110-admin' : 'admin'}>
         <div className="p-8 text-center text-gray-400">Laster...</div>

@@ -61,6 +61,47 @@ DO $$ BEGIN
 EXCEPTION WHEN OTHERS THEN NULL;
 END $$;
 
+-- Make opprettet_av nullable so we can seed demo hendelser without auth users
+DO $$ BEGIN
+  ALTER TABLE hendelser ALTER COLUMN opprettet_av DROP NOT NULL;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE hendelsesoppdateringer ALTER COLUMN opprettet_av DROP NOT NULL;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+-- Push abonnenter table (anonymous device push subscribers)
+CREATE TABLE IF NOT EXISTS push_abonnenter (
+  id TEXT PRIMARY KEY,
+  device_id TEXT NOT NULL,
+  platform TEXT NOT NULL CHECK (platform IN ('iOS', 'Android', 'Web')),
+  push_token TEXT NOT NULL,
+  push_aktiv BOOLEAN DEFAULT TRUE,
+  sentral_ids TEXT[] DEFAULT '{}',
+  fylke_ids TEXT[] DEFAULT '{}',
+  kategori_ids TEXT[] DEFAULT '{}',
+  kun_pågående BOOLEAN DEFAULT FALSE,
+  registrert TIMESTAMPTZ DEFAULT NOW(),
+  sist_aktiv TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE push_abonnenter ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  CREATE POLICY "Anyone can read push_abonnenter" ON push_abonnenter FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY "Admins can manage push_abonnenter" ON push_abonnenter FOR ALL USING (
+    EXISTS (SELECT 1 FROM brukerprofiler WHERE user_id = auth.uid() AND rolle IN ('admin', '110-admin'))
+  );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
 -- ============================================================================
 -- 1. Fylker (15 rows)
 -- ============================================================================
@@ -728,4 +769,198 @@ INSERT INTO brannvesen (id, navn, kort_navn, fylke_id, kommune_ids) VALUES
   ('bv-vardo', 'Vardø brannvesen', 'Vardø brann', 'f-56', ARRAY['k-5634']),
   ('bv-karasjok', 'Karasjok brannvesen', 'Karasjok brann', 'f-56', ARRAY['k-5610']),
   ('bv-kautokeino', 'Kautokeino brannvesen', 'Kautokeino brann', 'f-56', ARRAY['k-5612'])
+ON CONFLICT DO NOTHING;
+
+-- ============================================================================
+-- 6. Hendelser (12 demo incidents)
+-- ============================================================================
+INSERT INTO hendelser (id, brannvesen_id, kommune_id, fylke_id, kategori_id, tittel, beskrivelse, sted, status, alvorlighetsgrad, opprettet_av, opprettet_tidspunkt, oppdatert_tidspunkt, avsluttet_tidspunkt, latitude, longitude) VALUES
+  ('a0000001-0001-4000-8000-000000000001', 'bv-bergen', 'k-4601', 'f-46', 'kat-brann-bygning',
+   'Brann: Bergen, Sandviken',
+   'Melding om brann i leilighetsbygg i Sandviken. Røykutvikling fra 3. etasje. Alle beboere er evakuert. Brannvesenet jobber med slokking.',
+   'Sandviksveien 42, Sandviken', 'pågår', 'høy', NULL,
+   NOW() - INTERVAL '45 minutes', NOW() - INTERVAL '10 minutes', NULL, 60.4055, 5.3275),
+
+  ('a0000001-0002-4000-8000-000000000002', 'bv-trondheim', 'k-5001', 'f-50', 'kat-trafikkulykke',
+   'Trafikkulykke: Trondheim, E6 Heimdal',
+   'Trafikkulykke mellom to personbiler på E6 ved Heimdal. Brannvesenet bistår med frigjøring av person fra kjøretøy.',
+   'E6 Heimdal, retning sør', 'pågår', 'høy', NULL,
+   NOW() - INTERVAL '25 minutes', NOW() - INTERVAL '5 minutes', NULL, 63.3539, 10.3526),
+
+  ('a0000001-0003-4000-8000-000000000003', 'bv-oslo', 'k-0301', 'f-03', 'kat-mistenkelig-røyk',
+   'Røykutvikling: Oslo, Grünerløkka',
+   'Melding om røykutvikling fra kjeller i boligblokk på Grünerløkka. Brannvesenet undersøker.',
+   'Thorvald Meyers gate 28, Grünerløkka', 'pågår', 'middels', NULL,
+   NOW() - INTERVAL '15 minutes', NOW() - INTERVAL '15 minutes', NULL, 59.9228, 10.7591),
+
+  ('a0000001-0004-4000-8000-000000000004', 'bv-rogaland', 'k-1103', 'f-11', 'kat-brann-kjøretøy',
+   'Brann i kjøretøy: Stavanger, Forus',
+   'Bilbrann på parkeringsplass ved Forus. Elbil i full fyr. Brannvesenet er på stedet.',
+   'Forusbeen 35, Forus', 'avsluttet', 'middels', NULL,
+   NOW() - INTERVAL '3 hours', NOW() - INTERVAL '2 hours', NOW() - INTERVAL '2 hours', 58.8924, 5.7288),
+
+  ('a0000001-0005-4000-8000-000000000005', 'bv-kristiansand', 'k-4204', 'f-42', 'kat-brann-bygning',
+   'Brann: Kristiansand, Lund',
+   'Melding om brann i enebolig på Lund. Kraftig røykutvikling. Beboere evakuert.',
+   'Lundsiden 15, Lund', 'pågår', 'kritisk', NULL,
+   NOW() - INTERVAL '60 minutes', NOW() - INTERVAL '20 minutes', NULL, 58.1599, 7.9956),
+
+  ('a0000001-0006-4000-8000-000000000006', 'bv-bodo', 'k-1804', 'f-18', 'kat-naturhendelse',
+   'Naturhendelse: Bodø, Sentrum',
+   'Melding om takplater som løsner i sterk vind i Bodø sentrum. Brannvesenet sikrer området.',
+   'Sjøgata, Bodø sentrum', 'avsluttet', 'middels', NULL,
+   NOW() - INTERVAL '5 hours', NOW() - INTERVAL '4 hours', NOW() - INTERVAL '4 hours', 67.2804, 14.4049),
+
+  ('a0000001-0007-4000-8000-000000000007', 'bv-tromso', 'k-5501', 'f-55', 'kat-person-vann',
+   'Vanredning: Tromsø, Kvaløya',
+   'Båt i nød utenfor Kvaløya. Brannvesenets redningsbåt er sendt ut sammen med Redningsselskapet.',
+   'Farvannet utenfor Kvaløya', 'avsluttet', 'høy', NULL,
+   NOW() - INTERVAL '8 hours', NOW() - INTERVAL '7 hours', NOW() - INTERVAL '7 hours', 69.6789, 18.9551),
+
+  ('a0000001-0008-4000-8000-000000000008', 'bv-drammen', 'k-3301', 'f-33', 'kat-forurensning',
+   'Akutt forurensning: Drammen, Holmen',
+   'Melding om oljeutslipp fra industriområde på Holmen. Brannvesenet iverksetter tiltak for å begrense spredning.',
+   'Holmen industriområde, Drammen', 'pågår', 'høy', NULL,
+   NOW() - INTERVAL '90 minutes', NOW() - INTERVAL '30 minutes', NULL, 59.7440, 10.2045),
+
+  ('a0000001-0009-4000-8000-000000000009', 'bv-alesund', 'k-1508', 'f-15', 'kat-brann-skog',
+   'Gressbrann: Ålesund, Hessa',
+   'Melding om gressbrann på Hessa. Brannvesenet er på stedet.',
+   'Hessafjellveien, Hessa', 'avsluttet', 'lav', NULL,
+   NOW() - INTERVAL '6 hours', NOW() - INTERVAL '5.5 hours', NOW() - INTERVAL '5.5 hours', 62.4689, 6.1230),
+
+  ('a0000001-0010-4000-8000-000000000010', 'bv-grenland', 'k-4003', 'f-40', 'kat-andre-oppdrag',
+   'Teknisk assistanse: Skien, Sentrum',
+   'Heisnodstopp i forretningsbygg i Skien sentrum. To personer sitter fast.',
+   'Landmannstorget 2, Skien', 'avsluttet', 'lav', NULL,
+   NOW() - INTERVAL '4 hours', NOW() - INTERVAL '3.5 hours', NOW() - INTERVAL '3.5 hours', 59.2094, 9.6085),
+
+  ('a0000001-0011-4000-8000-000000000011', 'bv-alta', 'k-5601', 'f-56', 'kat-brann-skorstein',
+   'Skorsteinsbrann: Alta, Sentrum',
+   'Melding om skorsteinsbrann i bolighus i Alta sentrum. Brannvesenet er på vei.',
+   'Bossekopveien 12, Alta', 'pågår', 'middels', NULL,
+   NOW() - INTERVAL '10 minutes', NOW() - INTERVAL '10 minutes', NULL, 69.9689, 23.2716),
+
+  ('a0000001-0012-4000-8000-000000000012', 'bv-lillehammer', 'k-3405', 'f-34', 'kat-cbrne',
+   'Farlig gods: Lillehammer, E6',
+   'Lastebil med farlig gods har veltet på E6 ved Lillehammer. Gasslekkasje fra tank. Området evakueres.',
+   'E6 Lillehammer nord', 'pågår', 'kritisk', NULL,
+   NOW() - INTERVAL '2 hours', NOW() - INTERVAL '15 minutes', NULL, 61.1153, 10.4662)
+ON CONFLICT DO NOTHING;
+
+-- ============================================================================
+-- 7. Hendelsesoppdateringer (updates for demo incidents)
+-- ============================================================================
+INSERT INTO hendelsesoppdateringer (id, hendelse_id, tekst, opprettet_av, opprettet_tidspunkt) VALUES
+  -- h-001 Bergen brann
+  ('b0000001-0001-4000-8000-000000000001', 'a0000001-0001-4000-8000-000000000001',
+   'Brannvesenet er på stedet med 3 enheter. Synlig flamme fra vindu i 3. etasje.', NULL, NOW() - INTERVAL '35 minutes'),
+  ('b0000001-0002-4000-8000-000000000002', 'a0000001-0001-4000-8000-000000000001',
+   'Brannen er under kontroll. Etterslokking pågår. Ingen personskader meldt.', NULL, NOW() - INTERVAL '10 minutes'),
+
+  -- h-002 Trondheim trafikkulykke
+  ('b0000001-0003-4000-8000-000000000003', 'a0000001-0002-4000-8000-000000000002',
+   'En person frigjort fra kjøretøy og overlevert til ambulanse. Veien er stengt i begge retninger.', NULL, NOW() - INTERVAL '5 minutes'),
+
+  -- h-004 Stavanger bilbrann
+  ('b0000001-0004-4000-8000-000000000004', 'a0000001-0004-4000-8000-000000000004',
+   'Brannen er slukket. Bilen er totalskadet. Ingen personskader. Brannårsak undersøkes.', NULL, NOW() - INTERVAL '2 hours'),
+
+  -- h-005 Kristiansand brann
+  ('b0000001-0005-4000-8000-000000000005', 'a0000001-0005-4000-8000-000000000005',
+   'Brannvesenet er på stedet med full utrykking. Brannen har spredd seg til 2. etasje.', NULL, NOW() - INTERVAL '50 minutes'),
+  ('b0000001-0006-4000-8000-000000000006', 'a0000001-0005-4000-8000-000000000005',
+   'Nabobygg evakueres som sikkerhetstiltak. Ingen personskader meldt.', NULL, NOW() - INTERVAL '35 minutes'),
+  ('b0000001-0007-4000-8000-000000000007', 'a0000001-0005-4000-8000-000000000005',
+   'Brannen er under kontroll. Etterslokking og kontroll av nabobygg pågår.', NULL, NOW() - INTERVAL '20 minutes'),
+
+  -- h-006 Bodø naturhendelse
+  ('b0000001-0008-4000-8000-000000000008', 'a0000001-0006-4000-8000-000000000006',
+   'Takplatene er sikret. Området er gjenåpnet for ferdsel.', NULL, NOW() - INTERVAL '4 hours'),
+
+  -- h-007 Tromsø vanredning
+  ('b0000001-0009-4000-8000-000000000009', 'a0000001-0007-4000-8000-000000000007',
+   'To personer tatt opp fra båt. Båten slepes til kai. Ingen personskader.', NULL, NOW() - INTERVAL '7 hours'),
+
+  -- h-008 Drammen forurensning
+  ('b0000001-0010-4000-8000-000000000010', 'a0000001-0008-4000-8000-000000000008',
+   'Lenser er lagt ut for å hindre spredning til elva. IUA er varslet.', NULL, NOW() - INTERVAL '60 minutes'),
+  ('b0000001-0011-4000-8000-000000000011', 'a0000001-0008-4000-8000-000000000008',
+   'Utslippet er begrenset. Opprydding pågår i samarbeid med kommunen.', NULL, NOW() - INTERVAL '30 minutes'),
+
+  -- h-009 Ålesund gressbrann
+  ('b0000001-0012-4000-8000-000000000012', 'a0000001-0009-4000-8000-000000000009',
+   'Gressbrannen er slukket. Begrenset område berørt. Trolig påtent.', NULL, NOW() - INTERVAL '5.5 hours'),
+
+  -- h-010 Skien heisnodstopp
+  ('b0000001-0013-4000-8000-000000000013', 'a0000001-0010-4000-8000-000000000010',
+   'Personene er frigjort fra heisen. Ingen skader.', NULL, NOW() - INTERVAL '3.5 hours'),
+
+  -- h-012 Lillehammer farlig gods
+  ('b0000001-0014-4000-8000-000000000014', 'a0000001-0012-4000-8000-000000000012',
+   'Evakuering av 200 meter radius iverksatt. E6 stengt i begge retninger.', NULL, NOW() - INTERVAL '100 minutes'),
+  ('b0000001-0015-4000-8000-000000000015', 'a0000001-0012-4000-8000-000000000012',
+   'Spesialist på farlig gods er på vei fra Oslo. Lekkasjepunktet er identifisert.', NULL, NOW() - INTERVAL '60 minutes'),
+  ('b0000001-0016-4000-8000-000000000016', 'a0000001-0012-4000-8000-000000000012',
+   'Lekkasjen er tettet midlertidig. Evakueringsgrensen opprettholdes inntil videre.', NULL, NOW() - INTERVAL '15 minutes')
+ON CONFLICT DO NOTHING;
+
+-- ============================================================================
+-- 8. Push-abonnenter (18 demo anonymous push subscribers)
+-- ============================================================================
+INSERT INTO push_abonnenter (id, device_id, platform, push_token, push_aktiv, sentral_ids, fylke_ids, kategori_ids, kun_pågående, registrert, sist_aktiv) VALUES
+  ('ps-1', 'dev-a1b2c3', 'iOS', 'ExponentPushToken[abc123]', true,
+   ARRAY['s-vestland'], ARRAY['f-46'], ARRAY['kat-brann-bygning', 'kat-brann-annet'], false,
+   '2025-01-10 08:30:00+00', '2025-01-30 23:45:00+00'),
+  ('ps-2', 'dev-d4e5f6', 'Android', 'ExponentPushToken[def456]', true,
+   ARRAY['s-oslo', 's-ost'], ARRAY['f-03', 'f-32'], ARRAY[]::TEXT[], true,
+   '2025-01-12 14:20:00+00', '2025-01-30 22:10:00+00'),
+  ('ps-3', 'dev-g7h8i9', 'iOS', 'ExponentPushToken[ghi789]', true,
+   ARRAY['s-vestland'], ARRAY['f-46'], ARRAY[]::TEXT[], false,
+   '2025-01-14 09:00:00+00', '2025-01-30 20:30:00+00'),
+  ('ps-4', 'dev-j0k1l2', 'Web', 'web-push-token-jkl012', true,
+   ARRAY['s-oslo', 's-ost'], ARRAY['f-03', 'f-32', 'f-31'], ARRAY['kat-brann-bygning', 'kat-trafikkulykke'], true,
+   '2025-01-15 11:30:00+00', '2025-01-30 21:15:00+00'),
+  ('ps-5', 'dev-m3n4o5', 'iOS', 'ExponentPushToken[mno345]', false,
+   ARRAY['s-trondelag'], ARRAY['f-50'], ARRAY[]::TEXT[], false,
+   '2025-01-16 16:00:00+00', '2025-01-29 14:00:00+00'),
+  ('ps-6', 'dev-p6q7r8', 'Android', 'ExponentPushToken[pqr678]', true,
+   ARRAY[]::TEXT[], ARRAY[]::TEXT[], ARRAY['kat-brann-bygning', 'kat-trafikkulykke', 'kat-cbrne'], false,
+   '2025-01-17 08:00:00+00', '2025-01-30 23:50:00+00'),
+  ('ps-7', 'dev-s9t0u1', 'Web', 'web-push-token-stu901', true,
+   ARRAY['s-oslo', 's-vestland', 's-trondelag'], ARRAY['f-03', 'f-46', 'f-50'], ARRAY['kat-brann-bygning'], true,
+   '2025-01-18 12:00:00+00', '2025-01-30 19:00:00+00'),
+  ('ps-8', 'dev-v2w3x4', 'iOS', 'ExponentPushToken[vwx234]', false,
+   ARRAY['s-agder'], ARRAY['f-42'], ARRAY[]::TEXT[], false,
+   '2025-01-19 10:30:00+00', '2025-01-20 10:00:00+00'),
+  ('ps-9', 'dev-y5z6a7', 'Android', 'ExponentPushToken[yza567]', true,
+   ARRAY['s-sorost'], ARRAY['f-39', 'f-40', 'f-33'], ARRAY['kat-brann-bygning', 'kat-brann-annet'], false,
+   '2025-01-20 09:00:00+00', '2025-01-30 18:30:00+00'),
+  ('ps-10', 'dev-b8c9d0', 'iOS', 'ExponentPushToken[bcd890]', true,
+   ARRAY['s-vestland', 's-rogaland'], ARRAY['f-46', 'f-11'], ARRAY[]::TEXT[], false,
+   '2025-01-21 13:00:00+00', '2025-01-30 22:45:00+00'),
+  ('ps-11', 'dev-e1f2g3', 'Web', 'web-push-token-efg123', false,
+   ARRAY[]::TEXT[], ARRAY[]::TEXT[], ARRAY[]::TEXT[], false,
+   '2025-01-22 07:30:00+00', '2025-01-25 12:00:00+00'),
+  ('ps-12', 'dev-h4i5j6', 'Android', 'ExponentPushToken[hij456]', true,
+   ARRAY[]::TEXT[], ARRAY[]::TEXT[], ARRAY['kat-brann-bygning', 'kat-trafikkulykke', 'kat-cbrne', 'kat-brann-annet'], false,
+   '2025-01-23 15:00:00+00', '2025-01-30 23:30:00+00'),
+  ('ps-13', 'dev-k7l8m9', 'iOS', 'ExponentPushToken[klm789]', true,
+   ARRAY['s-innlandet'], ARRAY['f-34'], ARRAY[]::TEXT[], false,
+   '2025-01-24 11:00:00+00', '2025-01-30 17:00:00+00'),
+  ('ps-14', 'dev-n0o1p2', 'Web', 'web-push-token-nop012', true,
+   ARRAY['s-agder', 's-rogaland'], ARRAY['f-42', 'f-11'], ARRAY['kat-brann-bygning'], true,
+   '2025-01-25 08:00:00+00', '2025-01-30 20:00:00+00'),
+  ('ps-15', 'dev-q3r4s5', 'Android', 'ExponentPushToken[qrs345]', true,
+   ARRAY['s-trondelag', 's-more'], ARRAY['f-50', 'f-15'], ARRAY[]::TEXT[], false,
+   '2025-01-26 10:30:00+00', '2025-01-30 21:30:00+00'),
+  ('ps-16', 'dev-t6u7v8', 'iOS', 'ExponentPushToken[tuv678]', true,
+   ARRAY[]::TEXT[], ARRAY[]::TEXT[], ARRAY[]::TEXT[], false,
+   '2025-01-27 14:00:00+00', '2025-01-30 23:00:00+00'),
+  ('ps-17', 'dev-w9x0y1', 'Android', 'ExponentPushToken[wxy901]', false,
+   ARRAY['s-nordland'], ARRAY['f-18'], ARRAY[]::TEXT[], false,
+   '2025-01-28 09:00:00+00', '2025-01-28 15:00:00+00'),
+  ('ps-18', 'dev-z2a3b4', 'iOS', 'ExponentPushToken[zab234]', true,
+   ARRAY['s-oslo'], ARRAY['f-03'], ARRAY['kat-brann-bygning', 'kat-trafikkulykke'], true,
+   '2025-01-29 12:00:00+00', '2025-01-30 22:00:00+00')
 ON CONFLICT DO NOTHING;
