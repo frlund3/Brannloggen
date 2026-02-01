@@ -156,7 +156,7 @@ export default function PresseRegistreringPage() {
                   className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg text-white focus:outline-none focus:border-cyan-500 mb-2"
                   placeholder="Søk eller skriv inn mediehus..."
                 />
-                {medierSok && filteredMedier.length > 0 && !mediumId && (
+                {medierSok && !mediumId && (
                   <div className="max-h-40 overflow-y-auto bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg">
                     {filteredMedier.slice(0, 8).map(m => (
                       <button
@@ -173,6 +173,11 @@ export default function PresseRegistreringPage() {
                         <span className="text-xs text-gray-500 ml-2">{m.type}</span>
                       </button>
                     ))}
+                    {filteredMedier.length === 0 && (
+                      <div className="px-4 py-2.5 text-sm text-gray-400">
+                        Ingen treff. &quot;{medierSok}&quot; sendes som egendefinert mediehus.
+                      </div>
+                    )}
                   </div>
                 )}
                 {mediumId && (
