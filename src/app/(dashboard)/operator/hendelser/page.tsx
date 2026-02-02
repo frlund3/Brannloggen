@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { logActivity } from '@/lib/logActivity'
 import { validateImageFileFull } from '@/lib/file-validation'
+import { from } from '@/lib/supabase/typed-queries'
 
 export default function OperatorHendelserPage() {
   const { data: allHendelser, loading: hendelserLoading, refetch } = useHendelser({ excludeDeactivated: true })
@@ -172,8 +173,7 @@ export default function OperatorHendelserPage() {
   const handleDeactivate = async (id: string) => {
     try {
       const supabase = createClient()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('hendelser') as any).update({ status: 'deaktivert' }).eq('id', id)
+      const { error } = await from(supabase, 'hendelser').update({ status: 'deaktivert' }).eq('id', id)
       if (error) throw error
       const h = allHendelser.find(x => x.id === id)
       logActivity({ handling: 'deaktivert', tabell: 'hendelser', radId: id, hendelseId: id, hendelseTittel: h?.tittel })
@@ -194,8 +194,7 @@ export default function OperatorHendelserPage() {
     }
     try {
       const supabase = createClient()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('hendelser') as any).update({
+      const { error } = await from(supabase, 'hendelser').update({
         status: 'avsluttet',
         avsluttet_tidspunkt: new Date(avsluttTidspunkt).toISOString(),
         oppdatert_tidspunkt: new Date().toISOString(),
@@ -230,8 +229,7 @@ export default function OperatorHendelserPage() {
       const table = tableMap[quickUpdateType]
       const textField = quickUpdateType === 'intern' ? 'notat' : 'tekst'
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from(table) as any).insert({
+      const { error } = await from(supabase, table).insert({
         hendelse_id: hendelseId, [textField]: quickUpdateText, opprettet_av: user.id, bilde_url: bildeUrl,
       })
       if (error) throw error
@@ -363,8 +361,7 @@ export default function OperatorHendelserPage() {
 
       if (Object.keys(updateData).length > 0) {
         updateData.oppdatert_tidspunkt = new Date().toISOString()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase.from('hendelser') as any).update(updateData).eq('id', selectedH.id)
+        const { error } = await from(supabase, 'hendelser').update(updateData).eq('id', selectedH.id)
         if (error) throw error
         const changedFields = Object.keys(updateData).filter(k => k !== 'oppdatert_tidspunkt')
         if (changedFields.includes('bilde_url') && newHendelseBilde) {
@@ -388,8 +385,7 @@ export default function OperatorHendelserPage() {
           setUploadingImage(true)
           bildeUrl = await uploadImage(newUpdateImage, selectedH.id)
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase.from('hendelsesoppdateringer') as any).insert({
+        const { error } = await from(supabase, 'hendelsesoppdateringer').insert({
           hendelse_id: selectedH.id, tekst: newUpdate, opprettet_av: user.id, bilde_url: bildeUrl,
         })
         if (error) throw error
@@ -403,8 +399,7 @@ export default function OperatorHendelserPage() {
           setUploadingImage(true)
           bildeUrl = await uploadImage(newPresseImage, selectedH.id)
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase.from('presseoppdateringer') as any).insert({
+        const { error } = await from(supabase, 'presseoppdateringer').insert({
           hendelse_id: selectedH.id, tekst: newPresse, opprettet_av: user.id, bilde_url: bildeUrl,
         })
         if (error) throw error
@@ -418,8 +413,7 @@ export default function OperatorHendelserPage() {
           setUploadingImage(true)
           bildeUrl = await uploadImage(newNotatImage, selectedH.id)
         }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase.from('interne_notater') as any).insert({
+        const { error } = await from(supabase, 'interne_notater').insert({
           hendelse_id: selectedH.id, notat: newNotat, opprettet_av: user.id, bilde_url: bildeUrl,
         })
         if (error) throw error
@@ -456,8 +450,7 @@ export default function OperatorHendelserPage() {
         const url = await uploadImage(editItemImage, hendelseId)
         if (url) updatePayload.bilde_url = url
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('hendelsesoppdateringer') as any).update(updatePayload).eq('id', updateId)
+      const { error } = await from(supabase, 'hendelsesoppdateringer').update(updatePayload).eq('id', updateId)
       if (error) throw error
       const parentH = allHendelser.find(x => x.id === hendelseId)
       logActivity({ handling: 'redigert_oppdatering', tabell: 'hendelsesoppdateringer', radId: updateId, hendelseId, hendelseTittel: parentH?.tittel })
@@ -478,8 +471,7 @@ export default function OperatorHendelserPage() {
         const url = await uploadImage(editItemImage, hendelseId)
         if (url) updatePayload.bilde_url = url
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('presseoppdateringer') as any).update(updatePayload).eq('id', presseId)
+      const { error } = await from(supabase, 'presseoppdateringer').update(updatePayload).eq('id', presseId)
       if (error) throw error
       const parentH = allHendelser.find(x => x.id === hendelseId)
       logActivity({ handling: 'redigert_pressemelding', tabell: 'presseoppdateringer', radId: presseId, hendelseId, hendelseTittel: parentH?.tittel })
@@ -500,8 +492,7 @@ export default function OperatorHendelserPage() {
         const url = await uploadImage(editItemImage, hendelseId)
         if (url) updatePayload.bilde_url = url
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('interne_notater') as any).update(updatePayload).eq('id', notatId)
+      const { error } = await from(supabase, 'interne_notater').update(updatePayload).eq('id', notatId)
       if (error) throw error
       const parentH = allHendelser.find(x => x.id === hendelseId)
       logActivity({ handling: 'redigert_notat', tabell: 'interne_notater', radId: notatId, hendelseId, hendelseTittel: parentH?.tittel })
@@ -514,8 +505,7 @@ export default function OperatorHendelserPage() {
   const handleDeactivateUpdate = async (id: string) => {
     try {
       const supabase = createClient()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('hendelsesoppdateringer') as any).update({ deaktivert: true }).eq('id', id)
+      const { error } = await from(supabase, 'hendelsesoppdateringer').update({ deaktivert: true }).eq('id', id)
       if (error) throw error
       logActivity({ handling: 'deaktivert_oppdatering', tabell: 'hendelsesoppdateringer', radId: id })
       invalidateCache(); refetch(); toast.success('Oppdatering deaktivert')
@@ -525,8 +515,7 @@ export default function OperatorHendelserPage() {
   const handleDeactivatePresse = async (id: string) => {
     try {
       const supabase = createClient()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('presseoppdateringer') as any).update({ deaktivert: true }).eq('id', id)
+      const { error } = await from(supabase, 'presseoppdateringer').update({ deaktivert: true }).eq('id', id)
       if (error) throw error
       logActivity({ handling: 'deaktivert_pressemelding', tabell: 'presseoppdateringer', radId: id })
       invalidateCache(); refetch(); toast.success('Pressemelding deaktivert')
@@ -536,8 +525,7 @@ export default function OperatorHendelserPage() {
   const handleDeactivateNotat = async (id: string) => {
     try {
       const supabase = createClient()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from('interne_notater') as any).update({ deaktivert: true }).eq('id', id)
+      const { error } = await from(supabase, 'interne_notater').update({ deaktivert: true }).eq('id', id)
       if (error) throw error
       logActivity({ handling: 'deaktivert_notat', tabell: 'interne_notater', radId: id })
       invalidateCache(); refetch(); toast.success('Notat deaktivert')
@@ -1158,8 +1146,7 @@ export default function OperatorHendelserPage() {
                     onClick={async () => {
                       try {
                         const supabase = createClient()
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        const { error } = await (supabase.from('hendelser') as any).update({ bilde_url: null, oppdatert_tidspunkt: new Date().toISOString() }).eq('id', selectedH.id)
+                        const { error } = await from(supabase, 'hendelser').update({ bilde_url: null, oppdatert_tidspunkt: new Date().toISOString() }).eq('id', selectedH.id)
                         if (error) throw error
                         logActivity({ handling: 'bilde_fjernet', tabell: 'hendelser', radId: selectedH.id, hendelseId: selectedH.id, hendelseTittel: selectedH.tittel })
                         invalidateCache(); refetch(); toast.success('Bilde fjernet')

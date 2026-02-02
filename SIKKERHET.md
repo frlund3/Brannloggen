@@ -410,6 +410,10 @@ Bruker (nettleser/app)
 | Automatiserte tester | Implementert | Vitest-basert testoppsett med 29 tester for rate limiting, filvalidering og utility-funksjoner. CI/CD-pipeline via GitHub Actions kjører typesjekk, tester og sårbarhetsskanning ved PR. |
 | Feillogging | Implementert | Alle catch-blokker i providers, hooks og API-ruter logger feil med kontekst-prefiks (`[Auth]`, `[login]`, etc.) for strukturert feilsøking |
 | Hemmelighetsbeskyttelse | Implementert | `.env.local` fjernet fra git-sporing. `.env.example` lagt til som referanse uten reelle nøkler. |
+| Komponentrefaktorering | Implementert | DashboardLayout (349 → 173 linjer) delt opp i DashboardHeader, DashboardSidebar, SidebarNav og ThemeToggle. Bedre vedlikeholdbarhet og testbarhet. |
+| Type-sikkerhet | Implementert | 14x `as any`-casts i operator/hendelser fjernet. Sentralisert typed-queries-modul med typesikre tabellnavn erstatter spredte type-overrides. |
+| Offline PWA-caching | Implementert | Service worker utvidet med install/activate/fetch-hendelser. Pre-cacher statiske ressurser, network-first for navigasjon med cache-fallback, stale-while-revalidate for assets. Supabase/API-kall ekskluderes fra caching. |
+| Tilgjengelighet (a11y) | Implementert | BottomNav med role="tablist"/role="tab"/aria-selected, ToggleSwitch med role="switch"/aria-checked, aria-labels på interaktive elementer, DashboardHeader med aria-label på meny-knapp. |
 
 ### 11.2 Anbefalte fremtidige tiltak
 
