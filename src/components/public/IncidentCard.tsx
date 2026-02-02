@@ -1,6 +1,5 @@
 'use client'
 
-import { StatusBadge } from '@/components/ui/StatusBadge'
 import { SeverityDot } from '@/components/ui/SeverityDot'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { formatTime, formatTimeAgo } from '@/lib/utils'
@@ -75,9 +74,6 @@ export function IncidentCard({
       <div className="p-4 flex-1 min-w-0">
       <div className="flex items-start justify-between gap-2 mb-1">
         <span className="text-xs text-theme-secondary">{sentral?.kort_navn || bv?.kort_navn || bv?.navn}</span>
-        <div className="flex items-center gap-2 shrink-0">
-          <StatusBadge status={status} />
-        </div>
       </div>
 
       <h3 className="text-base font-bold text-theme mb-0.5 leading-tight">{tittel}</h3>

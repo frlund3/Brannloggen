@@ -33,12 +33,15 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createServerSupabaseClient()
 
-    // Send recovery email. We do NOT pass redirectTo here because Supabase
-    // has issues with redirect URL validation. Instead, the email template
-    // in Supabase Dashboard is configured to link directly to
-    // {{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/oppdater-passord
+    // Build the callback URL for the reset email.
+    // Supabase will append ?code=... to this URL via PKCE flow.
+    // The /auth/callback route exchanges the code for a session
+    // and redirects to /oppdater-passord.
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://brannloggen.no'
+    const redirectTo = `${siteUrl}/auth/callback?next=/oppdater-passord`
+
     // Always return success regardless of result to prevent email enumeration
-    await supabase.auth.resetPasswordForEmail(email)
+    await supabase.auth.resetPasswordForEmail(email, { redirectTo })
 
     return NextResponse.json({ success: true })
   } catch {
