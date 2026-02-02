@@ -407,13 +407,16 @@ Bruker (nettleser/app)
 | Feilmeldingssanitisering | Implementert | Generiske feilmeldinger til klient, detaljert logging server-side |
 | JWT-verifisering | Implementert | Eksakt Bearer-match + Supabase auth.getUser() verifisering |
 | Mobil UI-integritet | Implementert | Varselpanelet bruker viewport-forankret posisjonering på mobil for å sikre at all hendelsesinformasjon er synlig og tilgjengelig på alle skjermstørrelser |
+| Automatiserte tester | Implementert | Vitest-basert testoppsett med 29 tester for rate limiting, filvalidering og utility-funksjoner. CI/CD-pipeline via GitHub Actions kjører typesjekk, tester og sårbarhetsskanning ved PR. |
+| Feillogging | Implementert | Alle catch-blokker i providers, hooks og API-ruter logger feil med kontekst-prefiks (`[Auth]`, `[login]`, etc.) for strukturert feilsøking |
+| Hemmelighetsbeskyttelse | Implementert | `.env.local` fjernet fra git-sporing. `.env.example` lagt til som referanse uten reelle nøkler. |
 
 ### 11.2 Anbefalte fremtidige tiltak
 
 | Prioritet | Tiltak | Beskrivelse | Kostnad/Innsats |
 |-----------|--------|-------------|-----------------|
 | Høy | Penetrasjonstesting | Ekstern sikkerhetsgjennomgang av autorisert tester. Anbefales sterkt for statlig bruk. Bør utføres før produksjonslansering og deretter årlig. | Moderat |
-| Høy | Automatisk sårbarhetsscanning | `npm audit` og Dependabot/Snyk i CI/CD-pipeline for å oppdage kjente sårbarheter i avhengigheter. | Lav |
+| Høy | Automatisk sårbarhetsscanning | `npm audit` kjøres automatisk i CI/CD-pipeline. Vurder å legge til Dependabot/Snyk for proaktiv varsling. | Lav |
 | Medium | WAF (Web Application Firewall) | Cloudflare, AWS WAF eller lignende foran Vercel for DDoS-beskyttelse og bot-filtrering. | Moderat |
 | Medium | SIEM-integrasjon | Koble aktivitetslogg til sentralt loggverktøy (Splunk, ELK, Azure Sentinel) for overvåkning og varsling. | Moderat |
 | Medium | Distribuert rate limiting | Oppgrader til Redis/Upstash-basert rate limiting for multi-instans-deployments. | Lav |

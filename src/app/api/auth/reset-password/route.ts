@@ -46,8 +46,9 @@ export async function POST(req: NextRequest) {
     await supabase.auth.resetPasswordForEmail(email)
 
     return NextResponse.json({ success: true })
-  } catch {
-    // Return success even on error to prevent information leakage
+  } catch (e) {
+    // Log server-side but return success to prevent information leakage
+    console.error('[reset-password] Uventet feil:', e)
     return NextResponse.json({ success: true })
   }
 }
