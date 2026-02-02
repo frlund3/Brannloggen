@@ -112,7 +112,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
             onClick={toggleAll}
             className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-theme-card-hover transition-colors border-b border-theme mb-1"
           >
-            <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${allSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
+            <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${allSelected ? 'bg-blue-500 border-blue-500' : 'border-theme'}`}>
               {allSelected && (
                 <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -129,14 +129,14 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
                 onClick={() => toggleArrayFilter(filterKey, item.id)}
                 className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-theme-card-hover transition-colors"
               >
-                <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
+                <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-theme'}`}>
                   {isSelected && (
                     <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
                   )}
                 </div>
-                <span className={`text-sm ${isSelected ? 'text-blue-400' : 'text-gray-300'}`}>{item.label}</span>
+                <span className={`text-sm ${isSelected ? 'text-blue-400' : 'text-theme-secondary'}`}>{item.label}</span>
               </button>
             )
           })}
@@ -215,7 +215,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
                 onClick={toggleAllKat}
                 className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-theme-card-hover transition-colors border-b border-theme mb-1"
               >
-                <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${allKatSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
+                <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${allKatSelected ? 'bg-blue-500 border-blue-500' : 'border-theme'}`}>
                   {allKatSelected && (
                     <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -232,7 +232,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
                     onClick={() => toggleArrayFilter('kategori_ids', kat.id)}
                     className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-theme-card-hover transition-colors"
                   >
-                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${isSelected ? 'bg-blue-500 border-blue-500' : 'border-theme'}`}>
                       {isSelected && (
                         <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -242,7 +242,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
                     <span className="shrink-0" style={{ color: kat.farge }}>
                       <CategoryIcon iconName={kat.ikon} className="w-3.5 h-3.5" />
                     </span>
-                    <span className={`text-sm ${isSelected ? 'text-blue-400' : 'text-gray-300'}`}>{kat.navn}</span>
+                    <span className={`text-sm ${isSelected ? 'text-blue-400' : 'text-theme-secondary'}`}>{kat.navn}</span>
                   </button>
                 )
               })}
@@ -264,10 +264,10 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
                 onClick={() => onFiltersChange({ ...filters, status: opt.value })}
                 className="w-full flex items-center gap-2 px-4 py-1.5 text-left hover:bg-theme-card-hover transition-colors"
               >
-                <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${filters.status === opt.value ? 'bg-blue-500 border-blue-500' : 'border-gray-600'}`}>
+                <div className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${filters.status === opt.value ? 'bg-blue-500 border-blue-500' : 'border-theme'}`}>
                   {filters.status === opt.value && <div className="w-2 h-2 rounded-full bg-white" />}
                 </div>
-                <span className={`text-sm ${filters.status === opt.value ? 'text-blue-400' : 'text-gray-300'}`}>{opt.label}</span>
+                <span className={`text-sm ${filters.status === opt.value ? 'text-blue-400' : 'text-theme-secondary'}`}>{opt.label}</span>
               </button>
             ))}
           </div>
@@ -306,7 +306,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
           </svg>
           Lukk
         </button>
-        <h2 className="text-base font-semibold">Filter</h2>
+        <h2 className="text-base font-semibold text-theme">Filter</h2>
         <div className="w-12" />
       </div>
 
@@ -324,7 +324,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
             className="w-full flex items-center justify-between py-3 border-b border-theme text-left"
           >
             <div>
-              <span className="text-white">{item.label}</span>
+              <span className="text-theme">{item.label}</span>
               {item.count > 0 && <span className="ml-2 text-xs text-blue-400">({item.count} valgt)</span>}
             </div>
             <svg className="w-5 h-5 text-theme-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -357,7 +357,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           Tilbake
         </button>
-        <h2 className="text-base font-semibold">{title}</h2>
+        <h2 className="text-base font-semibold text-theme">{title}</h2>
         <div className="w-16" />
       </div>
       <div className="overflow-y-auto flex-1 p-4">
@@ -384,7 +384,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           Tilbake
         </button>
-        <h2 className="text-base font-semibold">Fylke</h2>
+        <h2 className="text-base font-semibold text-theme">Fylke</h2>
         <div className="w-16" />
       </div>
       <div className="overflow-y-auto flex-1 p-4">
@@ -418,7 +418,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
           Tilbake
         </button>
-        <h2 className="text-base font-semibold">Status</h2>
+        <h2 className="text-base font-semibold text-theme">Status</h2>
         <div className="w-16" />
       </div>
       <div className="p-4 space-y-1">
@@ -449,7 +449,7 @@ export function FilterSheet({ isOpen, onClose, filters, onFiltersChange, mode = 
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
               Tilbake
             </button>
-            <h2 className="text-base font-semibold">Kategori</h2>
+            <h2 className="text-base font-semibold text-theme">Kategori</h2>
             <div className="w-16" />
           </div>
           <div className="overflow-y-auto flex-1 p-4">
