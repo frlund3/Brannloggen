@@ -406,13 +406,21 @@ Bruker (nettleser/app)
 | GDPR-dataoppbevaring | Implementert | Automatisk sletting via pg_cron (12 mnd logg, 30 dager kø) |
 | Feilmeldingssanitisering | Implementert | Generiske feilmeldinger til klient, detaljert logging server-side |
 | JWT-verifisering | Implementert | Eksakt Bearer-match + Supabase auth.getUser() verifisering |
+| Mobil UI-integritet | Implementert | Varselpanelet bruker viewport-forankret posisjonering på mobil for å sikre at all hendelsesinformasjon er synlig og tilgjengelig på alle skjermstørrelser |
+| Automatiserte tester | Implementert | Vitest-basert testoppsett med 29 tester for rate limiting, filvalidering og utility-funksjoner. CI/CD-pipeline via GitHub Actions kjører typesjekk, tester og sårbarhetsskanning ved PR. |
+| Feillogging | Implementert | Alle catch-blokker i providers, hooks og API-ruter logger feil med kontekst-prefiks (`[Auth]`, `[login]`, etc.) for strukturert feilsøking |
+| Hemmelighetsbeskyttelse | Implementert | `.env.local` fjernet fra git-sporing. `.env.example` lagt til som referanse uten reelle nøkler. |
+| Komponentrefaktorering | Implementert | DashboardLayout (349 → 173 linjer) delt opp i DashboardHeader, DashboardSidebar, SidebarNav og ThemeToggle. Bedre vedlikeholdbarhet og testbarhet. |
+| Type-sikkerhet | Implementert | 14x `as any`-casts i operator/hendelser fjernet. Sentralisert typed-queries-modul med typesikre tabellnavn erstatter spredte type-overrides. |
+| Offline PWA-caching | Implementert | Service worker utvidet med install/activate/fetch-hendelser. Pre-cacher statiske ressurser, network-first for navigasjon med cache-fallback, stale-while-revalidate for assets. Supabase/API-kall ekskluderes fra caching. |
+| Tilgjengelighet (a11y) | Implementert | BottomNav med role="tablist"/role="tab"/aria-selected, ToggleSwitch med role="switch"/aria-checked, aria-labels på interaktive elementer, DashboardHeader med aria-label på meny-knapp. |
 
 ### 11.2 Anbefalte fremtidige tiltak
 
 | Prioritet | Tiltak | Beskrivelse | Kostnad/Innsats |
 |-----------|--------|-------------|-----------------|
 | Høy | Penetrasjonstesting | Ekstern sikkerhetsgjennomgang av autorisert tester. Anbefales sterkt for statlig bruk. Bør utføres før produksjonslansering og deretter årlig. | Moderat |
-| Høy | Automatisk sårbarhetsscanning | `npm audit` og Dependabot/Snyk i CI/CD-pipeline for å oppdage kjente sårbarheter i avhengigheter. | Lav |
+| Høy | Automatisk sårbarhetsscanning | `npm audit` kjøres automatisk i CI/CD-pipeline. Vurder å legge til Dependabot/Snyk for proaktiv varsling. | Lav |
 | Medium | WAF (Web Application Firewall) | Cloudflare, AWS WAF eller lignende foran Vercel for DDoS-beskyttelse og bot-filtrering. | Moderat |
 | Medium | SIEM-integrasjon | Koble aktivitetslogg til sentralt loggverktøy (Splunk, ELK, Azure Sentinel) for overvåkning og varsling. | Moderat |
 | Medium | Distribuert rate limiting | Oppgrader til Redis/Upstash-basert rate limiting for multi-instans-deployments. | Lav |

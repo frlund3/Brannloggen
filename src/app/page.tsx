@@ -11,6 +11,8 @@ import { useRealtimeHendelser } from '@/hooks/useRealtimeHendelser'
 import { useAuth } from '@/components/providers/AuthProvider'
 import { useTheme } from '@/components/providers/ThemeProvider'
 import { NotificationBell } from '@/components/ui/NotificationBell'
+import { IncidentListSkeleton } from '@/components/ui/Skeleton'
+import Image from 'next/image'
 
 const PREFS_KEY = 'brannloggen_push_prefs'
 
@@ -36,6 +38,15 @@ type Tab = 'følger' | 'alle' | 'innstillinger'
 type SubTab = 'alle' | 'pågår'
 
 export default function HomePage() {
+  // If Supabase redirects here with recovery tokens in the hash fragment,
+  // redirect to /oppdater-passord which handles the token exchange.
+  useEffect(() => {
+    const hash = window.location.hash.substring(1)
+    if (hash && hash.includes('access_token') && hash.includes('type=recovery')) {
+      window.location.replace('/oppdater-passord#' + hash)
+    }
+  }, [])
+
   const { data: hendelser, loading: hendelserLoading, refetch } = useHendelser({ excludeDeactivated: true })
   useRealtimeHendelser(refetch)
   const { data: sentraler, loading: sentralerLoading } = useSentraler()
@@ -162,7 +173,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           {/* Logo + Name */}
           <div className="flex items-center gap-2.5">
-            <img src="/icon-192.png" alt="Brannloggen" className="w-8 h-8 rounded-lg" />
+            <Image src="/icon-192.png" alt="Brannloggen" width={32} height={32} className="rounded-lg" />
             <span className="text-lg font-bold hidden sm:inline">Brannloggen</span>
           </div>
 
@@ -322,7 +333,7 @@ export default function HomePage() {
           {activeTab === 'følger' && (
             <div className="max-w-5xl mx-auto">
               {loading ? (
-                <p className="text-center text-theme-secondary py-12">Laster hendelser...</p>
+                <IncidentListSkeleton />
               ) : !hasPrefs ? (
                 <div className="text-center py-12">
                   <svg className="w-12 h-12 text-theme-dim mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -358,7 +369,7 @@ export default function HomePage() {
           {activeTab === 'alle' && (
             <div className="max-w-5xl mx-auto">
               {loading ? (
-                <p className="text-center text-theme-secondary py-12">Laster hendelser...</p>
+                <IncidentListSkeleton />
               ) : allHendelser.length > 0 ? (
                 <div className="space-y-3">
                   {allHendelser.map((h) => (

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useFylker, useKategorier, useBrannvesen, useSentraler } from '@/hooks/useSupabaseData'
 import { usePushRegistration } from '@/hooks/usePushRegistration'
 import { useAuth } from '@/components/providers/AuthProvider'
+import { ToggleSwitch } from '@/components/ui/ToggleSwitch'
 
 const STORAGE_KEY = 'brannloggen_push_prefs'
 
@@ -93,14 +94,13 @@ export function SettingsView() {
       <section className="mb-8">
         <h2 className="text-lg font-semibold mb-3">Push-varsler</h2>
         <div className="bg-theme-card rounded-xl p-4 border border-theme max-w-lg">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <span className="text-sm text-theme">Aktiver push-varsler</span>
-              <p className="text-xs text-theme-muted mt-0.5">Få varsel om hendelser på enheten</p>
-            </div>
-            <button
+          <div className="mb-4">
+            <ToggleSwitch
+              enabled={prefs.pushEnabled}
               disabled={pushRegistering}
-              onClick={async () => {
+              label="Aktiver push-varsler"
+              description="Få varsel om hendelser på enheten"
+              onChange={async () => {
                 const newEnabled = !prefs.pushEnabled
                 if (newEnabled) {
                   const ok = await registerPush({
@@ -109,46 +109,25 @@ export function SettingsView() {
                     kategori_ids: prefs.kategorier,
                     kun_pågående: prefs.onlyOngoing,
                   })
-                  if (!ok) return // Don't toggle on if registration failed
+                  if (!ok) return
                 } else {
                   await unregisterPush()
                 }
                 savePrefs({ ...prefs, pushEnabled: newEnabled })
               }}
-              className={`w-12 h-6 rounded-full transition-colors relative ${
-                prefs.pushEnabled ? 'bg-blue-500' : 'bg-theme-card-hover'
-              } ${pushRegistering ? 'opacity-50' : ''}`}
-            >
-              <div
-                className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
-                  prefs.pushEnabled ? 'translate-x-6' : 'translate-x-0.5'
-                }`}
-              />
-            </button>
+            />
           </div>
 
           {pushError && (
             <p className="text-xs text-red-400 mb-3">Feil: {pushError}</p>
           )}
 
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-sm text-theme">Kun pågående hendelser</span>
-              <p className="text-xs text-theme-muted mt-0.5">Ikke varsle om avsluttede hendelser</p>
-            </div>
-            <button
-              onClick={() => savePrefs({ ...prefs, onlyOngoing: !prefs.onlyOngoing })}
-              className={`w-12 h-6 rounded-full transition-colors relative ${
-                prefs.onlyOngoing ? 'bg-blue-500' : 'bg-theme-card-hover'
-              }`}
-            >
-              <div
-                className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-transform ${
-                  prefs.onlyOngoing ? 'translate-x-6' : 'translate-x-0.5'
-                }`}
-              />
-            </button>
-          </div>
+          <ToggleSwitch
+            enabled={prefs.onlyOngoing}
+            label="Kun pågående hendelser"
+            description="Ikke varsle om avsluttede hendelser"
+            onChange={() => savePrefs({ ...prefs, onlyOngoing: !prefs.onlyOngoing })}
+          />
         </div>
       </section>
 

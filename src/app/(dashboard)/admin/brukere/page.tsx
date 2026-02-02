@@ -409,9 +409,7 @@ export default function AdminBrukerePage() {
                 </div>
                 <div className="flex items-center gap-3 mt-3 pt-3 border-t border-theme">
                   {canEdit && <button onClick={() => handleEdit(user)} className="text-xs text-blue-400 hover:text-blue-300 py-1 touch-manipulation">Rediger</button>}
-                  <button onClick={() => handleSendReset(user)} disabled={sendingResetTo === user.id} className="text-xs text-cyan-400 hover:text-cyan-300 disabled:opacity-50 py-1 touch-manipulation">
-                    {sendingResetTo === user.id ? 'Sender...' : 'Send nytt passord'}
-                  </button>
+
                   <button onClick={() => handleToggleActive(user.id)} className={`text-xs py-1 touch-manipulation ${user.aktiv ? 'text-orange-400 hover:text-orange-300' : 'text-green-400 hover:text-green-300'}`}>
                     {user.aktiv ? 'Deaktiver' : 'Aktiver'}
                   </button>

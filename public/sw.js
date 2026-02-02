@@ -1,3 +1,84 @@
+// ── Cache configuration ──
+const CACHE_NAME = 'brannloggen-v1'
+const STATIC_ASSETS = [
+  '/',
+  '/icon-192.png',
+  '/manifest.json',
+]
+
+// ── Install: pre-cache static assets ──
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(STATIC_ASSETS)
+    })
+  )
+  // Activate immediately without waiting for existing tabs to close
+  self.skipWaiting()
+})
+
+// ── Activate: clean up old caches ──
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((names) => {
+      return Promise.all(
+        names
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
+      )
+    })
+  )
+  // Take control of all open tabs immediately
+  self.clients.claim()
+})
+
+// ── Fetch: network-first with cache fallback ──
+self.addEventListener('fetch', (event) => {
+  const { request } = event
+
+  // Skip non-GET requests and Supabase/API calls
+  if (request.method !== 'GET') return
+  const url = new URL(request.url)
+  if (url.pathname.startsWith('/api/')) return
+  if (url.hostname.includes('supabase')) return
+
+  // For navigation requests (HTML pages): network-first
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const clone = response.clone()
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+          return response
+        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('/')))
+    )
+    return
+  }
+
+  // For static assets (JS, CSS, images): stale-while-revalidate
+  if (
+    url.pathname.startsWith('/_next/') ||
+    url.pathname.match(/\.(js|css|png|jpg|jpeg|svg|webp|ico|woff2?)$/)
+  ) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        const fetchPromise = fetch(request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone()
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone))
+          }
+          return response
+        }).catch(() => cached)
+
+        return cached || fetchPromise
+      })
+    )
+    return
+  }
+})
+
+// ── Push notifications ──
 self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {}
   const title = data.title || 'Brannloggen'
