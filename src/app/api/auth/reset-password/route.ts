@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { rateLimit, getClientIp } from '@/lib/rate-limit'
 
@@ -31,27 +31,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Ugyldig e-postadresse' }, { status: 400 })
     }
 
-    // Use a plain Supabase client with implicit flow (NOT the SSR client).
-    // The SSR client uses PKCE which stores a code_verifier cookie in the
-    // current browser session. But the person clicking the reset link may be
-    // on a different browser/device (or an admin sent it on their behalf),
-    // so the code_verifier cookie won't exist and exchangeCodeForSession fails.
+    const supabase = await createServerSupabaseClient()
+
+    // The email template in Supabase Dashboard must be configured to link
+    // directly to our app (bypassing Supabase's /auth/v1/verify endpoint):
     //
-    // With implicit flow, Supabase redirects directly to the redirect URL with
-    // #access_token=...&refresh_token=...&type=recovery in the hash fragment.
-    // The /oppdater-passord page already handles this (reads hash and calls setSession).
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { auth: { flowType: 'implicit' } }
-    )
-
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://brannloggen.no'
-
-    // Always return success regardless of result to prevent email enumeration
-    await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${siteUrl}/oppdater-passord`,
-    })
+    //   {{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/oppdater-passord
+    //
+    // Our /auth/callback route then verifies the token_hash via verifyOtp()
+    // and redirects to /oppdater-passord with a valid session.
+    //
+    // We do NOT pass redirectTo here — the email template handles the URL entirely.
+    // Always return success regardless of result to prevent email enumeration.
+    await supabase.auth.resetPasswordForEmail(email)
 
     return NextResponse.json({ success: true })
   } catch {

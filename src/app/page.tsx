@@ -36,6 +36,15 @@ type Tab = 'følger' | 'alle' | 'innstillinger'
 type SubTab = 'alle' | 'pågår'
 
 export default function HomePage() {
+  // If Supabase redirects here with recovery tokens in the hash fragment,
+  // redirect to /oppdater-passord which handles the token exchange.
+  useEffect(() => {
+    const hash = window.location.hash.substring(1)
+    if (hash && hash.includes('access_token') && hash.includes('type=recovery')) {
+      window.location.replace('/oppdater-passord#' + hash)
+    }
+  }, [])
+
   const { data: hendelser, loading: hendelserLoading, refetch } = useHendelser({ excludeDeactivated: true })
   useRealtimeHendelser(refetch)
   const { data: sentraler, loading: sentralerLoading } = useSentraler()
