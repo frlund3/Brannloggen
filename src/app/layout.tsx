@@ -3,6 +3,7 @@ import { AuthProvider } from '@/components/providers/AuthProvider'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
 import { ThemeToaster } from '@/components/providers/ThemeToaster'
 import { PushInit } from '@/components/providers/PushInit'
+import { ErrorBoundaryProvider } from '@/components/providers/ErrorBoundaryProvider'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -29,7 +30,9 @@ export default function RootLayout({
     <html lang="no" className="dark" suppressHydrationWarning>
       <body className="min-h-screen bg-theme text-theme">
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <ErrorBoundaryProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </ErrorBoundaryProvider>
           <ThemeToaster />
           <PushInit />
         </ThemeProvider>

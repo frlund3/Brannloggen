@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { IncidentCard } from '@/components/public/IncidentCard'
+import { usePullToRefresh } from '@/hooks/usePullToRefresh'
 import { BottomNav } from '@/components/public/BottomNav'
 import { FilterSheet, FilterState, emptyFilters } from '@/components/public/FilterSheet'
 import { SettingsView } from '@/components/public/SettingsView'
@@ -52,6 +53,11 @@ export default function HomePage() {
   const { data: sentraler, loading: sentralerLoading } = useSentraler()
   const { rolle } = useAuth()
   const { theme, toggleTheme } = useTheme()
+
+  const handleRefresh = useCallback(async () => {
+    await refetch()
+  }, [refetch])
+  const { containerRef, refreshing, pullDistance, progress } = usePullToRefresh({ onRefresh: handleRefresh })
 
   const dashboardHref = rolle === 'admin' || rolle === '110-admin' ? '/operator/hendelser'
     : rolle === 'operator' ? '/operator/hendelser'
@@ -162,7 +168,26 @@ export default function HomePage() {
   const prefsFilterCount = pushPrefs.sentraler.length + pushPrefs.fylker.length + pushPrefs.kategorier.length + pushPrefs.brannvesen.length
 
   return (
-    <div className="min-h-screen bg-theme pb-20 lg:pb-0">
+    <div ref={containerRef} className="min-h-screen bg-theme pb-20 lg:pb-0">
+      {/* Pull-to-refresh indicator (mobile only) */}
+      {(pullDistance > 0 || refreshing) && (
+        <div
+          className="fixed top-0 left-0 right-0 z-50 flex justify-center pointer-events-none lg:hidden"
+          style={{ transform: `translateY(${refreshing ? 48 : pullDistance}px)`, transition: refreshing ? 'transform 200ms ease' : 'none' }}
+        >
+          <div className={`w-8 h-8 rounded-full bg-theme-card border border-theme shadow-lg flex items-center justify-center ${refreshing ? 'animate-spin' : ''}`}>
+            <svg
+              className="w-4 h-4 text-blue-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              style={{ transform: `rotate(${progress * 360}deg)`, transition: refreshing ? 'none' : 'transform 100ms' }}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </div>
+        </div>
+      )}
       {/* Push Onboarding Popup */}
       {showOnboarding && !onboardingDismissed && (
         <PushOnboarding onComplete={() => setOnboardingDismissed(true)} />

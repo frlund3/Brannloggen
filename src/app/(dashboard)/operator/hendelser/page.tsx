@@ -12,6 +12,8 @@ import { useSentralScope } from '@/hooks/useSentralScope'
 import Link from 'next/link'
 import { useState, useMemo, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
+import { useDebounce } from '@/hooks/useDebounce'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { createClient } from '@/lib/supabase/client'
 import { logActivity } from '@/lib/logActivity'
 import { validateImageFileFull } from '@/lib/file-validation'
@@ -42,6 +44,7 @@ export default function OperatorHendelserPage() {
   // Filters
   const [statusFilter, setStatusFilter] = useState<string>('alle')
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
   const [filterKategori, setFilterKategori] = useState('')
   const [filterFylke, setFilterFylke] = useState('')
   const [filterKommune, setFilterKommune] = useState('')
@@ -148,7 +151,7 @@ export default function OperatorHendelserPage() {
     .filter((h) => {
       if (deactivatedIds.includes(h.id)) return false
       if (statusFilter !== 'alle' && h.status !== statusFilter) return false
-      if (search && !h.tittel.toLowerCase().includes(search.toLowerCase()) && !h.sted.toLowerCase().includes(search.toLowerCase())) return false
+      if (debouncedSearch && !h.tittel.toLowerCase().includes(debouncedSearch.toLowerCase()) && !h.sted.toLowerCase().includes(debouncedSearch.toLowerCase())) return false
       if (filterKategori && h.kategori_id !== filterKategori) return false
       if (filterFylke && h.fylke_id !== filterFylke) return false
       if (filterKommune && h.kommune_id !== filterKommune) return false
@@ -617,7 +620,41 @@ export default function OperatorHendelserPage() {
         </div>
 
         {/* Cards */}
-        <div className="space-y-3">
+        {hendelser.length === 0 ? (
+          <EmptyState
+            icon={debouncedSearch ? 'search' : 'filter'}
+            title={debouncedSearch ? 'Ingen treff på søket' : 'Ingen hendelser funnet'}
+            description={debouncedSearch
+              ? `Ingen hendelser matcher "${debouncedSearch}". Prøv et annet søkeord.`
+              : activeFilterCount > 0
+                ? 'Ingen hendelser matcher de valgte filtrene.'
+                : statusFilter !== 'alle'
+                  ? `Ingen hendelser med status "${statusFilter}".`
+                  : 'Det finnes ingen hendelser ennå.'}
+            action={activeFilterCount > 0 || debouncedSearch ? { label: 'Nullstill filtre', onClick: clearFilters } : undefined}
+          />
+        ) : (
+        <div
+          className="space-y-3"
+          role="list"
+          onKeyDown={(e) => {
+            if (!['ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(e.key)) return
+            e.preventDefault()
+            const currentIdx = expandedId ? hendelser.findIndex(h => h.id === expandedId) : -1
+            if (e.key === 'ArrowDown') {
+              const nextIdx = Math.min(currentIdx + 1, hendelser.length - 1)
+              setExpandedId(hendelser[nextIdx].id)
+            } else if (e.key === 'ArrowUp') {
+              const prevIdx = Math.max(currentIdx - 1, 0)
+              setExpandedId(hendelser[prevIdx].id)
+            } else if (e.key === 'Enter' && expandedId) {
+              openHendelse(expandedId)
+            } else if (e.key === 'Escape') {
+              setExpandedId(null)
+            }
+          }}
+          tabIndex={0}
+        >
           {hendelser.map((h) => {
             const sentral = sentraler.find((s) => s.brannvesen_ids.includes(h.brannvesen_id))
             const bv = brannvesen.find((b) => b.id === h.brannvesen_id)
@@ -633,7 +670,7 @@ export default function OperatorHendelserPage() {
             const statusLabel = h.status === 'pågår' ? 'PÅGÅR' : 'AVSLUTTET'
 
             return (
-              <div key={h.id} className="bg-theme-card rounded-xl border border-theme overflow-hidden transition-all shadow-sm hover:shadow-md flex">
+              <div key={h.id} role="listitem" className={`bg-theme-card rounded-xl border overflow-hidden transition-all shadow-sm hover:shadow-md flex ${expandedId === h.id ? 'border-blue-500/50 ring-1 ring-blue-500/30' : 'border-theme'}`}>
                 {/* Status color stripe with vertical text */}
                 <div className={`w-7 shrink-0 ${statusStripeColor} flex items-center justify-center`}>
                   <span className="text-[10px] font-bold text-white tracking-widest [writing-mode:vertical-lr] rotate-180 select-none">
@@ -960,11 +997,6 @@ export default function OperatorHendelserPage() {
             )
           })}
         </div>
-
-        {hendelser.length === 0 && (
-          <div className="bg-theme-card rounded-xl border border-theme p-8 text-center text-theme-muted text-sm">
-            {search || activeFilterCount > 0 ? 'Ingen hendelser matcher filteret' : 'Ingen hendelser registrert'}
-          </div>
         )}
 
         <div className="mt-3 text-center">
