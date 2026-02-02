@@ -406,6 +406,7 @@ Bruker (nettleser/app)
 | GDPR-dataoppbevaring | Implementert | Automatisk sletting via pg_cron (12 mnd logg, 30 dager kø) |
 | Feilmeldingssanitisering | Implementert | Generiske feilmeldinger til klient, detaljert logging server-side |
 | JWT-verifisering | Implementert | Eksakt Bearer-match + Supabase auth.getUser() verifisering |
+| Mobil UI-integritet | Implementert | Varselpanelet bruker viewport-forankret posisjonering på mobil for å sikre at all hendelsesinformasjon er synlig og tilgjengelig på alle skjermstørrelser |
 
 ### 11.2 Anbefalte fremtidige tiltak
 
