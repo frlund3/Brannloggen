@@ -413,7 +413,12 @@ Bruker (nettleser/app)
 | Komponentrefaktorering | Implementert | DashboardLayout (349 → 173 linjer) delt opp i DashboardHeader, DashboardSidebar, SidebarNav og ThemeToggle. Bedre vedlikeholdbarhet og testbarhet. |
 | Type-sikkerhet | Implementert | 14x `as any`-casts i operator/hendelser fjernet. Sentralisert typed-queries-modul med typesikre tabellnavn erstatter spredte type-overrides. |
 | Offline PWA-caching | Implementert | Service worker utvidet med install/activate/fetch-hendelser. Pre-cacher statiske ressurser, network-first for navigasjon med cache-fallback, stale-while-revalidate for assets. Supabase/API-kall ekskluderes fra caching. |
-| Tilgjengelighet (a11y) | Implementert | BottomNav med role="tablist"/role="tab"/aria-selected, ToggleSwitch med role="switch"/aria-checked, aria-labels på interaktive elementer, DashboardHeader med aria-label på meny-knapp. |
+| Tilgjengelighet (a11y) | Implementert | BottomNav med role="tablist"/role="tab"/aria-selected, ToggleSwitch med role="switch"/aria-checked, aria-labels på interaktive elementer, DashboardHeader med aria-label på meny-knapp. Tastaturnavigasjon i hendelseslisten (piltaster, Enter, Escape). |
+| Error Boundary | Implementert | React Error Boundary-komponent fanger komponent-krasj og viser feilmelding med "Prøv igjen"-knapp. Integrert i root layout rundt hele applikasjonen. |
+| Debounced søk | Implementert | `useDebounce`-hook (300ms) på søkefeltet i operator/hendelser for å redusere unødvendige omberegninger. |
+| Pull-to-refresh | Implementert | Mobil-vennlig pull-to-refresh på forsiden med visuell indikator og animasjon. |
+| Tema-overgang | Implementert | Myk CSS-overgang (200ms) ved bytte mellom lyst og mørkt tema via `.theme-transitioning`-klasse. |
+| Empty states | Implementert | Informative tomme tilstander med ikon, beskrivelse og handling (nullstill filtre) når ingen hendelser matcher i operator-visningen. |
 
 ### 11.2 Anbefalte fremtidige tiltak
 

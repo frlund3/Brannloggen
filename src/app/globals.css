@@ -59,6 +59,12 @@ body {
   padding-right: env(safe-area-inset-right);
 }
 
+/* Smooth theme transition */
+.theme-transitioning,
+.theme-transitioning * {
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease !important;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
