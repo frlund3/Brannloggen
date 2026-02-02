@@ -32,8 +32,11 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-theme border-t border-theme z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-      <div className="max-w-lg mx-auto flex items-center justify-around py-2">
+      <div className="max-w-lg mx-auto flex items-center justify-around py-2" role="tablist">
         <button
+          role="tab"
+          aria-selected={activeTab === 'følger'}
+          aria-label="Jeg følger"
           onClick={() => onTabChange('følger')}
           className={cn(
             'flex flex-col items-center gap-0.5 px-3 py-1',
@@ -47,6 +50,9 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         </button>
 
         <button
+          role="tab"
+          aria-selected={activeTab === 'alle'}
+          aria-label="Alle hendelser"
           onClick={() => onTabChange('alle')}
           className={cn(
             'flex flex-col items-center gap-0.5 px-3 py-1',
@@ -60,6 +66,9 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
         </button>
 
         <button
+          role="tab"
+          aria-selected={activeTab === 'innstillinger'}
+          aria-label="Innstillinger"
           onClick={() => onTabChange('innstillinger')}
           className={cn(
             'flex flex-col items-center gap-0.5 px-3 py-1',

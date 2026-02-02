@@ -4,7 +4,8 @@ import { SeverityDot } from '@/components/ui/SeverityDot'
 import { CategoryIcon } from '@/components/ui/CategoryIcon'
 import { formatTime, formatTimeAgo } from '@/lib/utils'
 import { useBrannvesen, useKategorier, useSentraler } from '@/hooks/useSupabaseData'
-import { useState } from 'react'
+import { useState, memo, useMemo } from 'react'
+import Image from 'next/image'
 
 interface IncidentUpdate {
   id: string
@@ -34,7 +35,7 @@ interface IncidentCardProps {
   onClick?: () => void
 }
 
-export function IncidentCard({
+export const IncidentCard = memo(function IncidentCard({
   brannvesen_id,
   kategori_id,
   tittel,
@@ -52,9 +53,9 @@ export function IncidentCard({
   const { data: brannvesen } = useBrannvesen()
   const { data: sentraler } = useSentraler()
   const { data: kategorier } = useKategorier()
-  const bv = brannvesen.find((b) => b.id === brannvesen_id)
-  const sentral = sentraler.find((s) => s.brannvesen_ids.includes(brannvesen_id))
-  const kat = kategorier.find((k) => k.id === kategori_id)
+  const bv = useMemo(() => brannvesen.find((b) => b.id === brannvesen_id), [brannvesen, brannvesen_id])
+  const sentral = useMemo(() => sentraler.find((s) => s.brannvesen_ids.includes(brannvesen_id)), [sentraler, brannvesen_id])
+  const kat = useMemo(() => kategorier.find((k) => k.id === kategori_id), [kategorier, kategori_id])
 
   const activeUpdates = oppdateringer.filter(u => !u.deaktivert)
   const stripeColor = status === 'pågår' ? 'bg-red-500' : 'bg-gray-600'
@@ -96,7 +97,7 @@ export function IncidentCard({
 
       {/* Hendelsebilde */}
       {bilde_url && (
-        <img src={bilde_url} alt="" className="mt-2 rounded-lg max-h-32 max-w-[200px] object-cover" />
+        <Image src={bilde_url} alt={`Bilde fra hendelse: ${tittel}`} width={200} height={128} className="mt-2 rounded-lg max-h-32 max-w-[200px] object-cover" />
       )}
 
       {/* Last edited indicator */}
@@ -125,6 +126,8 @@ export function IncidentCard({
               setShowUpdates(!showUpdates)
             }}
             className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+            aria-expanded={showUpdates}
+            aria-label={showUpdates ? 'Skjul oppdateringer' : 'Vis oppdateringer'}
           >
             {activeUpdates.length} oppdatering{activeUpdates.length > 1 ? 'er' : ''},
             siste {formatTimeAgo(activeUpdates[activeUpdates.length - 1].opprettet_tidspunkt)}
@@ -153,7 +156,7 @@ export function IncidentCard({
                   </div>
                   <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5">{update.tekst}</p>
                   {update.bilde_url && (
-                    <img src={update.bilde_url} alt="" className="mt-1.5 rounded-lg max-h-48 object-cover" />
+                    <Image src={update.bilde_url} alt={`Oppdateringsbilde: ${update.tekst.slice(0, 50)}`} width={400} height={192} className="mt-1.5 rounded-lg max-h-48 object-cover" />
                   )}
                 </div>
               ))}
@@ -164,4 +167,4 @@ export function IncidentCard({
       </div>
     </div>
   )
-}
+})
