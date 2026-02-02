@@ -45,7 +45,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const cachedSentrals = localStorage.getItem(SENTRAL_IDS_KEY)
       if (cachedSentrals) setSentralIds(JSON.parse(cachedSentrals))
-    } catch {}
+    } catch (e) {
+      console.warn('[Auth] Kunne ikke lese cached sentral-IDer:', e)
+    }
 
     // Use getUser() for server-verified auth (not just local JWT)
     const timeout = setTimeout(() => {
@@ -64,7 +66,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSentralIds([])
       }
       setLoading(false)
-    }).catch(() => {
+    }).catch((e) => {
+      console.warn('[Auth] Feil ved verifisering av bruker:', e)
       clearTimeout(timeout)
       setLoading(false)
     })

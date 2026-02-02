@@ -44,7 +44,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       user: { id: data.user.id },
     })
-  } catch {
+  } catch (e) {
+    console.error('[login] Uventet feil:', e)
     return NextResponse.json({ error: 'En intern feil oppstod' }, { status: 500 })
   }
 }

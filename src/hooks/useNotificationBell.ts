@@ -63,7 +63,9 @@ function getPrefs(): PushPrefs {
   try {
     const raw = localStorage.getItem(PREFS_KEY)
     if (raw) return { ...defaultPrefs, ...JSON.parse(raw) }
-  } catch {}
+  } catch (e) {
+    console.warn('[NotificationBell] Kunne ikke lese varslingspreferanser fra localStorage:', e)
+  }
   return defaultPrefs
 }
 
@@ -97,7 +99,7 @@ export function useNotificationBell() {
 
   const setSoundEnabled = useCallback((enabled: boolean) => {
     setSoundEnabledState(enabled)
-    try { localStorage.setItem(SOUND_KEY, String(enabled)) } catch {}
+    try { localStorage.setItem(SOUND_KEY, String(enabled)) } catch (e) { console.warn('[NotificationBell] Kunne ikke lagre lydinnstilling:', e) }
   }, [])
 
   // Build notification items from hendelser
@@ -185,7 +187,7 @@ export function useNotificationBell() {
   const markAllRead = useCallback(() => {
     const now = new Date().toISOString()
     setLastSeen(now)
-    try { localStorage.setItem(LAST_SEEN_KEY, now) } catch {}
+    try { localStorage.setItem(LAST_SEEN_KEY, now) } catch (e) { console.warn('[NotificationBell] Kunne ikke lagre sist-sett tidspunkt:', e) }
   }, [])
 
   // No longer auto-marking as read when opening — user must press "Merk alle lest"

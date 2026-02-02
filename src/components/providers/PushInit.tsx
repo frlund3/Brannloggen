@@ -61,7 +61,9 @@ export function PushInit() {
             clearBadge()
           }
         })
-      }).catch(() => {})
+      }).catch((e) => {
+        console.warn('[PushInit] Kunne ikke initialisere Capacitor App-lytter:', e)
+      })
     }
 
     // Clear badge on initial load
