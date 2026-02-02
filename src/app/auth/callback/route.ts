@@ -18,9 +18,20 @@ export async function GET(request: NextRequest) {
 
   // Handle PKCE code exchange (standard flow)
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
-      return NextResponse.redirect(new URL(next, origin))
+      // If this is a recovery session and no explicit next was provided,
+      // redirect to the password update page
+      let redirectPath = next
+      if (redirectPath === '/login' && data.session?.user?.recovery_sent_at) {
+        const recoverySentAt = new Date(data.session.user.recovery_sent_at).getTime()
+        const now = Date.now()
+        // If recovery was sent within the last hour, this is likely a password reset flow
+        if (now - recoverySentAt < 60 * 60 * 1000) {
+          redirectPath = '/oppdater-passord'
+        }
+      }
+      return NextResponse.redirect(new URL(redirectPath, origin))
     }
   }
 
